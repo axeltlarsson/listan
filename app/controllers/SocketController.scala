@@ -18,32 +18,11 @@ import pdi.jwt.{JwtJson, JwtAlgorithm}
 class SocketController @Inject() (implicit sys: ActorSystem, mat: Materializer)
   extends Controller {
 
-  case class Message(auth: String, action: Action)
-  object Message {
-    implicit val format: OFormat[Message] = derived.oformat
-  }
-
-  sealed trait Action
-  case class EDIT_ITEM(id: String, contents: String) extends Action
-  case class ADD_ITEM(id: String, contents: String) extends Action
-  object EDIT_ITEM {
-    implicit val format: OFormat[EDIT_ITEM] = derived.oformat
-  }
-  object ADD_ITEM {
-    implicit val format: OFormat[ADD_ITEM] = derived.oformat
-  }
-  object Action {
-    implicit val actionReads: Reads[Action] = derived.reads
-    implicit val actionWrites: OWrites[Action] =
-      derived.flat.owrites((__ \ "type").write[String])
-  }
-
-
   class MyWebSocketActor(out: ActorRef) extends Actor {
     def receive = {
       case msg =>
         Logger.info("Received some shit")
-        out ! msg
+        out ! Json.toJson(Message("eyJhbGciOiJ...", ADD_ITEM("kslndfö", "ny item")))
     }
 
     override def postStop() = {
