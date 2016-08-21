@@ -11,23 +11,24 @@ class WebSocketActor(ws: ActorRef) extends Actor {
       json.validate[Message] match {
         case s: JsSuccess[Message] => {
           s.get match {
-            case Message(auth, ADD_ITEM(id, contents)) => {
+            case ADD_ITEM(id, contents) => {
               Logger.info(s"ADD_ITEM($id, $contents)")
-              ws ! Json.obj("message" -> "added item")
+              ws ! Json.toJson(Response(true, "added item"))
             }
-            case Message(auth, EDIT_ITEM(id, contents)) => {
+            case EDIT_ITEM(id, contents) => {
               Logger.info(s"EDIT_ITEM($id, $contents)")
-              ws ! Json.obj("message" -> "edited item")
+              ws ! Json.toJson(Response(true, "edited item"))
             }
-            case Message(auth, action) => {
-              Logger.info("Unknown action", action)
+            case _ => {
+              Logger.info("Unknown message")
+              ws ! Json.toJson(Response(false, "Unknown message"))
               self ! PoisonPill
             }
           }
         }
         case e: JsError => {
           Logger.error("Could not validate json as Message")
-          ws ! Json.obj("error" -> "Invalid message.")
+          ws ! Json.toJson(Response(false, "Invalid message"))
           self ! PoisonPill 
         }
       }
@@ -35,7 +36,7 @@ class WebSocketActor(ws: ActorRef) extends Actor {
 
   override def preStart() = {
     Logger.info("WebSocketActor created, sending auth request")
-    ws ! Json.obj("message" -> "authenticate yourself or I will kill you!")
+    ws ! Json.toJson(AuthRequest())
   }
 
   override def postStop() = {

@@ -4,25 +4,40 @@ import play.api.libs.json._
 import julienrf.json.derived
 
 
-// The algebraic data type presentation of message from client
+// The algebraic data type presentation of messages
 // ex: {"action": {"type": "DELETE_ITEM", "id": "1a"}}
-case class Message(auth: String, action: Action)
-
-sealed trait Action
+sealed trait Message
+case class Auth(token: String) extends Message
+case class Response(ok: Boolean, msg: String) extends Message
+case class AuthRequest() extends Message 
+sealed trait Action extends Message
 case class EDIT_ITEM(id: String, contents: String) extends Action
 case class ADD_ITEM(id: String, contents: String) extends Action
 
 
-/* JSON format */
-object Message {
-  implicit val format: OFormat[Message] = derived.oformat
+// Json format
+object AuthRequest {
+  implicit val format: OFormat[AuthRequest] = derived.oformat
 }
-/* Must be after the sum types for some reason */
-object EDIT_ITEM { implicit val format: OFormat[EDIT_ITEM] = derived.oformat }
-object ADD_ITEM { implicit val format: OFormat[ADD_ITEM] = derived.oformat }
+object EDIT_ITEM {
+  implicit val format: OFormat[EDIT_ITEM] = derived.oformat
+}
+object ADD_ITEM {
+  implicit val format: OFormat[ADD_ITEM] = derived.oformat
+}
 object Action {
-  implicit val actionReads: Reads[Action] =
-      derived.flat.reads((__ \ "type").read[String])
-  implicit val actionWrites: OWrites[Action] =
+  implicit val format: OFormat[Action] = derived.oformat
+} 
+
+object Message {
+  implicit val msgDataReads: Reads[Message] =
+    derived.flat.reads((__ \ "type").read[String])
+  implicit val msgDataWrites: OWrites[Message] =
     derived.flat.owrites((__ \ "type").write[String])
+}
+object Auth {
+  implicit val format: OFormat[Auth] = derived.oformat 
+}
+object Response {
+  implicit val format: OFormat[Response] = derived.oformat
 }
