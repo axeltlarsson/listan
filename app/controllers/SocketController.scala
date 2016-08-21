@@ -11,32 +11,16 @@ import akka.actor._
 import scala.concurrent.Future
 import play.api.mvc._
 import play.api.libs.streams._
-import play.api.libs.json._
-import julienrf.json.derived
+import play.api.libs.json.{JsValue}
 import pdi.jwt.{JwtJson, JwtAlgorithm}
+import services.WebSocketActor
 
 class SocketController @Inject() (implicit sys: ActorSystem, mat: Materializer)
   extends Controller {
 
-  class MyWebSocketActor(out: ActorRef) extends Actor {
-    def receive = {
-      case msg =>
-        Logger.info("Received some shit")
-        out ! Json.toJson(Message("eyJhbGciOiJ...", ADD_ITEM("kslndfö", "ny item")))
-    }
-
-    override def postStop() = {
-      Logger.info("WS closed")
-    }
-  }
-
-  object MyWebSocketActor {
-    def props(out: ActorRef) = Props(new MyWebSocketActor(out))
-  }
-  
   def connect = WebSocket.acceptOrResult[JsValue, JsValue] {
     case requestHeader if sameOriginCheck(requestHeader) =>
-      Future.successful(Right(ActorFlow.actorRef(MyWebSocketActor.props)))
+      Future.successful(Right(ActorFlow.actorRef(WebSocketActor.props)))
     case rejected =>
       Logger.error(s"Request $rejected failed same origin check")
       Future.successful(Left(Forbidden("forbidden")))  
@@ -58,6 +42,7 @@ class SocketController @Inject() (implicit sys: ActorSystem, mat: Materializer)
         false
     }
   }
+
   def originMatches(origin: String): Boolean = {
     origin.contains("localhost:9000")
   }

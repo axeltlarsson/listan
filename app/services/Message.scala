@@ -1,10 +1,11 @@
-package controllers
+package services
 
 import play.api.libs.json._
 import julienrf.json.derived
 
+
 // The algebraic data type presentation of message from client
-// ex: {"auth": "eybsd...", "action": {"type": "DELETE_ITEM", "id": "1a"}}
+// ex: {"action": {"type": "DELETE_ITEM", "id": "1a"}}
 case class Message(auth: String, action: Action)
 
 sealed trait Action
@@ -20,7 +21,8 @@ object Message {
 object EDIT_ITEM { implicit val format: OFormat[EDIT_ITEM] = derived.oformat }
 object ADD_ITEM { implicit val format: OFormat[ADD_ITEM] = derived.oformat }
 object Action {
-  implicit val actionReads: Reads[Action] = derived.reads
+  implicit val actionReads: Reads[Action] =
+      derived.flat.reads((__ \ "type").read[String])
   implicit val actionWrites: OWrites[Action] =
     derived.flat.owrites((__ \ "type").write[String])
 }
