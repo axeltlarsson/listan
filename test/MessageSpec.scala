@@ -28,7 +28,7 @@ class MessageSpec extends PlaySpec with OneAppPerTest {
 
   "(Out) Message as json" should {
     "work for request_auth messages" in {
-      jsonSerializable(AuthRequest()) mustBe true
+      jsonSerializable(AuthRequest(): Message) mustBe true
     }
 
     "work for response messages" in {

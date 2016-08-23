@@ -15,39 +15,42 @@ case object Authenticated extends State
 sealed trait Data
 case object Uninitialized extends Data
 
-class WebSocketActor(ws: ActorRef) extends FSM[State, Data] {
+class WebSocketActor(ws: ActorRef) extends LoggingFSM[State, Data] {
   startWith(Unauthenticated, Uninitialized)
   ws ! Json.toJson(AuthRequest(): Message)
 
-
-// Maybe re-implement websocket flow so that we receive Message:s and not JsValue:s?
   when(Unauthenticated) {
-    case Event(msg: Message, _) => {
-      msg match {
-        case ADD_ITEM => 
-        case EDIT_ITEM =>
-      }
-
-      }
-    }
+    case Event(json: JsValue, _) => {
       json.validate[Message] match {
-        case s: JsSucces[Message] => {
-
+        case s: JsSuccess[Message] => {
+          s.get match {
+            case Auth(token) => {
+              if (true) {
+                ws ! Json.toJson(Response(true, "Authentication success"))
+                goto(Authenticated)
+              } else {
+                stay // or die?
+              }
+            }
+            case _ => {
+              val msg = "Invalid message at this state (Unauthenticated)"
+              Logger.warn(msg)
+              ws ! Json.toJson(Response(false, msg))
+              stay // or die?
+            }
+          }
         }
         case e: JsError => {
-          Logger.error("Could not validate json as Message")
-          ws ! Json.toJson(Response(false, "Invalid message"))
-          self ! PoisonPill
+          val msg = s"Could not validate json ($json) as Message"
+          Logger.error(msg)
+          ws ! Json.toJson(Response(false, msg))
+          stay // or die?
+        }
 
-      }
-
-      case Auth(token) => {
-        // check that token is valid
-        // if (valid(token))
-          goto(Authenticated) using Uninitialized replying (Response(true, "Authenticated"))
       }
     }
   }
+
   onTransition {
     case Unauthenticated -> Authenticated =>
       stateData match {
@@ -61,32 +64,26 @@ class WebSocketActor(ws: ActorRef) extends FSM[State, Data] {
         case s: JsSuccess[Message] => {
           s.get match {
             case ADD_ITEM(id, contents) => {
-              Logger.info(s"ADD_ITEM($id, $contents)")
               ws ! Json.toJson(Response(true, "added item"))
+              stay
             }
             case EDIT_ITEM(id, contents) => {
-              Logger.info(s"EDIT_ITEM($id, $contents)")
               ws ! Json.toJson(Response(true, "edited item"))
+              stay
             }
             case _ => {
               Logger.info("Unknown message")
               ws ! Json.toJson(Response(false, "Unknown message"))
-              self ! PoisonPill
+              stay
             }
           }
         }
         case e: JsError => {
           Logger.error("Could not validate json as Message")
           ws ! Json.toJson(Response(false, "Invalid message"))
-          self ! PoisonPill 
+          stay
         }
       }
-  }
-
-
-  override def preStart() = {
-    Logger.info("WebSocketActor created, sending auth request")
-    ws ! Json.toJson(AuthRequest(): Message)
   }
 
   override def postStop() = {
