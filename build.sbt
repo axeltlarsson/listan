@@ -1,4 +1,4 @@
-name := """iteratees-test"""
+name := """listan-server"""
 
 version := "1.0-SNAPSHOT"
 
