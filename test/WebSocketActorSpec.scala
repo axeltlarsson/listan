@@ -8,11 +8,13 @@ import akka.testkit.TestActorRef
 import scala.concurrent.duration._
 import services._
 import services.WebSocketActor._
-
+import controllers.HomeController
 import akka.actor.ActorSystem
 import akka.pattern.ask
 import akka.stream.Materializer
 import javax.inject._
+import play.api.mvc._
+import scala.concurrent.Future
 
 object MockWsActor {
   case object GetMessage
@@ -30,7 +32,7 @@ class MockWsActor extends Actor {
 }
 
 
-class WebSocketActorSpec extends PlaySpec with OneAppPerTest {
+class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
   import MockWsActor._
   implicit val system = ActorSystem("sys")
 
@@ -49,7 +51,26 @@ class WebSocketActorSpec extends PlaySpec with OneAppPerTest {
 
     "handle valid Auth" in new Automaton {
       fsm.stateName mustBe Unauthenticated
-      fsm ! Json.toJson(Auth("somevalidtoken"): Message)
+
+      // Get the token by calling /api/login with creds
+      val controller = new HomeController()
+      val json = Json.parse("""
+      {
+        "username": "axel",
+        "password": "whatever"
+      }
+      """)
+      val req = new FakeRequest(
+        uri = "/api/login",
+        method = "POST",
+        headers = FakeHeaders(Seq("Content-type"-> "application/json")),
+        body = json
+        )
+      val Some(res) = route(app, req)
+      status(res) mustEqual OK
+      val token = headers(res).get("Authorization").get.split("Bearer ")(1)
+      
+      fsm ! Json.toJson(Auth(token): Message)
       val futureReply = mockWsActor ? GetMessage
       val result = futureReply.value.get
       result mustBe Response(true, _: String)

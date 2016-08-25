@@ -5,6 +5,10 @@ import akka.actor.FSM.Event
 import play.api.libs.json.{Json, JsValue, JsError, JsSuccess}
 import play.Logger
 import scala.concurrent.duration._
+import javax.inject._
+import com.google.inject.assistedinject.Assisted
+import scala.util.{Success}
+import play.api.Configuration
 
 // States in the FSM
 sealed trait State
@@ -15,9 +19,27 @@ case object Authenticated extends State
 sealed trait Data
 case object Uninitialized extends Data
 
-class WebSocketActor(ws: ActorRef) extends LoggingFSM[State, Data] {
+class WebSocketActor @Inject() (configuration: Configuration, @Assisted ws: ActorRef)
+  extends LoggingFSM[State, Data] {
+
   startWith(Unauthenticated, Uninitialized)
   ws ! Json.toJson(AuthRequest(): Message)
+
+  def valid(token: String): Boolean = {
+    import pdi.jwt.{JwtJson, JwtAlgorithm}
+    // val key = configuration.underlying.getString("play.crypto.secret")
+    val key = configuration.getString("play.crypto.secret").get
+    JwtJson.decodeJson(token, key, Seq(JwtAlgorithm.HS256)) match {
+      case Success(json) => {
+        Logger.info("token decoded as " + json)
+        true
+      }
+      case _ => {
+        Logger.error("could not decode token")
+        false
+      }
+    }
+  }
 
   when(Unauthenticated) {
     case Event(json: JsValue, _) => {
@@ -25,7 +47,7 @@ class WebSocketActor(ws: ActorRef) extends LoggingFSM[State, Data] {
         case s: JsSuccess[Message] => {
           s.get match {
             case Auth(token) => {
-              if (true) {
+              if (valid(token)) {
                 ws ! Json.toJson(Response(true, "Authentication success"))
                 goto(Authenticated)
               } else {
@@ -92,6 +114,9 @@ class WebSocketActor(ws: ActorRef) extends LoggingFSM[State, Data] {
 }
 
 object WebSocketActor {
-  def props(ws: ActorRef) = Props(new WebSocketActor(ws))
+  // def props(ws: ActorRef) = Props(new WebSocketActor(ws))
+  trait Factory {
+    def apply(ws: ActorRef): Actor
+  }
 }
 
