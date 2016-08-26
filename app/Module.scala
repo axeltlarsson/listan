@@ -1,8 +1,8 @@
 import com.google.inject.AbstractModule
 import java.time.Clock
 
-import services.{ApplicationTimer, AtomicCounter, Counter, WebSocketActor}
-import play.api.Configuration
+import services.{ApplicationTimer, AtomicCounter, Counter, WebSocketActor, WebSocketActorProvider}
+import play.api.{Environment, Configuration}
 import play.api.libs.concurrent.AkkaGuiceSupport
 
 /**
@@ -15,7 +15,7 @@ import play.api.libs.concurrent.AkkaGuiceSupport
  * adding `play.modules.enabled` settings to the `application.conf`
  * configuration file.
  */
-class Module(configuration: Configuration) extends AbstractModule with AkkaGuiceSupport {
+class Module(environment: Environment, configuration: Configuration) extends AbstractModule with AkkaGuiceSupport {
 
   override def configure() = {
     // Use the system clock as the default implementation of Clock
@@ -26,8 +26,7 @@ class Module(configuration: Configuration) extends AbstractModule with AkkaGuice
     // Set AtomicCounter as the implementation for Counter.
     bind(classOf[Counter]).to(classOf[AtomicCounter])
 
-    bindActorFactory[WebSocketActor, WebSocketActor.Factory]
-
+    // bindActorFactory[WebSocketActor, WebSocketActorProvider]
   }
 
 }

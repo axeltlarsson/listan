@@ -7,7 +7,6 @@ import akka.actor._
 import akka.testkit.TestActorRef
 import scala.concurrent.duration._
 import services._
-import services.WebSocketActor._
 import controllers.HomeController
 import akka.actor.ActorSystem
 import akka.pattern.ask
@@ -15,10 +14,13 @@ import akka.stream.Materializer
 import javax.inject._
 import play.api.mvc._
 import scala.concurrent.Future
+import play.api.inject._
+import play.api.Configuration
 
 object MockWsActor {
   case object GetMessage
 }
+
 class MockWsActor extends Actor {
   import MockWsActor._
   var lastMsg: Any = None
@@ -37,8 +39,13 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
   implicit val system = ActorSystem("sys")
 
   trait Automaton {
+      import play.api.inject.guice.GuiceApplicationBuilder
+      val app = new GuiceApplicationBuilder().build
+      val injector: Injector = app.injector
+      val conf = injector.instanceOf[Configuration]
       val mockWsActor = TestActorRef(new MockWsActor)
-      val fsm = TestFSMRef(new WebSocketActor(mockWsActor))
+      val wsActorProvider: WebSocketActorProvider = new WebSocketActorProvider(conf)
+      val fsm = TestFSMRef(wsActorProvider.get(mockWsActor))
   }
   
   "WebSocketActor" should {
@@ -70,6 +77,7 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
       status(res) mustEqual OK
       val token = headers(res).get("Authorization").get.split("Bearer ")(1)
       
+      // Try to authenticate with the token
       fsm ! Json.toJson(Auth(token): Message)
       val futureReply = mockWsActor ? GetMessage
       val result = futureReply.value.get
@@ -78,12 +86,15 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
     }
 
     "reject invalid Auth" in new Automaton {
+      // NB: This test might cause error log message (could not decode token)
+      // that is entirely expected
       fsm.stateName mustBe Unauthenticated
-      // val future = fsm ? Auth("someinvalidtoken")
-      // val result = future.value.get
-      // println(result)
-      // fsm.stateName mustBe Unauthenticated
-      // ok mustBe false
+
+      fsm ! Json.toJson(Auth("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ"): Message)
+      val futureReply = mockWsActor ? GetMessage
+      val result = futureReply.value.get
+      result mustBe Response(false, _: String)
+      fsm.stateName mustBe Unauthenticated
     }
   }
 

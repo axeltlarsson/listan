@@ -9,6 +9,7 @@ import javax.inject._
 import com.google.inject.assistedinject.Assisted
 import scala.util.{Success}
 import play.api.Configuration
+import models.User
 
 // States in the FSM
 sealed trait State
@@ -19,7 +20,7 @@ case object Authenticated extends State
 sealed trait Data
 case object Uninitialized extends Data
 
-class WebSocketActor @Inject() (configuration: Configuration, @Assisted ws: ActorRef)
+class WebSocketActor (ws: ActorRef, configuration: Configuration)
   extends LoggingFSM[State, Data] {
 
   startWith(Unauthenticated, Uninitialized)
@@ -27,12 +28,17 @@ class WebSocketActor @Inject() (configuration: Configuration, @Assisted ws: Acto
 
   def valid(token: String): Boolean = {
     import pdi.jwt.{JwtJson, JwtAlgorithm}
-    // val key = configuration.underlying.getString("play.crypto.secret")
     val key = configuration.getString("play.crypto.secret").get
-    JwtJson.decodeJson(token, key, Seq(JwtAlgorithm.HS256)) match {
+    JwtJson.decodeJson(token, key, Seq(JwtAlgorithm.HmacSHA256)) match {
       case Success(json) => {
         Logger.info("token decoded as " + json)
-        true
+        (json \ "user").validate[User] match {
+          case JsSuccess(user, _) => {
+            Logger.info("Authenticated " + user)
+            true
+          }
+          case _ => false
+        }
       }
       case _ => {
         Logger.error("could not decode token")
@@ -51,6 +57,7 @@ class WebSocketActor @Inject() (configuration: Configuration, @Assisted ws: Acto
                 ws ! Json.toJson(Response(true, "Authentication success"))
                 goto(Authenticated)
               } else {
+                ws ! Json.toJson(Response(false, "Authentication failure"))
                 stay // or die?
               }
             }
@@ -113,10 +120,15 @@ class WebSocketActor @Inject() (configuration: Configuration, @Assisted ws: Acto
   }
 }
 
-object WebSocketActor {
-  // def props(ws: ActorRef) = Props(new WebSocketActor(ws))
-  trait Factory {
-    def apply(ws: ActorRef): Actor
-  }
+/*object WebSocketActor @Inject() (conf: Configuration) {
+  def props(ws: ActorRef) = Props(new WebSocketActor(ws, conf))
+  // trait Factory {
+  //   def apply(ws: ActorRef): Actor
+  // }
 }
-
+*/
+@Singleton
+class WebSocketActorProvider @Inject() (conf: Configuration) {
+  def props(ws: ActorRef) = Props(new WebSocketActor(ws, conf))
+  def get(ws: ActorRef) = new WebSocketActor(ws, conf)
+}

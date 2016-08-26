@@ -13,17 +13,16 @@ import play.api.mvc._
 import play.api.libs.streams._
 import play.api.libs.json.{JsValue}
 import pdi.jwt.{JwtJson, JwtAlgorithm}
-import services.WebSocketActor
-import play.api.libs.concurrent.InjectedActorSupport
+import services.WebSocketActorProvider
+import play.api.Configuration
 
 @Singleton
-class SocketController @Inject() (implicit sys: ActorSystem, mat: Materializer)
-  extends Controller with InjectedActorSupport {
+class SocketController @Inject() (implicit sys: ActorSystem, mat: Materializer, conf: Configuration, provider: WebSocketActorProvider)
+  extends Controller {
 
   def connect = WebSocket.acceptOrResult[JsValue, JsValue] {
     case requestHeader if sameOriginCheck(requestHeader) => {
-      Future.successful(Right(ActorFlow.actorRef(
-        out => Props(injectedChild(wsFactory(out), "ws-actor")))))
+      Future.successful(Right(ActorFlow.actorRef(out => provider.props(out))))
     }
     case rejected =>
       Logger.error(s"Request $rejected failed same origin check")
