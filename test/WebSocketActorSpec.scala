@@ -16,6 +16,7 @@ import play.api.mvc._
 import scala.concurrent.Future
 import play.api.inject._
 import play.api.Configuration
+import models.User
 
 object MockWsActor {
   case object GetMessage
@@ -83,6 +84,7 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
       val result = futureReply.value.get
       result mustBe Response(true, _: String)
       fsm.stateName mustBe Authenticated
+      fsm.stateData mustBe UserData(User("axel"))
     }
 
     "reject invalid Auth" in new Automaton {
