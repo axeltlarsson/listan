@@ -4,6 +4,7 @@ import java.time.Clock
 import services.{ApplicationTimer, AtomicCounter, Counter, WebSocketActor, WebSocketActorProvider}
 import play.api.{Environment, Configuration}
 import play.api.libs.concurrent.AkkaGuiceSupport
+import models.{UserRepository, SlickUserRepository}
 
 /**
  * This class is a Guice module that tells Guice how to bind several
@@ -25,7 +26,7 @@ class Module(environment: Environment, configuration: Configuration) extends Abs
     bind(classOf[ApplicationTimer]).asEagerSingleton()
     // Set AtomicCounter as the implementation for Counter.
     bind(classOf[Counter]).to(classOf[AtomicCounter])
-
+    bind(classOf[UserRepository]).to(classOf[SlickUserRepository])
     // bindActorFactory[WebSocketActor, WebSocketActorProvider]
   }
 

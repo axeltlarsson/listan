@@ -61,7 +61,7 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
       fsm.stateName mustBe Unauthenticated
 
       // Get the token by calling /api/login with creds
-      val controller = new HomeController()
+      val controller = injector.instanceOf[HomeController]
       val json = Json.parse("""
       {
         "username": "axel",

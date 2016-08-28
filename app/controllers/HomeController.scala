@@ -10,18 +10,10 @@ import scala.language.postfixOps
 import pdi.jwt._
 
 import models.User
-
-class UserService
-object UserService {
-  def authenticate(userName: String, password: String): Option[User] = {
-    // check auth ...
-    Logger.info(s"authenticate $userName:$password")
-    Some(User(userName))
-  }
-}
+import services.UserService
 
 @Singleton
-class HomeController @Inject() extends Controller with Secured {
+class HomeController @Inject() (userService: UserService) extends Controller with Secured {
 
   def index = Action {
     Ok(views.html.index("Your new application is ready."))
@@ -37,7 +29,7 @@ class HomeController @Inject() extends Controller with Secured {
         BadRequest(JsError.toJson(errors))
       },
       form => {
-        UserService.authenticate(form._1, form._2) match {
+        userService.authenticate(form._1, form._2) match {
           case Some(user) => Ok.addingToJwtSession("user", user)
           case None => Unauthorized
         }
