@@ -15,7 +15,7 @@ import services.{UserService}
 
 class UserServiceSpec extends PlaySpec with MockitoSugar {
 
-  trait MockUserService {
+  trait MockUserRepo {
     val mockUserRepo = mock[UserRepository]
     when(mockUserRepo.authenticate("axel", "password")) thenReturn Some(User("axel"))
     when(mockUserRepo.authenticate("axel", "wrong")) thenReturn None
@@ -26,12 +26,12 @@ class UserServiceSpec extends PlaySpec with MockitoSugar {
   }
 
   "UserService#authenticate" should {
-    "return correct user for valid password" in new MockUserService {
+    "return correct user for valid password" in new MockUserRepo {
       val maybeUser = userService.authenticate("axel", "password")
       maybeUser mustBe Some(User("axel"))
     }
 
-    "return None for user with invalid password" in new MockUserService {
+    "return None for user with invalid password" in new MockUserRepo {
       val maybeUser = userService.authenticate("axel", "wrong")
       maybeUser mustBe None
     }
