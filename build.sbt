@@ -21,3 +21,5 @@ libraryDependencies ++= Seq(
 )
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
+
+// javaOptions in Test += "-Dconfig.resource=application.test.conf"
