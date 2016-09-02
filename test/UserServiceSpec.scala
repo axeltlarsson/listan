@@ -43,14 +43,9 @@ class UserServiceSpec extends PlaySpec with MockitoSugar {
 
   "SlickUserRepository" should {
     "work with a test db" in {
-      // mode is Test so application.test.conf is loaded
       val app = new GuiceApplicationBuilder().build 
       val repo = app.injector.instanceOf[UserRepository]
-      // val maybeUser = Await.result(repo.authenticate("axel", "password"), 1 seconds)
-      // maybeUser mustBe Some(User("axel"))
-
       val user = User.create("axel", "password")
-      println(user)
       repo.insert(user)
       val usersInDb = Await.result(repo.all(), 1 seconds)
       usersInDb(0).name mustBe "axel"

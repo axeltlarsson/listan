@@ -43,9 +43,9 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
       import play.api.inject.guice.GuiceApplicationBuilder
       val app = new GuiceApplicationBuilder().build
       val injector: Injector = app.injector
-      val conf = injector.instanceOf[Configuration]
+      val userService = injector.instanceOf[UserService]
       val mockWsActor = TestActorRef(new MockWsActor)
-      val wsActorProvider: WebSocketActorProvider = new WebSocketActorProvider(conf)
+      val wsActorProvider: WebSocketActorProvider = new WebSocketActorProvider(userService)
       val fsm = TestFSMRef(wsActorProvider.get(mockWsActor))
   }
   

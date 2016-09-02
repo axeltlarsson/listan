@@ -12,12 +12,10 @@ import scala.concurrent.Future
 import play.api.mvc._
 import play.api.libs.streams._
 import play.api.libs.json.{JsValue}
-import pdi.jwt.{JwtJson, JwtAlgorithm}
 import services.WebSocketActorProvider
-import play.api.Configuration
 
 @Singleton
-class SocketController @Inject() (implicit sys: ActorSystem, mat: Materializer, conf: Configuration, provider: WebSocketActorProvider)
+class SocketController @Inject() (implicit sys: ActorSystem, mat: Materializer, provider: WebSocketActorProvider)
   extends Controller {
 
   def connect = WebSocket.acceptOrResult[JsValue, JsValue] {

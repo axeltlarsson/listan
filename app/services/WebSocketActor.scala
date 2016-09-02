@@ -6,7 +6,6 @@ import play.api.libs.json.{Json, JsValue, JsError, JsSuccess}
 import play.Logger
 import scala.concurrent.duration._
 import javax.inject._
-import com.google.inject.assistedinject.Assisted
 import scala.util.{Success}
 import play.api.Configuration
 import models.User
@@ -21,41 +20,19 @@ sealed trait Data
 case object NoData extends Data
 case class UserData(user: User) extends Data
 
-class WebSocketActor (ws: ActorRef, configuration: Configuration)
+class WebSocketActor (ws: ActorRef, userService: UserService)
   extends LoggingFSM[State, Data] {
 
   startWith(Unauthenticated, NoData)
   ws ! Json.toJson(AuthRequest(): Message)
-
-  // TODO: move somwhere!
-  def authenticateUser(token: String): Option[User] = {
-    import pdi.jwt.{JwtJson, JwtAlgorithm}
-    val key = configuration.getString("play.crypto.secret").get
-    JwtJson.decodeJson(token, key, Seq(JwtAlgorithm.HmacSHA256)) match {
-      case Success(json) => {
-        Logger.info("token decoded as " + json)
-        (json \ "user").validate[User] match {
-          case JsSuccess(user, _) => {
-            Logger.info("Authenticated " + user)
-            Some(user)
-          }
-          case _ => None
-        }
-      }
-      case _ => {
-        Logger.error("could not decode token")
-        None
-      }
-    }
-  }
-
+  
   when(Unauthenticated) {
     case Event(json: JsValue, _) => {
       json.validate[Message] match {
         case s: JsSuccess[Message] => {
           s.get match {
             case Auth(token) => {
-              authenticateUser(token) match {
+              userService.authenticate(token) match {
                 case Some(user) => {
                   ws ! Json.toJson(Response(true, "Authentication success"))
                   goto(Authenticated) using UserData(user)
@@ -125,15 +102,8 @@ class WebSocketActor (ws: ActorRef, configuration: Configuration)
   }
 }
 
-/*object WebSocketActor @Inject() (conf: Configuration) {
-  def props(ws: ActorRef) = Props(new WebSocketActor(ws, conf))
-  // trait Factory {
-  //   def apply(ws: ActorRef): Actor
-  // }
-}
-*/
 @Singleton
-class WebSocketActorProvider @Inject() (conf: Configuration) {
-  def props(ws: ActorRef) = Props(new WebSocketActor(ws, conf))
-  def get(ws: ActorRef) = new WebSocketActor(ws, conf)
+class WebSocketActorProvider @Inject() (userService: UserService) {
+  def props(ws: ActorRef) = Props(new WebSocketActor(ws, userService))
+  def get(ws: ActorRef) = new WebSocketActor(ws, userService)
 }
