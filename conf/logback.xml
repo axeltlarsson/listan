@@ -30,7 +30,9 @@
   <logger name="akka" level="INFO" />
   <!-- Set a specific actor to DEBUG -->
   <logger name="services.WebSocketActor" level="DEBUG" />
-
+  
+  <logger name="slick.jdbc" level="DEBUG"/>
+  
   <!-- Off these ones as they are annoying, and anyway we manage configuration ourselves -->
   <logger name="com.avaje.ebean.config.PropertyMapLoader" level="OFF" />
   <logger name="com.avaje.ebeaninternal.server.core.XmlConfigLoader" level="OFF" />

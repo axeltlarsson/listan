@@ -16,7 +16,7 @@ import play.api.mvc._
 import scala.concurrent.Future
 import play.api.inject._
 import play.api.Configuration
-import models.User
+import models.{User, UserRepository}
 
 object MockWsActor {
   case object GetMessage
@@ -62,6 +62,8 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
 
       // Get the token by calling /api/login with creds
       val controller = injector.instanceOf[HomeController]
+      val repo = injector.instanceOf[UserRepository]
+      repo.insert(User.create("axel", "whatever"))
       val json = Json.parse("""
       {
         "username": "axel",

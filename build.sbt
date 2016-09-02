@@ -17,9 +17,10 @@ libraryDependencies ++= Seq(
   "org.mockito" % "mockito-core" % "2.0.0-beta.118",
   "com.typesafe.play" %% "play-slick" % "2.0.0",
   "com.typesafe.play" %% "play-slick-evolutions" % "2.0.0",
-  "com.h2database" % "h2" % "1.4.192"
+  "com.h2database" % "h2" % "1.4.192",
+  "com.github.t3hnar" %% "scala-bcrypt" % "2.6"
 )
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 
-// javaOptions in Test += "-Dconfig.resource=application.test.conf"
+javaOptions in Test += "-Dconfig.file=conf/application.test.conf"

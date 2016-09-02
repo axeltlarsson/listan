@@ -42,11 +42,20 @@ class UserServiceSpec extends PlaySpec with MockitoSugar {
   }
 
   "SlickUserRepository" should {
-    "work with the real db" in {
-      val app = new GuiceApplicationBuilder().build
+    "work with a test db" in {
+      // mode is Test so application.test.conf is loaded
+      val app = new GuiceApplicationBuilder().build 
       val repo = app.injector.instanceOf[UserRepository]
-      val maybeUser = Await.result(repo.authenticate("axel", "password"), 1 seconds)
-      maybeUser mustBe Some(User("axel"))
+      // val maybeUser = Await.result(repo.authenticate("axel", "password"), 1 seconds)
+      // maybeUser mustBe Some(User("axel"))
+
+      val user = User.create("axel", "password")
+      println(user)
+      repo.insert(user)
+      val usersInDb = Await.result(repo.all(), 1 seconds)
+      usersInDb.length mustBe 1
+      usersInDb(0).name mustBe "axel"
+      usersInDb(0).passwordHash must not be Some("password") // should be hashed duh
     }
   }
 }

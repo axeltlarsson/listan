@@ -10,30 +10,36 @@ import java.sql.Timestamp
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Success, Failure}
 import play.Logger
+import com.github.t3hnar.bcrypt._
 
 class SlickUserRepository @Inject() (protected val dbConfigProvider: DatabaseConfigProvider) extends HasDatabaseConfigProvider[JdbcProfile] with UserRepository {
   import driver.api._
 
-  private val Users = TableQuery[UsersTable]
+  private val users = TableQuery[UsersTable]
 
-  def all(): Future[Seq[User]] = db.run(Users.result)
+  override def all(): Future[Seq[User]] = db.run(users.result)
+
+  override def insert(user: User): Future[Unit] = db.run(users += user).map { _ => () }
+
+  def find(name: String): Future[Seq[User]] = db.run(users.filter(_.name === name).result)
 
   private class UsersTable(tag: Tag) extends Table[User](tag, "USER") {
-    def uuid = column[String]("UUID", O.PrimaryKey)
-    def userName = column[String]("USER_NAME")
-    def password = column[String]("PASSWORD")
-    def created_at = column[Timestamp]("CREATED_AT")
-    def updated_at = column[Timestamp]("UPDATED_AT")
+    def id = column[String]("UUID", O.PrimaryKey, O.AutoInc)
+    def name = column[String]("NAME")
+    def passwordHash = column[String]("PASSWORD_HASH")
+    def created = column[Timestamp]("CREATED", O.AutoInc)
+    def updated = column[Timestamp]("UPDATED", O.AutoInc)
 
-    def idx = index("users_username_index", (userName))
+    def idx = index("users_username_index", (name))
 
-    def * = (userName, uuid.?, password.?) <> ((User.apply _).tupled, User.unapply)
+    def * = (name, id.?, passwordHash.?, created.?, updated.?) <> ((User.apply _).tupled, User.unapply)
   }
 
-  override def authenticate(userName: String, password: String): Future[Option[User]] = {
-    Logger.info(s"authenticate($userName, $password)")
-    val users =  Await.result(all(), 1 seconds)
-    users.foreach(user => Logger.info(user.userName))
-    Future {Some(User(userName))}
+  override def authenticate(name: String, password: String): Future[Option[User]] = {
+    Logger.info(s"authenticate($name, $password)")
+    find(name) map {
+      case Seq(u) if (password.isBcrypted(u.passwordHash.getOrElse(""))) => Some(u)
+      case _ => None
+    }
   }
 }

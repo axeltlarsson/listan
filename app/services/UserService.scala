@@ -5,7 +5,7 @@ import javax.inject._
 import scala.concurrent.Future
 
 class UserService @Inject() (userRepo: UserRepository) {
-  def authenticate(userName: String, password: String): Future[Option[User]] = {
-    userRepo.authenticate(userName, password);
+  def authenticate(name: String, password: String): Future[Option[User]] = {
+    userRepo.authenticate(name, password)
   }
 }
