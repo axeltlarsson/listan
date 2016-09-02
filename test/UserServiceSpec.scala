@@ -53,7 +53,6 @@ class UserServiceSpec extends PlaySpec with MockitoSugar {
       println(user)
       repo.insert(user)
       val usersInDb = Await.result(repo.all(), 1 seconds)
-      usersInDb.length mustBe 1
       usersInDb(0).name mustBe "axel"
       usersInDb(0).passwordHash must not be Some("password") // should be hashed duh
     }

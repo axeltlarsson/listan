@@ -86,7 +86,10 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
       val result = futureReply.value.get
       result mustBe Response(true, _: String)
       fsm.stateName mustBe Authenticated
-      fsm.stateData mustBe UserData(User("axel"))
+      fsm.stateData match {
+        case UserData(user) => user.name mustBe "axel"
+        case _ => false mustBe true
+      }
     }
 
     "reject invalid Auth" in new Automaton {
