@@ -9,6 +9,10 @@ import play.api.test.Helpers._
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.{bind, Injector}
 import play.api.Configuration
+import scala.concurrent.{Future, Await}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.DurationInt
+import scala.language.postfixOps
 
 import models.{User, UserRepository, SlickUserRepository}
 import services.{UserService}
@@ -17,8 +21,8 @@ class UserServiceSpec extends PlaySpec with MockitoSugar {
 
   trait MockUserRepo {
     val mockUserRepo = mock[UserRepository]
-    when(mockUserRepo.authenticate("axel", "password")) thenReturn Some(User("axel"))
-    when(mockUserRepo.authenticate("axel", "wrong")) thenReturn None
+    when(mockUserRepo.authenticate("axel", "password")) thenReturn Future{Some(User("axel"))}
+    when(mockUserRepo.authenticate("axel", "wrong")) thenReturn Future{None}
     val app = new GuiceApplicationBuilder()
       .overrides(bind[UserRepository].toInstance(mockUserRepo))
       .build
@@ -27,13 +31,22 @@ class UserServiceSpec extends PlaySpec with MockitoSugar {
 
   "UserService#authenticate" should {
     "return correct user for valid password" in new MockUserRepo {
-      val maybeUser = userService.authenticate("axel", "password")
+      val maybeUser = Await.result(userService.authenticate("axel", "password"), 1 seconds)
       maybeUser mustBe Some(User("axel"))
     }
 
     "return None for user with invalid password" in new MockUserRepo {
-      val maybeUser = userService.authenticate("axel", "wrong")
+      val maybeUser = Await.result(userService.authenticate("axel", "wrong"), 1 seconds)
       maybeUser mustBe None
+    }
+  }
+
+  "SlickUserRepository" should {
+    "work with the real db" in {
+      val app = new GuiceApplicationBuilder().build
+      val repo = app.injector.instanceOf[UserRepository]
+      val maybeUser = Await.result(repo.authenticate("axel", "password"), 1 seconds)
+      maybeUser mustBe Some(User("axel"))
     }
   }
 }
