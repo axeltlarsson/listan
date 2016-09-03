@@ -13,6 +13,12 @@ import scala.concurrent.{Future, Await}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
+import play.api.db.slick.DatabaseConfigProvider
+
+import play.api.inject.BindingKey
+import play.api.inject.QualifierInstance
+import play.db.NamedDatabaseImpl
+
 
 import models.{User, UserRepository, SlickUserRepository}
 import services.{UserService}
