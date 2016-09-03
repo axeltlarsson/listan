@@ -40,7 +40,40 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar {
       val uuid = Await.result(repo.add("some contents"), 1 seconds)
       uuid.length must be > 20
 
-      val allItems = repo.all()
+      val allItems = Await.result(repo.all(), 1 seconds)
+      allItems(0).contents mustBe "some contents"
+      allItems(0).completed mustBe false
+      allItems(0).uuid.get mustBe uuid
+    }
+  }
+
+  "SlickItemRepository#delete(uuid)" should {
+    "return nbr of rows affected and actually delete the item" in new Inject {
+      lazy val repo = inject[ItemRepository]
+      val affectedRows = for {
+        uuid <- repo.add("to be deleted")
+        affectedRows <- repo.delete(uuid)
+      } yield affectedRows
+      Await.result(affectedRows, 1 seconds) mustBe 1
+      val allItems = Await.result(repo.all(), 1 seconds)
+      allItems.length mustBe 1 // because earlier test
+    }
+  }
+
+  "SlickItemRepository#edit(uuid, contents)" should {
+    "properly update contents of item" in new Inject {
+      lazy val repo = inject[ItemRepository]
+
+      val affectedRows = for {
+        uuid <- repo.add("to be updated")
+        affectedRows <- repo.edit(uuid, "updated contents")
+      } yield affectedRows
+      Await.result(affectedRows, 1 seconds) mustBe 1
+    }
+
+    "do not crash when trying to edit non-existing item" in new Inject {
+      lazy val repo = inject[ItemRepository]
+      Await.result(repo.edit("bogus", "updated value"), 1 seconds) mustBe 0
     }
   }
 }
