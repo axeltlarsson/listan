@@ -16,7 +16,10 @@ import play.Logger
 import com.github.t3hnar.bcrypt._
 
 @Singleton
-class SlickUserRepository @Inject()(protected val dbConfigProvider: DatabaseConfigProvider) extends HasDatabaseConfigProvider[JdbcProfile] with UserRepository {
+class SlickUserRepository @Inject()
+    (protected val dbConfigProvider: DatabaseConfigProvider)
+    extends HasDatabaseConfigProvider[JdbcProfile] with UserRepository {
+  
   import driver.api._
 
   private val users = TableQuery[UsersTable]
