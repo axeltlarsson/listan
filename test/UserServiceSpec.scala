@@ -23,7 +23,7 @@ import play.db.NamedDatabaseImpl
 import models.{User, UserRepository, SlickUserRepository}
 import services.{UserService}
 
-class UserServiceSpec extends PlaySpec with MockitoSugar {
+class UserServiceSpec extends PlaySpec with MockitoSugar  {
 
   trait MockUserRepo {
     val mockUserRepo = mock[UserRepository]
@@ -48,9 +48,8 @@ class UserServiceSpec extends PlaySpec with MockitoSugar {
   }
 
   "SlickUserRepository" should {
-    "work with a test db" in {
-      val app = new GuiceApplicationBuilder().build 
-      val repo = app.injector.instanceOf[UserRepository]
+    "work with a test db" in new Inject {
+      val repo = inject[UserRepository]
       val user = User.create("axel", "password")
       repo.insert(user)
       val usersInDb = Await.result(repo.all(), 1 seconds)

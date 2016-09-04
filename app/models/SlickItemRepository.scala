@@ -29,16 +29,23 @@ class SlickItemRepository @Inject()
   }
 
   override def delete(uuid: Item.UUID): Future[Int] = {
-    val q = items.filter(_.uuid === uuid)
-    db.run(q.delete)
+    val action = items.filter(_.uuid === uuid)
+    db.run(action.delete)
   }
 
   override def edit(uuid: String, contents: String): Future[Int] = {
-    val q = for { i <- items if i.uuid === uuid } yield i.contents
-    db.run(q.update(contents))
+    val action = for { i <- items if i.uuid === uuid } yield i.contents
+    db.run(action.update(contents))
   }
 
-  override def toggle(uuid: String): Future[Int] = ???
+  override def toggle(uuid: String): Future[Int] = {
+    val selectCompleted = for { i <- items if i.uuid === uuid } yield i.completed
+    db.run(for {
+      item <- items.filter(_.uuid === uuid).result.head
+      affectedRows <- selectCompleted.update(!item.completed)
+    } yield affectedRows)
+  }
+
   override def all(): Future[Seq[Item]] = db.run(items.result)
 
   private class Items(tag: Tag) extends Table[Item](tag, "items") {

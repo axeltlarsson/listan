@@ -15,27 +15,10 @@ import scala.language.postfixOps
 
 import models.{Item, ItemRepository, SlickItemRepository}
 
-class ItemServiceSpec extends PlaySpec with MockitoSugar {
-
-  // trait MockItemRepo {
-  //   val mockItemRep = mock[ItemRepository]
-  //   when(mockItemRep.authenticate("axel", "password")) thenReturn Future{Some(User("axel"))}
-  //   val app = new GuiceApplicationBuilder()
-  //     .overrides(bind[ItemRepository].toInstance(mockItemRep))
-  //     .build
-  //   val userService = app.injector.instanceOf[UserService]
-  // }
-
-  trait Inject {
-    import scala.reflect.ClassTag
-    lazy val injector = (new GuiceApplicationBuilder).injector
-    def inject[T: ClassTag]: T = injector.instanceOf[T]
-  }
+class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject {
 
   "SlickItemRepository#add(contents)" should {
-    "return uuid and actually insert the item correctly" in new Inject {
-      // val app = new GuiceApplicationBuilder().build
-      // val repo = app.injector.instanceOf[ItemRepository]
+    "return uuid and actually insert the item correctly" in {
       lazy val repo = inject[ItemRepository]
       val uuid = Await.result(repo.add("some contents"), 1 seconds)
       uuid.length must be > 20
@@ -48,7 +31,7 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar {
   }
 
   "SlickItemRepository#delete(uuid)" should {
-    "return nbr of rows affected and actually delete the item" in new Inject {
+    "return nbr of rows affected and actually delete the item" in {
       lazy val repo = inject[ItemRepository]
       val affectedRows = for {
         uuid <- repo.add("to be deleted")
@@ -61,7 +44,7 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar {
   }
 
   "SlickItemRepository#edit(uuid, contents)" should {
-    "properly update contents of item" in new Inject {
+    "properly update contents of item" in {
       lazy val repo = inject[ItemRepository]
 
       val affectedRows = for {
@@ -71,9 +54,23 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar {
       Await.result(affectedRows, 1 seconds) mustBe 1
     }
 
-    "do not crash when trying to edit non-existing item" in new Inject {
+    "do not crash when trying to edit non-existing item" in {
       lazy val repo = inject[ItemRepository]
       Await.result(repo.edit("bogus", "updated value"), 1 seconds) mustBe 0
+    }
+  }
+
+  "SlickItemRepository#toggle(uuid)" should {
+    "work" in new Inject {
+      lazy val repo = inject[ItemRepository]
+      val affectedRows = for {
+        uuid <- repo.add("TO BE TOGGLED")
+        affectedRows <- repo.toggle(uuid)
+      } yield affectedRows
+      Await.result(affectedRows, 1 seconds) mustBe 1
+      val item = Await.result(repo.all(), 1 seconds)
+        .filter(_.contents == "TO BE TOGGLED").head
+      item.completed mustBe true
     }
   }
 }
