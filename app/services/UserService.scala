@@ -8,6 +8,7 @@ import play.api.Configuration
 import play.Logger
 import scala.util.Success
 
+@Singleton
 class UserService @Inject() (userRepo: UserRepository, configuration: Configuration) {
   def authenticate(name: String, password: String): Future[Option[User]] = {
     userRepo.authenticate(name, password)

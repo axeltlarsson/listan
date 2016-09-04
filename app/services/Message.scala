@@ -13,7 +13,9 @@ case class AuthRequest() extends Message
 sealed trait Action extends Message
 case class EDIT_ITEM(id: String, contents: String) extends Action
 case class ADD_ITEM(id: String, contents: String) extends Action
-
+case class TOGGLE_ITEM(id: String) extends Action
+case class DELETE_ITEM(id: String) extends Action
+case class ALL() extends Action
 
 // Json format
 object AuthRequest {
@@ -24,6 +26,15 @@ object EDIT_ITEM {
 }
 object ADD_ITEM {
   implicit val format: OFormat[ADD_ITEM] = derived.oformat
+}
+object TOGGLE_ITEM {
+ implicit val format: OFormat[TOGGLE_ITEM] = derived.oformat
+}
+object DELETE_ITEM {
+  implicit val format: OFormat[DELETE_ITEM] = derived.oformat
+}
+object ALL {
+ implicit val format: OFormat[DELETE_ITEM] = derived.oformat
 }
 object Action {
   implicit val format: OFormat[Action] = derived.oformat

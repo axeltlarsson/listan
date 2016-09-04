@@ -9,8 +9,5 @@ CREATE TABLE items (
   updated datetime AS CURRENT_TIMESTAMP()
 )
 
-INSERT INTO items (contents) VALUES ('item1');
-INSERT INTO items (contents) VALUES ('item2');
-
 # --- !Downs
 DROP TABLE items;

@@ -41,6 +41,11 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject {
       val allItems = Await.result(repo.all(), 1 seconds)
       allItems.length mustBe 1 // because earlier test
     }
+
+    "not crash for non-existing uuid" in {
+      lazy val repo = inject[ItemRepository]
+      Await.result(repo.delete("bogus"), 1 seconds) mustBe 0
+    }
   }
 
   "SlickItemRepository#edit(uuid, contents)" should {
