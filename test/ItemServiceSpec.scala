@@ -61,7 +61,7 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject {
   }
 
   "SlickItemRepository#toggle(uuid)" should {
-    "work" in new Inject {
+    "work" in {
       lazy val repo = inject[ItemRepository]
       val affectedRows = for {
         uuid <- repo.add("TO BE TOGGLED")
@@ -71,6 +71,17 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject {
       val item = Await.result(repo.all(), 1 seconds)
         .filter(_.contents == "TO BE TOGGLED").head
       item.completed mustBe true
+
+      // toggle again
+      Await.result(repo.toggle(item.uuid.get), 1 seconds) mustBe 1
+      val itemToggledAgain = Await.result(repo.all(), 1 seconds)
+        .filter(_.contents == "TO BE TOGGLED").head
+      itemToggledAgain.completed mustBe false
+    }
+
+    "not crash for non-existing uuid" in  {
+      lazy val repo = inject[ItemRepository]
+      Await.result(repo.toggle("bogus"), 1 seconds) mustBe 0
     }
   }
 }

@@ -41,8 +41,11 @@ class SlickItemRepository @Inject()
   override def toggle(uuid: String): Future[Int] = {
     val selectCompleted = for { i <- items if i.uuid === uuid } yield i.completed
     db.run(for {
-      item <- items.filter(_.uuid === uuid).result.head
-      affectedRows <- selectCompleted.update(!item.completed)
+      maybeItem <- items.filter(_.uuid === uuid).result.headOption
+      affectedRows <- selectCompleted.update(maybeItem match {
+        case Some(item) => !item.completed
+        case _ => false
+      })
     } yield affectedRows)
   }
 
