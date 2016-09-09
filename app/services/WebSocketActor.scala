@@ -23,11 +23,13 @@ sealed trait Data
 case object NoData extends Data
 case class UserData(user: User) extends Data
 
-class WebSocketActor (ws: ActorRef, userService: UserService, itemService: ItemService)
-  extends LoggingFSM[State, Data] {
+class WebSocketActor (ws: ActorRef, userService: UserService,
+  itemService: ItemService,
+  listActor: ActorRef) extends LoggingFSM[State, Data] {
 
   startWith(Unauthenticated, NoData)
   ws ! Json.toJson(AuthRequest(): Message)
+  listActor ! (AuthRequest(): Message)
   
   when(Unauthenticated) {
     case Event(json: JsValue, _) => {
@@ -160,7 +162,11 @@ class WebSocketActor (ws: ActorRef, userService: UserService, itemService: ItemS
 }
 
 @Singleton
-class WebSocketActorProvider @Inject() (userService: UserService, itemService: ItemService) {
-  def props(ws: ActorRef) = Props(new WebSocketActor(ws, userService, itemService))
-  def get(ws: ActorRef) = new WebSocketActor(ws, userService, itemService)
+class WebSocketActorProvider @Inject() (
+  userService: UserService,
+  itemService: ItemService,
+  @Named("list-actor") listActor: ActorRef) {
+
+  def props(ws: ActorRef) = Props(new WebSocketActor(ws, userService, itemService, listActor))
+  def get(ws: ActorRef) = new WebSocketActor(ws, userService, itemService, listActor)
 }
