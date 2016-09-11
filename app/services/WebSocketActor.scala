@@ -29,7 +29,6 @@ class WebSocketActor (ws: ActorRef, userService: UserService,
 
   startWith(Unauthenticated, NoData)
   ws ! Json.toJson(AuthRequest(): Message)
-  listActor ! (AuthRequest(): Message)
   
   when(Unauthenticated) {
     case Event(json: JsValue, _) => {
@@ -70,7 +69,10 @@ class WebSocketActor (ws: ActorRef, userService: UserService,
   onTransition {
     case Unauthenticated -> Authenticated =>
       stateData match {
-        case _ => // nothing to do
+        case _ => {
+          Logger.debug("Subscribing to listActor")
+          listActor ! ListActor.Subscribe
+        }
       }
   }
 
