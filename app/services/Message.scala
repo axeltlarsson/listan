@@ -9,6 +9,9 @@ import julienrf.json.derived
 sealed trait Message
 case class Auth(token: String) extends Message
 case class Response(ok: Boolean, msg: String) extends Message
+/*sealed trait Response
+case class Items(items: Seq[Item]) extends Response
+case class StatusResponse(ok: Boolean, msg: String) extends Response*/
 case class AuthRequest() extends Message 
 sealed trait Action extends Message
 case class EDIT_ITEM(id: String, contents: String) extends Action

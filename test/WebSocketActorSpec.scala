@@ -38,14 +38,14 @@ class MockWsActor extends Actor {
 class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
   import MockWsActor._
   implicit val system = ActorSystem("sys")
-
   trait Automaton {
       import play.api.inject.guice.GuiceApplicationBuilder
       val app = new GuiceApplicationBuilder().build
       val injector: Injector = app.injector
       val userService = injector.instanceOf[UserService]
+      val listActor: ActorRef = injector.instanceOf(BindingKey(classOf[ActorRef]).qualifiedWith("list-actor"))
       val mockWsActor = TestActorRef(new MockWsActor)
-      val wsActorProvider: WebSocketActorProvider = new WebSocketActorProvider(userService)
+      val wsActorProvider: WebSocketActorProvider = new WebSocketActorProvider(userService, listActor)
       val fsm = TestFSMRef(wsActorProvider.get(mockWsActor))
   }
   

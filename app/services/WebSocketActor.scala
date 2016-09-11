@@ -23,8 +23,9 @@ sealed trait Data
 case object NoData extends Data
 case class UserData(user: User) extends Data
 
-class WebSocketActor (ws: ActorRef, userService: UserService,
-  itemService: ItemService,
+class WebSocketActor(
+  ws: ActorRef,
+  userService: UserService,
   listActor: ActorRef) extends LoggingFSM[State, Data] {
 
   startWith(Unauthenticated, NoData)
@@ -76,79 +77,13 @@ class WebSocketActor (ws: ActorRef, userService: UserService,
       }
   }
 
-  def failureResponse(e: Throwable): JsValue = {
-    Logger.error(e.getMessage)
-    Json.toJson(Response(false, "An error ocurred, see server logs"))
-  }
-
   when(Authenticated) {
     case Event(json: JsValue, _) =>
       json.validate[Message] match {
         case s: JsSuccess[Message] => {
-          s.get match {
-            case ADD_ITEM(id, contents) => {
-              val uuidFuture: Future[Item.UUID] = itemService.add(contents)
-              uuidFuture.map {
-                uuid => Json.toJson(Response(true, uuid))
-              }.recover {
-                case e => failureResponse(e)
-              } pipeTo ws
-              stay
-            }
-            case EDIT_ITEM(id, contents) => {
-              val rowsFuture: Future[Int] = itemService.edit(id, contents)
-              rowsFuture.map { rows =>
-                rows match {
-                  case 1 => Json.toJson(Response(true, "Edited item"))
-                  case 0 => Json.toJson(Response(false, "Could not find item to edit"))
-                }
-              }.recover {
-                case e => failureResponse(e)
-              } pipeTo ws
-              stay
-            }
-            case TOGGLE_ITEM(id) => {
-              val rowsFuture: Future[Int] = itemService.toggle(id)
-              rowsFuture.map { rows =>
-                rows match {
-                  case 1 => Json.toJson(Response(true, "Toggled item"))
-                  case 0 => Json.toJson(Response(false, "Could not find item to toggle"))
-                }
-              }.recover {
-                case e => failureResponse(e)
-              } pipeTo ws
-              stay
-            }
-
-            case DELETE_ITEM(id) => {
-              val rowsFuture: Future[Int] = itemService.delete(id)
-              rowsFuture.map { rows =>
-                rows match {
-                  case 1 => Json.toJson(Response(true, "Deleted item"))
-                  case 0 => Json.toJson(Response(false, "Could not find item to delete"))
-                }
-              }.recover {
-                case e => failureResponse(e)
-              } pipeTo ws
-              stay
-            }
-
-            case ALL() => {
-              val itemsFuture: Future[Seq[Item]] = itemService.all()
-              itemsFuture.map {
-                items => Json.toJson(items)
-              }.recover {
-                case e => failureResponse(e)
-              } pipeTo ws
-              stay
-            }
-
-            case _ => {
-              Logger.info("Unknown message")
-              ws ! Json.toJson(Response(false, "Unknown message"))
-              stay
-            }
-          }
+          Logger.debug("WsActor got msg, sending it further up the chain to ListActor")
+          listActor ! s.get
+          stay
         }
         case e: JsError => {
           Logger.error("Could not validate json as Message")
@@ -156,6 +91,10 @@ class WebSocketActor (ws: ActorRef, userService: UserService,
           stay
         }
       }
+    case Event(r: Response, _) =>  {
+      ws ! Json.toJson(r)
+      stay
+    }
   }
 
   override def postStop() = {
@@ -166,9 +105,8 @@ class WebSocketActor (ws: ActorRef, userService: UserService,
 @Singleton
 class WebSocketActorProvider @Inject() (
   userService: UserService,
-  itemService: ItemService,
   @Named("list-actor") listActor: ActorRef) {
 
-  def props(ws: ActorRef) = Props(new WebSocketActor(ws, userService, itemService, listActor))
-  def get(ws: ActorRef) = new WebSocketActor(ws, userService, itemService, listActor)
+  def props(ws: ActorRef) = Props(new WebSocketActor(ws, userService, listActor))
+  def get(ws: ActorRef) = new WebSocketActor(ws, userService, listActor)
 }
