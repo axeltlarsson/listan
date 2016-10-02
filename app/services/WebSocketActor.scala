@@ -39,11 +39,11 @@ class WebSocketActor(
             case Auth(token) => {
               userService.authenticate(token) match {
                 case Some(user) => {
-                  ws ! Json.toJson(Response(true, "Authentication success"))
+                  ws ! Json.toJson(BoolResponse("Authentication success", true))
                   goto(Authenticated) using UserData(user)
                 }
                 case None => {
-                  ws ! Json.toJson(Response(false, "Authentication failure"))
+                  ws ! Json.toJson(FailureResponse("Authentication failure"))
                   stay // or die?
                 }
               }
@@ -51,7 +51,7 @@ class WebSocketActor(
             case _ => {
               val msg = "Invalid message at this state (Unauthenticated)"
               Logger.warn(msg)
-              ws ! Json.toJson(Response(false, msg))
+              ws ! Json.toJson(FailureResponse(msg))
               stay // or die?
             }
           }
@@ -59,7 +59,7 @@ class WebSocketActor(
         case e: JsError => {
           val msg = s"Could not validate json ($json) as Message"
           Logger.error(msg)
-          ws ! Json.toJson(Response(false, msg))
+          ws ! Json.toJson(FailureResponse(msg))
           stay // or die?
         }
 
@@ -87,7 +87,7 @@ class WebSocketActor(
         }
         case e: JsError => {
           Logger.error("Could not validate json as Message")
-          ws ! Json.toJson(Response(false, "Invalid message"))
+          ws ! Json.toJson(FailureResponse("Invalid message"))
           stay
         }
       }
