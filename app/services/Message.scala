@@ -20,7 +20,8 @@ case class ALL() extends Action
 sealed trait Response extends Message
 case class FailureResponse(reason: String) extends Response
 case class UUIDResponse(status: String, uuid: Item.UUID) extends Response
-case class BoolResponse(status: String, toggled: Boolean) extends Response
+case class StatusResponse(status: String) extends Response
+case class BoolResponse(status: String, bool: Boolean) extends Response
 case class AllResponse(status: String, items: Seq[Item]) extends Response
 
 
@@ -64,6 +65,9 @@ object FailureResponse {
   implicit val format: OFormat[FailureResponse] = derived.oformat
 }
 object UUIDResponse {
+  implicit val format: OFormat[UUIDResponse] = derived.oformat
+}
+object StatusResponse {
   implicit val format: OFormat[UUIDResponse] = derived.oformat
 }
 object BoolResponse {

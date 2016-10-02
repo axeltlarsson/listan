@@ -39,7 +39,7 @@ class WebSocketActor(
             case Auth(token) => {
               userService.authenticate(token) match {
                 case Some(user) => {
-                  ws ! Json.toJson(BoolResponse("Authentication success", true))
+                  ws ! Json.toJson(StatusResponse("Authentication success"))
                   goto(Authenticated) using UserData(user)
                 }
                 case None => {
