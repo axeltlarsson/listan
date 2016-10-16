@@ -32,7 +32,7 @@ class MessageSpec extends PlaySpec with OneAppPerTest {
     }
 
     "work for response messages" in {
-      jsonSerializable(Response(false, "Unauthorized")) mustBe true
+      jsonSerializable(StatusResponse("Unauthorized")) mustBe true
     }
   }
 }
