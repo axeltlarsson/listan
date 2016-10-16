@@ -34,6 +34,15 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
       val fsm = TestFSMRef(wsActorProvider.get(mockWsActor.ref))
   }
 
+  trait ExtraClient {
+    self: Automaton =>
+    val mockWsActor2 = TestProbe()
+    val fsm2 = TestFSMRef(wsActorProvider.get(mockWsActor2.ref))
+    mockWsActor2.expectMsg(500 millis, Json.toJson(AuthRequest(): Message))
+    fsm2 ! Json.toJson(Auth(token): Message)
+    mockWsActor2.expectMsg(500 millis, Json.toJson(StatusResponse("Authentication success"): StatusResponse))
+  }
+
   trait Authenticated {
     self: Automaton =>
     if (token == "") {
@@ -97,6 +106,25 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
         case JsError(errors) => false mustBe true
       }
     }
-  
+  }
+
+  "System with multiple clients" should {
+
+    "handle ADD_ITEM" in new Automaton with Authenticated with ExtraClient {
+      fsm ! Json.toJson(ADD_ITEM("some id", "some contents that is to be added"): Message)
+      val res = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
+      println("res" + res)
+      res.validate[Response] match {
+        case yes: JsSuccess[Response] => true mustBe true
+        case JsError(errors) => false mustBe true
+      }
+      val res2 = mockWsActor2.receiveOne(500 millis).asInstanceOf[JsObject]
+      println("res" + res2)
+      // Todo validate the action better (more than just checking that is an Action)
+      res2.validate[services.Action] match {
+        case yes: JsSuccess[services.Action] => true mustBe true
+        case JsError(errors) => false mustBe true
+      }
+    }
   }
 }
