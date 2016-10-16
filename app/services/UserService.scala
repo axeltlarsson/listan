@@ -19,7 +19,6 @@ class UserService @Inject() (userRepo: UserRepository, configuration: Configurat
     val key = configuration.getString("play.crypto.secret").get
     JwtJson.decodeJson(token, key, Seq(JwtAlgorithm.HmacSHA256)) match {
       case Success(json) => {
-        Logger.info("token decoded as " + json)
         (json \ "user").validate[User] match {
           case JsSuccess(user, _) => {
             Logger.info("Authenticated " + user)

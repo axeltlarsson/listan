@@ -18,11 +18,11 @@ case class DELETE_ITEM(id: String) extends Action
 case class ALL() extends Action
 
 sealed trait Response extends Message
-case class FailureResponse(reason: String) extends Response
+case class FailureResponse(error: String) extends Response
 case class UUIDResponse(status: String, uuid: Item.UUID) extends Response
 case class StatusResponse(status: String) extends Response
 case class BoolResponse(status: String, bool: Boolean) extends Response
-case class AllResponse(status: String, items: Seq[Item]) extends Response
+case class AllResponse(items: Seq[Item]) extends Response
 
 
 // Json format

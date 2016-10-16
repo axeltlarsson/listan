@@ -37,9 +37,11 @@ class ListActor @Inject() (itemService: ItemService)
     }
 
     case action @ ADD_ITEM(id, contents) => {
+      Logger.debug(s"ListActor: Got ADD_ITEM($id, $contents)")
       val uuidFuture: Future[Item.UUID] = itemService.add(contents)
+      val theSender = sender
       uuidFuture.map {
-        uuid => SuccessfulAction(action, UUIDResponse("Added item", uuid), sender)
+        uuid => SuccessfulAction(action.copy(id = uuid), UUIDResponse("Added item", uuid), theSender)
       }.recover {
         case e => failureAction(e, sender)
       } pipeTo self
@@ -56,48 +58,56 @@ class ListActor @Inject() (itemService: ItemService)
       originalSender ! failureResponse
     }
 
-/*    case EDIT_ITEM(id, contents) => {
+    // TODO: return the actual id of the edited item
+    // because potentially id could be a client-side temp id
+    case action @ EDIT_ITEM(id, contents) => {
       val rowsFuture: Future[Int] = itemService.edit(id, contents)
+      val theSender = sender
       rowsFuture.map { rows =>
         rows match {
-          case 1 => Response(true, "Edited item")
-          case 0 => Response(false, "Could not find item to edit")
+          case 1 => SuccessfulAction(action, StatusResponse("Edited item"), theSender)
+          case 0 => FailedAction(FailureResponse("Could not find item to edit"), theSender)
         }
       }.recover {
-        case e => failureAction(e, sender)
-      } pipeTo sender
-      
+        case e => failureAction(e, theSender)
+      } pipeTo self
     }
-    case TOGGLE_ITEM(id) => {
+
+    case action @ TOGGLE_ITEM(id) => {
       val rowsFuture: Future[Int] = itemService.toggle(id)
+      val theSender = sender
       rowsFuture.map { rows =>
         rows match {
-          case 1 => Response(true, "Toggled item")
-          case 0 => Response(false, "Could not find item to toggle")
+          case 1 => SuccessfulAction(action, StatusResponse("Toggled item"), theSender)
+          case 0 => FailedAction(FailureResponse("Could not find item to toggle"), theSender)
         }
       }.recover {
-        case e => failureAction(m, sender)
-      } pipeTo sender
-      
+        case e => failureAction(e, sender)
+      } pipeTo self
     }
 
-    case DELETE_ITEM(id) => {
+    /* TODO: return id of deleted item insted */ 
+    case action @ DELETE_ITEM(id) => {
       val rowsFuture: Future[Int] = itemService.delete(id)
+      val theSender = sender
       rowsFuture.map { rows =>
         rows match {
-          case 1 => Response(true, "Deleted item")
-          case 0 => Response(false, "Could not find item to delete")
+          case 1 => SuccessfulAction(action, StatusResponse("Deleted item"), theSender)
+          case 0 => FailedAction(FailureResponse("Could not find item to delete"), theSender)
         }
       }.recover {
-        case e => failureAction(e, sender)
-      } pipeTo sender
+        case e => failureAction(e, theSender)
+      } pipeTo self
     }
 
-    case ALL() => {
+    case action @ ALL() => {
       val itemsFuture: Future[Seq[Item]] = itemService.all()
-      itemsFuture.recover {
-        case e => failureAction(e, sender)
-      } pipeTo sender
-    }*/
+      val theSender = sender
+      itemsFuture.map {
+        items => SuccessfulAction(action, AllResponse(items), theSender)
+      }.recover {
+        case e => failureAction(e, theSender)
+      } pipeTo self
+    }
   }
 }

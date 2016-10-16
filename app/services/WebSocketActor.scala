@@ -87,12 +87,16 @@ class WebSocketActor(
         }
         case e: JsError => {
           Logger.error("Could not validate json as Message")
-          ws ! Json.toJson(FailureResponse("Invalid message"))
+          ws ! Json.toJson(FailureResponse("Invalid message"): Response)
           stay
         }
       }
     case Event(r: Response, _) =>  {
       ws ! Json.toJson(r)
+      stay
+    }
+    case Event(a: Action, _) => {
+      ws ! Json.toJson(a)
       stay
     }
   }
