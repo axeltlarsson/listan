@@ -98,11 +98,21 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
       fsm.stateName mustBe Unauthenticated
     }
 
-    "handle ADD_ITEM" in new Automaton with Authenticated {
+    "handle ADD_ITEM and DELETE_ITEM" in new Automaton with Authenticated {
       fsm ! Json.toJson(ADD_ITEM("some id", "some contents that is to be added"): Message)
       val res = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
+      // Must be some way to make the following code compose better
       res.validate[Response] match {
-        case yes: JsSuccess[Response] => true mustBe true
+        case uuidRes: JsSuccess[Response] => {
+          val uuid = uuidRes.get.asInstanceOf[UUIDResponse].uuid
+          fsm ! Json.toJson(DELETE_ITEM(uuid): Message)
+          val resDel = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
+          resDel.validate[Response] match {
+            case res: JsSuccess[Response] =>
+              res.get.asInstanceOf[StatusResponse].status mustBe "Deleted item"
+            case JsError(_) => false mustBe true
+          }
+        }
         case JsError(errors) => false mustBe true
       }
     }
@@ -110,16 +120,15 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
 
   "System with multiple clients" should {
 
+    // TODO: clean up after, i.d. delete the item we add
     "handle ADD_ITEM" in new Automaton with Authenticated with ExtraClient {
       fsm ! Json.toJson(ADD_ITEM("some id", "some contents that is to be added"): Message)
       val res = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
-      println("res" + res)
       res.validate[Response] match {
         case yes: JsSuccess[Response] => true mustBe true
         case JsError(errors) => false mustBe true
       }
       val res2 = mockWsActor2.receiveOne(500 millis).asInstanceOf[JsObject]
-      println("res" + res2)
       // Todo validate the action better (more than just checking that is an Action)
       res2.validate[services.Action] match {
         case yes: JsSuccess[services.Action] => true mustBe true

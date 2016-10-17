@@ -24,6 +24,7 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject {
       uuid.length must be > 20
 
       val allItems = Await.result(repo.all(), 1 seconds)
+      println(allItems)
       allItems(0).contents mustBe "some contents"
       allItems(0).completed mustBe false
       allItems(0).uuid.get mustBe uuid
