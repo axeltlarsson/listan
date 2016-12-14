@@ -20,11 +20,11 @@ object ListActor {
 @Singleton
 class ListActor @Inject() (itemService: ItemService)
   extends Actor {
-  
+
   import ListActor._
 
   val clients: mutable.Set[ActorRef] = mutable.Set[ActorRef]()
-  
+
   def failureAction(e: Throwable, sender: ActorRef): FailedAction = {
     Logger.error(e.getMessage)
     FailedAction(FailureResponse("An error ocurred, see server logs"), sender)
@@ -86,7 +86,7 @@ class ListActor @Inject() (itemService: ItemService)
       } pipeTo self
     }
 
-    /* TODO: return id of deleted item insted */ 
+    /* TODO: return id of deleted item instead */
     case action @ DELETE_ITEM(id) => {
       val rowsFuture: Future[Int] = itemService.delete(id)
       val theSender = sender

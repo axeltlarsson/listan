@@ -20,11 +20,14 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject {
   "SlickItemRepository#add(contents)" should {
     "return uuid and actually insert the item correctly" in {
       lazy val repo = inject[ItemRepository]
+      val allItems0 = Await.result(repo.all(), 1 seconds)
+      allItems0.length mustBe 0 // this currently fails when testing all tests, but ok for testOnly
       val uuid = Await.result(repo.add("some contents"), 1 seconds)
       uuid.length must be > 20
 
       val allItems = Await.result(repo.all(), 1 seconds)
-      println(allItems)
+      println("allItems:")
+      println(allItems.mkString("\n"))
       allItems(0).contents mustBe "some contents"
       allItems(0).completed mustBe false
       allItems(0).uuid.get mustBe uuid
