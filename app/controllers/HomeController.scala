@@ -31,7 +31,15 @@ class HomeController @Inject() (userService: UserService)(implicit exec: Executi
       },
       form => {
         userService.authenticate(form._1, form._2) map {
-          case Some(user) => Ok.addingToJwtSession("user", user)
+          case Some(user) => {
+            val safeUser = user.copy(
+              passwordHash = None,
+              uuid = None,
+              created = None,
+              updated = None)
+            val session = JwtSession() + ("user", safeUser)
+            Ok(Json.toJson(session.serialize)).addingToJwtSession("user", safeUser)
+          }
           case None => Unauthorized
         }
       }
