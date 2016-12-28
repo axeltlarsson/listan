@@ -99,14 +99,15 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
     }
 
     "handle ADD_ITEM and DELETE_ITEM" in new Automaton with Authenticated {
-      fsm ! Json.toJson(ADD_ITEM("some contents that is to be added", "actionUUID"): Message)
+      fsm ! Json.toJson(ADD_ITEM("some contents that is to be added", "someAckNbr"): Message)
       val res = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
       println(res)
       // Must be some way to make the following code compose better
       res.validate[Message] match {
         case uuidRes: JsSuccess[Message] => {
           val uuid = uuidRes.get.asInstanceOf[UUIDResponse].uuid
-          val responseUUID = uuidRes.get.asInstanceOf[UUIDResponse].responseUUID
+          val ack = uuidRes.get.asInstanceOf[UUIDResponse].ack
+          ack mustBe "someAckNbr"
           fsm ! Json.toJson(DELETE_ITEM(uuid): Message)
           val resDel = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
           resDel.validate[Message] match {
@@ -123,7 +124,7 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
   "System with multiple clients" should {
 
     "handle ADD_ITEM" in new Automaton with Authenticated with ExtraClient {
-      fsm ! Json.toJson(ADD_ITEM("some contents that is to be added", "actionUUID"): Message)
+      fsm ! Json.toJson(ADD_ITEM("some contents that is to be added", "ackNbr"): Message)
       val res = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
       val uuid = (res \ "uuid").as[String]
       res.validate[Message] match {
