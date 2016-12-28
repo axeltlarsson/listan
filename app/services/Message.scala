@@ -11,7 +11,7 @@ case class Auth(token: String) extends Message
 case class AuthRequest() extends Message
 
 sealed trait Action extends Message
-case class ADD_ITEM(id: String, contents: String) extends Action
+case class ADD_ITEM(contents: String, actionUUID: String) extends Action
 case class EDIT_ITEM(id: String, contents: String) extends Action
 case class TOGGLE_ITEM(id: String) extends Action
 case class DELETE_ITEM(id: String) extends Action
@@ -19,8 +19,9 @@ case class ALL() extends Action
 
 sealed trait Response extends Message
 case class FailureResponse(error: String) extends Response
-case class UUIDResponse(status: String, uuid: Item.UUID) extends Response
+case class UUIDResponse(status: String, uuid: Item.UUID, responseUUID: String) extends Response
 case class StatusResponse(status: String) extends Response
+case class AuthResponse(status: String) extends Response
 case class BoolResponse(status: String, bool: Boolean) extends Response
 case class AllResponse(items: Seq[Item]) extends Response
 
@@ -68,6 +69,9 @@ object UUIDResponse {
   implicit val format: OFormat[UUIDResponse] = derived.oformat
 }
 object StatusResponse {
+  implicit val format: OFormat[UUIDResponse] = derived.oformat
+}
+object AuthResponse {
   implicit val format: OFormat[UUIDResponse] = derived.oformat
 }
 object BoolResponse {

@@ -30,7 +30,7 @@ class WebSocketActor(
 
   startWith(Unauthenticated, NoData)
   ws ! Json.toJson(AuthRequest(): Message)
-  
+
   when(Unauthenticated) {
     case Event(json: JsValue, _) => {
       json.validate[Message] match {
@@ -39,7 +39,7 @@ class WebSocketActor(
             case Auth(token) => {
               userService.authenticate(token) match {
                 case Some(user) => {
-                  ws ! Json.toJson(StatusResponse("Authentication success"))
+                  ws ! Json.toJson(AuthResponse("Authentication success"): Message)
                   goto(Authenticated) using UserData(user)
                 }
                 case None => {
@@ -92,7 +92,7 @@ class WebSocketActor(
         }
       }
     case Event(r: Response, _) =>  {
-      ws ! Json.toJson(r)
+      ws ! Json.toJson(r: Message)
       stay
     }
     case Event(a: Action, _) => {

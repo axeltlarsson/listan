@@ -8,6 +8,7 @@ class MessageSpec extends PlaySpec with OneAppPerTest {
 
   def jsonSerializable(msg: Message): Boolean = {
     val json = Json.toJson(msg)
+    println(json)
     json.validate[Message] match {
       case s: JsSuccess[Message] => true
       case _ => false
@@ -33,6 +34,10 @@ class MessageSpec extends PlaySpec with OneAppPerTest {
 
     "work for response messages" in {
       jsonSerializable(StatusResponse("Unauthorized")) mustBe true
+    }
+
+    "work for AuthResponse" in {
+      jsonSerializable(AuthResponse("Unauthorized"): Message) mustBe true
     }
   }
 }
