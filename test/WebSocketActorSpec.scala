@@ -136,12 +136,11 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
 
       // mockWsActor2 should get relayed AddItem action with uuid set
       val relayedAdd = mockWsActor2.receiveOne(500 millis).asInstanceOf[JsObject]
-      println(Json.prettyPrint(relayedAdd))
       (relayedAdd \ "uuid").as[String] mustBe uuid
       assertMessage(relayedAdd)
 
       /* mockWsActor2 sends EditItem */
-      fsm2 ! Json.toJson(EditItem(uuid, "changed content", "13-234-sjd-234"))
+      fsm2 ! Json.toJson(EditItem(uuid, "changed content", "13-234-sjd-234"): Message)
       // mockWsActor2 should get proper UUIDResponse
       val resEdit = mockWsActor2.receiveOne(500 millis).asInstanceOf[JsObject]
       assertMessage(resEdit)
@@ -152,8 +151,18 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
       (relayedEdit \ "uuid").as[String] mustBe uuid
       (relayedEdit \ "ack").as[String] mustBe "13-234-sjd-234"
 
-      // Delete the item Message
+      /* Let mockWsActor1 send DeleteItem */
       fsm ! Json.toJson(DeleteItem(uuid, "ack"): Message)
+      // mockWsActor should get proper UUIDResponse
+      val resDel = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
+      assertMessage(resDel)
+      (resDel \ "uuid").as[String] mustBe uuid
+      (resDel \ "ack").as[String] mustBe "ack"
+      // mockWsActor2 should get relayed DeleteItem action
+      val relayedDel = mockWsActor2.receiveOne(500 millis).asInstanceOf[JsObject]
+      assertMessage(relayedDel)
+      (relayedDel \ "uuid").as[String] mustBe uuid
+
     }
 
   }
