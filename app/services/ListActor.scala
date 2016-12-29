@@ -8,6 +8,7 @@ import models.{User, Item}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import akka.pattern.pipe
+import scala.util.{Success, Failure}
 
 object ListActor {
   // Used by WebSocketActor to add itself to list of clients
@@ -73,20 +74,31 @@ class ListActor @Inject() (itemService: ItemService)
       } pipeTo self
     }
 
-    /*
-     * case action @ TOGGLE_ITEM(id) => {
-     *  val rowsFuture: Future[Int] = itemService.toggle(id)
-     *  val theSender = sender
-     *  rowsFuture.map { rows =>
-     *    rows match {
-     *      case 1 => SuccessfulAction(action, StatusResponse("Toggled item"), theSender)
-     *      case 0 => FailedAction(FailureResponse("Could not find item to toggle"), theSender)
-     *    }
-     *  }.recover {
-     *    case e => failureAction(e, sender)
-     *  } pipeTo self
-     * }
-     */
+    case action @ CompleteItem(uuid, ack) => {
+      val rowsFuture: Future[Int] = itemService.complete(uuid)
+      val theSender = sender
+      rowsFuture.map { rows =>
+        if (rows == 1)
+          SuccessfulAction(action, UUIDResponse("Completed item", uuid, ack), theSender)
+        else
+          FailedAction(FailureResponse("Could not find item to complete", ack), theSender)
+      }.recover {
+        case e => failureAction(e, ack, theSender)
+      } pipeTo self
+    }
+
+    case action @ UncompleteItem(uuid, ack) => {
+      val rowsFuture: Future[Int] = itemService.uncomplete(uuid)
+      val theSender = sender
+      rowsFuture.map { rows =>
+        if (rows == 1)
+          SuccessfulAction(action, UUIDResponse("Uncompleted item", uuid, ack), theSender)
+        else
+          FailedAction(FailureResponse("Could not find item to uncomplete", ack), theSender)
+      }.recover {
+        case e => failureAction(e, ack, theSender)
+      } pipeTo self
+    }
 
    case action @ DeleteItem(uuid, ack) => {
      val rowsFuture: Future[Int] = itemService.delete(uuid)
@@ -99,6 +111,15 @@ class ListActor @Inject() (itemService: ItemService)
      }.recover {
        case e => failureAction(e, ack, theSender)
      } pipeTo self
+   }
+
+   case action @ GetState(ack) => {
+     val itemsFuture: Future[Seq[Item]] = itemService.all()
+     val theSender = sender
+     itemsFuture onComplete {
+       case Success(items) => theSender ! GetStateResponse(items, ack)
+       case Failure(t) => theSender ! FailureResponse(t.getMessage, ack)
+     }
    }
 
    /*

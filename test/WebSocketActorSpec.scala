@@ -170,9 +170,36 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
       (resComplete \ "uuid").as[String] mustBe uuid
       (resComplete \ "ack").as[String] mustBe "ack-nbr"
       (resComplete \ "status").as[String] mustBe "Completed item"
-      // mockWsActor should get relayed CompleteItem action
-      val relayedComplete = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
-      (relayedComplete \ uuid).as[String] mustBe uuid
+      // mockWsActor2 should get relayed CompleteItem action
+      val relayedComplete = mockWsActor2.receiveOne(500 millis).asInstanceOf[JsObject]
+      assertMessage(relayedComplete)
+      (relayedComplete \ "uuid").as[String] mustBe uuid
+
+      /* mockWsActor2 sends UncompleteItem for extra item */
+      fsm2 ! Json.toJson(UncompleteItem(uuidExtraAdd, "uncomplete-ack"): Message)
+      // mockWsActor2 should get UUIDResponse
+      val resUncomplete = mockWsActor2.receiveOne(500 millis).asInstanceOf[JsObject]
+      assertMessage(resUncomplete)
+      (resUncomplete \ "uuid").as[String] mustBe uuidExtraAdd
+      (resUncomplete \ "ack").as[String] mustBe "uncomplete-ack"
+      (resUncomplete \ "status").as[String] mustBe "Uncompleted item"
+      // mockWsActor should get relayed UncompleteItem action
+      val relayedUncomplete = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
+      assertMessage(relayedUncomplete)
+      (relayedUncomplete \ "uuid").as[String] mustBe uuidExtraAdd
+
+      /* Let mockWsActor send GetState */
+      fsm ! Json.toJson(GetState("get-state-ack"): Message)
+      // mockWsActor should get GetStateResponse
+      val resState = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
+      assertMessage(resState)
+      val items = (resState \ "items").as[Seq[models.Item]]
+      // the items list should contain the correct items
+      items must have length 2
+      items(0).contents must (be ("changed content") or be ("extra item"))
+      items(0).contents must not be (items(1).contents)
+      items(1).contents must (be ("changed content") or be ("extra item"))
+      items(0).completed must not be (items(1).completed)
 
       /* Let mockWsActor1 send DeleteItem */
       fsm ! Json.toJson(DeleteItem(uuid, "ack"): Message)
@@ -186,6 +213,17 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
       assertMessage(relayedDel)
       (relayedDel \ "uuid").as[String] mustBe uuid
 
+      /* Let mockWsActor1 send DeleteItem for Extra Item */
+      fsm ! Json.toJson(DeleteItem(uuidExtraAdd, "ack"): Message)
+      // mockWsActor should get proper UUIDResponse
+      val resDelExtra = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
+      assertMessage(resDelExtra)
+      (resDelExtra \ "uuid").as[String] mustBe uuidExtraAdd
+      (resDelExtra \ "ack").as[String] mustBe "ack"
+      // mockWsActor2 should get relayed DeleteItem action
+      val relayedDelExtra = mockWsActor2.receiveOne(500 millis).asInstanceOf[JsObject]
+      assertMessage(relayedDelExtra)
+      (relayedDelExtra \ "uuid").as[String] mustBe uuidExtraAdd
     }
 
   }
