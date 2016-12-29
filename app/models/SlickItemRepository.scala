@@ -38,14 +38,19 @@ class SlickItemRepository @Inject()
     db.run(action.update(contents))
   }
 
-  override def toggle(uuid: String): Future[Int] = {
+  override def complete(uuid: Item.UUID): Future[Int] = {
     val selectCompleted = for { i <- items if i.uuid === uuid } yield i.completed
     db.run(for {
       maybeItem <- items.filter(_.uuid === uuid).result.headOption
-      affectedRows <- selectCompleted.update(maybeItem match {
-        case Some(item) => !item.completed
-        case _ => false
-      })
+      affectedRows <- selectCompleted.update(maybeItem.exists((i: Item) => true))
+    } yield affectedRows)
+  }
+
+  override def uncomplete(uuid: Item.UUID): Future[Int] = {
+    val selectCompleted = for { i <- items if i.uuid === uuid } yield i.completed
+    db.run(for {
+      maybeItem <- items.filter(_.uuid === uuid).result.headOption
+      affectedRows <- selectCompleted.update(maybeItem.exists((i: Item) => false))
     } yield affectedRows)
   }
 

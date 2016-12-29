@@ -69,28 +69,36 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject {
     }
   }
 
-  "SlickItemRepository#toggle(uuid)" should {
+  "SlickItemRepository complete and uncomplete" should {
     "work" in {
       lazy val repo = inject[ItemRepository]
+
       val affectedRows = for {
-        uuid <- repo.add("TO BE TOGGLED")
-        affectedRows <- repo.toggle(uuid)
+        uuid <- repo.add("Complete me!")
+        uuid2 <- repo.add("Do NOT complete me")
+        affectedRows <- repo.complete(uuid)
       } yield affectedRows
       Await.result(affectedRows, 1 seconds) mustBe 1
       val item = Await.result(repo.all(), 1 seconds)
-        .filter(_.contents == "TO BE TOGGLED").head
+        .filter(_.contents == "Complete me!").head
       item.completed mustBe true
+      val item2 = Await.result(repo.all(), 1 seconds)
+        .filter(_.contents == "Do NOT complete me").head
+      item2.completed mustBe false
 
-      // toggle again
-      Await.result(repo.toggle(item.uuid.get), 1 seconds) mustBe 1
-      val itemToggledAgain = Await.result(repo.all(), 1 seconds)
-        .filter(_.contents == "TO BE TOGGLED").head
-      itemToggledAgain.completed mustBe false
+      Await.result(repo.uncomplete(item.uuid.get), 1 seconds) mustBe 1
+      val itemUncompleted = Await.result(repo.all(), 1 seconds)
+        .filter(_.contents == "Complete me!").head
+      itemUncompleted.completed mustBe false
+      val item22 = Await.result(repo.all(), 1 seconds)
+        .filter(_.contents == "Do NOT complete me").head
+      item22.completed mustBe false // (still)
     }
 
     "not crash for non-existing uuid" in  {
       lazy val repo = inject[ItemRepository]
-      Await.result(repo.toggle("bogus"), 1 seconds) mustBe 0
+      Await.result(repo.complete("bogus"), 1 seconds) mustBe 0
+      Await.result(repo.uncomplete("bogus"), 1 seconds) mustBe 0
     }
   }
 }

@@ -31,6 +31,18 @@ class ListActor @Inject() (itemService: ItemService)
   }
 
   def receive = {
+
+    // Propagate successful actions to all but original sender
+    case SuccessfulAction(action, response, originalSender) => {
+      clients.filter(_ != originalSender).foreach(_ ! action)
+      originalSender ! response
+    }
+
+    // Send the FailureResponse to the original sender only
+    case FailedAction(failureResponse, originalSender) => {
+      originalSender ! failureResponse
+    }
+
     case Subscribe => {
       Logger.debug("Adding client to set")
       clients += sender
@@ -47,19 +59,7 @@ class ListActor @Inject() (itemService: ItemService)
       } pipeTo self
     }
 
-    // Propagate successful actions to all but original sender
-    case SuccessfulAction(action, response, originalSender) => {
-      clients.filter(_ != originalSender).foreach(_ ! action)
-      originalSender ! response
-    }
 
-    // Send the FailureResponse to the original sender only
-    case FailedAction(failureResponse, originalSender) => {
-      originalSender ! failureResponse
-    }
-
-    // TODO: return the actual id of the edited item
-    // because potentially id could be a client-side temp id
     case action @ EditItem(uuid, contents, ack) => {
       val rowsFuture: Future[Int] = itemService.edit(uuid, contents)
       val theSender = sender
@@ -88,7 +88,6 @@ class ListActor @Inject() (itemService: ItemService)
      * }
      */
 
-   // TODO: return id of deleted item instead
    case action @ DeleteItem(uuid, ack) => {
      val rowsFuture: Future[Int] = itemService.delete(uuid)
      val theSender = sender

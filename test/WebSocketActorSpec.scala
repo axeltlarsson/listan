@@ -77,7 +77,7 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
     fsm.stateName mustBe Authenticated
     fsm.stateData match {
       case UserData(user) => user.name mustBe "axel"
-      case _ => false mustBe true
+      case _ => fail("user.name was not axel")
     }
   }
 
@@ -114,10 +114,10 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
           resDel.validate[Message] match {
             case res: JsSuccess[Message] =>
               res.get.asInstanceOf[UUIDResponse].status mustBe "Deleted item"
-            case JsError(_) => false mustBe true
+            case JsError(_) => fail("Could not validate JSON as Message")
           }
         }
-        case JsError(errors) => false mustBe true
+        case JsError(errors) => fail("Could not validate JSON as Message")
       }
     }
   }
@@ -130,14 +130,25 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
       // mockWsActor should get UUIDResponse
       val resAdd = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
       assertMessage(resAdd)
-      println(s"resAdd: $resAdd")
       val uuid = (resAdd \ "uuid").as[String]
       (resAdd \ "ack").as[String] mustBe "ackNbr"
-
       // mockWsActor2 should get relayed AddItem action with uuid set
       val relayedAdd = mockWsActor2.receiveOne(500 millis).asInstanceOf[JsObject]
-      (relayedAdd \ "uuid").as[String] mustBe uuid
       assertMessage(relayedAdd)
+      (relayedAdd \ "uuid").as[String] mustBe uuid
+
+      /* Add extra item from mockWsActor2 */
+      fsm2 ! Json.toJson(AddItem("extra item", "extra-ack-nbr"): Message)
+      // mockWsActor2 should get UUIDResponse for "extra item"
+      val resExtraAdd = mockWsActor2.receiveOne(500 millis).asInstanceOf[JsObject]
+      assertMessage(resExtraAdd)
+      (resExtraAdd \ "ack").as[String] mustBe "extra-ack-nbr"
+      val uuidExtraAdd = (resExtraAdd \ "uuid").as[String]
+      uuidExtraAdd must not be (uuid)
+      // mockWsActor should get relayed AddItem action
+      val relayedExtraAdd = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
+      assertMessage(relayedExtraAdd)
+      (relayedExtraAdd \ "uuid").as[String] mustBe uuidExtraAdd
 
       /* mockWsActor2 sends EditItem */
       fsm2 ! Json.toJson(EditItem(uuid, "changed content", "13-234-sjd-234"): Message)
@@ -150,6 +161,18 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
       val relayedEdit = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
       (relayedEdit \ "uuid").as[String] mustBe uuid
       (relayedEdit \ "ack").as[String] mustBe "13-234-sjd-234"
+
+      /* mockWsActor sends CompleteItem */
+      fsm ! Json.toJson(CompleteItem(uuid, "ack-nbr"): Message)
+      // mockWsActor should get UUIDResponse
+      val resComplete = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
+      assertMessage(resComplete)
+      (resComplete \ "uuid").as[String] mustBe uuid
+      (resComplete \ "ack").as[String] mustBe "ack-nbr"
+      (resComplete \ "status").as[String] mustBe "Completed item"
+      // mockWsActor should get relayed CompleteItem action
+      val relayedComplete = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
+      (relayedComplete \ uuid).as[String] mustBe uuid
 
       /* Let mockWsActor1 send DeleteItem */
       fsm ! Json.toJson(DeleteItem(uuid, "ack"): Message)
@@ -171,8 +194,7 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
       json.validate[Message] match {
         case yes: JsSuccess[Message] => true mustBe true
         case JsError(errors) => {
-          Logger.error(s"Json was not Message: $json")
-          false mustBe true
+          fail(s"Json was not Message: $json")
         }
       }
   }
