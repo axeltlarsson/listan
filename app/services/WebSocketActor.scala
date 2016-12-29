@@ -36,14 +36,14 @@ class WebSocketActor(
       json.validate[Message] match {
         case s: JsSuccess[Message] => {
           s.get match {
-            case Auth(token) => {
+            case Auth(token, ack) => {
               userService.authenticate(token) match {
                 case Some(user) => {
-                  ws ! Json.toJson(AuthResponse("Authentication success"): Message)
+                  ws ! Json.toJson(AuthResponse("Authentication success", ack): Message)
                   goto(Authenticated) using UserData(user)
                 }
                 case None => {
-                  ws ! Json.toJson(FailureResponse("Authentication failure"))
+                  ws ! Json.toJson(FailureResponse("Authentication failure", ack): Message)
                   stay // or die?
                 }
               }
@@ -51,7 +51,7 @@ class WebSocketActor(
             case _ => {
               val msg = "Invalid message at this state (Unauthenticated)"
               Logger.warn(msg)
-              ws ! Json.toJson(FailureResponse(msg))
+              ws ! Json.toJson(FailureResponse(msg, "NO_ACK_PROVIDED"): Message)
               stay // or die?
             }
           }
@@ -59,7 +59,7 @@ class WebSocketActor(
         case e: JsError => {
           val msg = s"Could not validate json ($json) as Message"
           Logger.error(msg)
-          ws ! Json.toJson(FailureResponse(msg))
+          ws ! Json.toJson(FailureResponse(msg, "NO_ACK_PROVIDED"): Message)
           stay // or die?
         }
 
@@ -87,7 +87,7 @@ class WebSocketActor(
         }
         case e: JsError => {
           Logger.error("Could not validate json as Message")
-          ws ! Json.toJson(FailureResponse("Invalid message"): Response)
+          ws ! Json.toJson(FailureResponse("Invalid message", "NO_ACK_PROVIDED"): Response)
           stay
         }
       }
@@ -96,7 +96,7 @@ class WebSocketActor(
       stay
     }
     case Event(a: Action, _) => {
-      ws ! Json.toJson(a)
+      ws ! Json.toJson(a: Message)
       stay
     }
   }

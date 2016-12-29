@@ -7,23 +7,22 @@ import models.Item
 // The algebraic data type presentation of messages
 // ex: {"action": {"type": "DELETE_ITEM", "id": "1a"}}
 sealed trait Message
-case class Auth(token: String) extends Message
+case class Auth(token: String, ack: String) extends Message
 case class AuthRequest() extends Message
 
 sealed trait Action extends Message
-case class ADD_ITEM(contents: String, ack: String) extends Action
-case class EDIT_ITEM(id: String, contents: String) extends Action
-case class TOGGLE_ITEM(id: String) extends Action
-case class DELETE_ITEM(id: String) extends Action
-case class ALL() extends Action
+case class AddItem(contents: String, ack: String, uuid: Option[String] = None) extends Action // uuid for relayed msg
+case class EditItem(uuid: String, contents: String, ack: String) extends Action
+case class CompleteItem(uuid: String, ack: String) extends Action
+case class UncompleteItem(uuid: String, ack: String) extends Action
+case class DeleteItem(uuid: String, ack: String) extends Action
+case class GetState(ack: String) extends Action
 
 sealed trait Response extends Message
-case class FailureResponse(error: String) extends Response
+case class AuthResponse(status: String, ack: String) extends Response // Authorised
+case class FailureResponse(error: String, ack: String) extends Response
 case class UUIDResponse(status: String, uuid: Item.UUID, ack: String) extends Response
-case class StatusResponse(status: String) extends Response
-case class AuthResponse(status: String) extends Response
-case class BoolResponse(status: String, bool: Boolean) extends Response
-case class AllResponse(items: Seq[Item]) extends Response
+case class GetStateResponse(items: Seq[Item], ack: String) extends Response
 
 
 // Json format
@@ -42,20 +41,23 @@ object AuthRequest {
 }
 
 // Actions
-object EDIT_ITEM {
-  implicit val format: OFormat[EDIT_ITEM] = derived.oformat
+object EditItem {
+  implicit val format: OFormat[EditItem] = derived.oformat
 }
-object ADD_ITEM {
-  implicit val format: OFormat[ADD_ITEM] = derived.oformat
+object AddItem {
+  implicit val format: OFormat[AddItem] = derived.oformat
 }
-object TOGGLE_ITEM {
- implicit val format: OFormat[TOGGLE_ITEM] = derived.oformat
+object CompleteItem {
+ implicit val format: OFormat[CompleteItem] = derived.oformat
 }
-object DELETE_ITEM {
-  implicit val format: OFormat[DELETE_ITEM] = derived.oformat
+object UncompleteItem {
+ implicit val format: OFormat[UncompleteItem] = derived.oformat
 }
-object ALL {
- implicit val format: OFormat[DELETE_ITEM] = derived.oformat
+object DeleteItem {
+  implicit val format: OFormat[DeleteItem] = derived.oformat
+}
+object GetState {
+ implicit val format: OFormat[GetState] = derived.oformat
 }
 object Action {
   implicit val format: OFormat[Action] = derived.oformat
@@ -68,17 +70,11 @@ object FailureResponse {
 object UUIDResponse {
   implicit val format: OFormat[UUIDResponse] = derived.oformat
 }
-object StatusResponse {
-  implicit val format: OFormat[UUIDResponse] = derived.oformat
-}
 object AuthResponse {
-  implicit val format: OFormat[UUIDResponse] = derived.oformat
+  implicit val format: OFormat[AuthResponse] = derived.oformat
 }
-object BoolResponse {
-  implicit val format: OFormat[BoolResponse] = derived.oformat
-}
-object AllResponse {
-  implicit val format: OFormat[AllResponse] = derived.oformat
+object GetStateResponse {
+  implicit val format: OFormat[GetStateResponse] = derived.oformat
 }
 object Response {
   implicit val format: OFormat[Response] = derived.oformat
