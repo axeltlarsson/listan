@@ -33,6 +33,7 @@ class WebSocketActor(
 
   when(Unauthenticated) {
     case Event(json: JsValue, _) => {
+      val ack = (json \ "ack").asOpt[String]
       json.validate[Message] match {
         case s: JsSuccess[Message] => {
           s.get match {
@@ -51,7 +52,7 @@ class WebSocketActor(
             case _ => {
               val msg = "Invalid message at this state (Unauthenticated)"
               Logger.warn(msg)
-              ws ! Json.toJson(FailureResponse(msg, "NO_ACK_PROVIDED"): Message)
+              ws ! Json.toJson(FailureResponse(msg, ack.getOrElse("NO_ACK_PROVIDED")): Message)
               stay // or die?
             }
           }
@@ -59,7 +60,7 @@ class WebSocketActor(
         case e: JsError => {
           val msg = s"Could not validate json ($json) as Message"
           Logger.error(msg)
-          ws ! Json.toJson(FailureResponse(msg, "NO_ACK_PROVIDED"): Message)
+          ws ! Json.toJson(FailureResponse(msg, ack.getOrElse("NO_ACK_PROVIDED")): Message)
           stay // or die?
         }
 
@@ -79,6 +80,7 @@ class WebSocketActor(
 
   when(Authenticated) {
     case Event(json: JsValue, _) =>
+      val ack = (json \ "ack").asOpt[String]
       json.validate[Message] match {
         case s: JsSuccess[Message] => {
           Logger.debug("WsActor got msg, sending it further up the chain to ListActor")
@@ -87,7 +89,7 @@ class WebSocketActor(
         }
         case e: JsError => {
           Logger.error("Could not validate json as Message")
-          ws ! Json.toJson(FailureResponse("Invalid message", "NO_ACK_PROVIDED"): Response)
+          ws ! Json.toJson(FailureResponse("Invalid message", ack.getOrElse("NO_ACK_PROVIDED")): Response)
           stay
         }
       }

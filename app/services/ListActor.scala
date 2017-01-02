@@ -121,17 +121,5 @@ class ListActor @Inject() (itemService: ItemService)
        case Failure(t) => theSender ! FailureResponse(t.getMessage, ack)
      }
    }
-
-   /*
-    * case action @ ALL() => {
-    *   val itemsFuture: Future[Seq[Item]] = itemService.all()
-    *   val theSender = sender
-    *   itemsFuture.map {
-    *     items => SuccessfulAction(action, AllResponse(items), theSender)
-    *   }.recover {
-    *     case e => failureAction(e, theSender)
-    *   } pipeTo self
-    * }
-    */
   }
 }
