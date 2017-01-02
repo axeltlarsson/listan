@@ -18,6 +18,9 @@ class MessageSpec extends PlaySpec with OneAppPerTest {
   }
 
   "JSON serialisable" should {
+    "Auth be" in {
+      jsonSerializable(Auth(token = "eyJ0e...", ack = "12345..")) mustBe true
+    }
     // Actions
     "AddItem be" in {
       jsonSerializable(AddItem(contents = "mjölk", ack = "123")) mustBe true

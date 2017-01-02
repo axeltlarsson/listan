@@ -89,7 +89,7 @@ class WebSocketActor(
         }
         case e: JsError => {
           Logger.error("Could not validate json as Message")
-          ws ! Json.toJson(FailureResponse("Invalid message", ack.getOrElse("NO_ACK_PROVIDED")): Response)
+          ws ! Json.toJson(FailureResponse("Invalid message", ack.getOrElse("NO_ACK_PROVIDED")): Message)
           stay
         }
       }
