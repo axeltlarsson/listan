@@ -14,7 +14,7 @@ object Item {
 case class Item(
   contents: String,
   completed: Boolean = false,
-  uuid: Option[Item.UUID] = None,
+  uuid: Item.UUID,
   created: Option[Timestamp] = None,
   updated: Option[Timestamp] = None
 )

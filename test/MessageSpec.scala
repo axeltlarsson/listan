@@ -23,7 +23,7 @@ class MessageSpec extends PlaySpec with OneAppPerTest {
     }
     // Actions
     "AddItem be" in {
-      jsonSerializable(AddItem(contents = "mjölk", ack = "123")) mustBe true
+      jsonSerializable(AddItem(uuid = "uid", contents = "mjölk", ack = "123")) mustBe true
     }
     "EditItem be" in {
       jsonSerializable(EditItem(uuid = "sldfj-234-sdfj", contents = "filmjölk", ack = "124")) mustBe true

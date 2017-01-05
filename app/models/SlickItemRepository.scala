@@ -22,10 +22,10 @@ class SlickItemRepository @Inject()
 
   private val items = TableQuery[Items]
 
-  override def add(contents: String): Future[Item.UUID] = {
-    val item = Item(contents)
-    val uuid = (items returning items.map(_.uuid)) += item
-    db.run(uuid)
+  override def add(uuid: String, contents: String): Future[Item.UUID] = {
+    val item: Item = Item(contents, false, uuid)
+    val id = (items returning items.map(_.uuid)) += item
+    db.run(id)
   }
 
   override def delete(uuid: Item.UUID): Future[Int] = {
@@ -57,13 +57,13 @@ class SlickItemRepository @Inject()
   override def all(): Future[Seq[Item]] = db.run(items.result)
 
   private class Items(tag: Tag) extends Table[Item](tag, "items") {
-    def uuid = column[String]("uuid", O.PrimaryKey, O.AutoInc)
+    def uuid = column[String]("uuid", O.PrimaryKey)
     def contents = column[String]("contents")
     def completed = column[Boolean]("completed")
     def created = column[Timestamp]("created", O.AutoInc)
     def updated = column[Timestamp]("updated", O.AutoInc)
 
-    def * = (contents, completed, uuid.?, created.?, updated.?) <>
+    def * = (contents, completed, uuid, created.?, updated.?) <>
       ((Item.apply _).tupled, Item.unapply)
 
   }

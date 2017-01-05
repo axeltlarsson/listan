@@ -83,7 +83,7 @@ class WebSocketActor(
       val ack = (json \ "ack").asOpt[String]
       json.validate[Message] match {
         case s: JsSuccess[Message] => {
-          Logger.debug("WsActor got msg, sending it further up the chain to ListActor")
+          Logger.debug(s"WsActor: Got $json")
           listActor ! s.get
           stay
         }

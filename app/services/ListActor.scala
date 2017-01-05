@@ -49,12 +49,12 @@ class ListActor @Inject() (itemService: ItemService)
       clients += sender
     }
 
-    case action @ AddItem(contents, ack, _) => {
-      Logger.debug(s"ListActor: Got ADD_ITEM($ack, $contents)")
-      val uuidFuture: Future[Item.UUID] = itemService.add(contents)
+    case action @ AddItem(uuid, contents, ack) => {
+      Logger.debug(s"ListActor: Got ADD_ITEM($contents)")
+      val uuidFuture: Future[Item.UUID] = itemService.add(uuid, contents)
       val theSender = sender
       uuidFuture.map {
-        uuid => SuccessfulAction(action.copy(uuid = Some(uuid)), UUIDResponse("Added item", uuid, action.ack), theSender)
+        uuid => SuccessfulAction(action, UUIDResponse("Added item", uuid, action.ack), theSender)
       }.recover {
         case e => failureAction(e, ack, sender)
       } pipeTo self
