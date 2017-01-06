@@ -18,6 +18,15 @@ import models.{Item, ItemRepository, SlickItemRepository}
 class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject {
 
   "SlickItemRepository#add(contents)" should {
+    "accept a client-given uuid" in {
+      lazy val repo = inject[ItemRepository]
+      val clientUuid = "abc-123"
+      val uuid = Await.result(repo.add("an item", Option(clientUuid)), 100 millis)
+      val allItems = Await.result(repo.all(), 100 millis)
+      uuid mustBe clientUuid
+      repo.delete(uuid)
+    }
+
     "return uuid and actually insert the item correctly" in {
       lazy val repo = inject[ItemRepository]
       val allItems0 = Await.result(repo.all(), 1 seconds)
@@ -26,8 +35,6 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject {
       uuid.length must be > 20
 
       val allItems = Await.result(repo.all(), 1 seconds)
-      println("allItems:")
-      println(allItems.mkString("\n"))
       allItems(0).contents mustBe "some contents"
       allItems(0).completed mustBe false
       allItems(0).uuid.get mustBe uuid

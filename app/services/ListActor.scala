@@ -49,9 +49,9 @@ class ListActor @Inject() (itemService: ItemService)
       clients += sender
     }
 
-    case action @ AddItem(contents, ack, _) => {
+    case action @ AddItem(contents, ack, clientId) => {
       Logger.debug(s"ListActor: Got ADD_ITEM($ack, $contents)")
-      val uuidFuture: Future[Item.UUID] = itemService.add(contents)
+      val uuidFuture: Future[Item.UUID] = itemService.add(contents, clientId)
       val theSender = sender
       uuidFuture.map {
         uuid => SuccessfulAction(action.copy(uuid = Some(uuid)), UUIDResponse("Added item", uuid, action.ack), theSender)
