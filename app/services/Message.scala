@@ -11,7 +11,7 @@ case class Auth(token: String, ack: String) extends Message
 case class AuthRequest() extends Message
 
 sealed trait Action extends Message
-case class AddItem(uuid: String, contents: String, ack: String) extends Action
+case class AddItem(contents: String, ack: String, uuid: Option[String] = None) extends Action // uuid for relayed msg
 case class EditItem(uuid: String, contents: String, ack: String) extends Action
 case class CompleteItem(uuid: String, ack: String) extends Action
 case class UncompleteItem(uuid: String, ack: String) extends Action

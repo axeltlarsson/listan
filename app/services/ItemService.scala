@@ -7,7 +7,7 @@ import play.Logger
 
 @Singleton
 class ItemService @Inject()(itemRepo: ItemRepository) {
-  def add(uuid: String, contents: String): Future[Item.UUID] = itemRepo.add(uuid, contents)
+  def add(contents: String): Future[Item.UUID] = itemRepo.add(contents)
   def complete(uuid: String): Future[Int] = itemRepo.complete(uuid)
   def uncomplete(uuid: String): Future[Int] = itemRepo.uncomplete(uuid)
   def edit(uuid: String, contents: String): Future[Int] = itemRepo.edit(uuid, contents)
