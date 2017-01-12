@@ -102,7 +102,6 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
     "handle AddItem and DeleteItem" in new Automaton with Authenticated {
       fsm ! Json.toJson(AddItem("some contents that is to be added", "someAckNbr"): Message)
       val res = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
-      println(res)
       // Must be some way to make the following code compose better
       res.validate[Message] match {
         case uuidRes: JsSuccess[Message] => {
@@ -229,12 +228,12 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
   }
 
   def assertMessage(json: JsObject): Unit = {
-      json.validate[Message] match {
-        case yes: JsSuccess[Message] => true mustBe true
-        case JsError(errors) => {
-          fail(s"Json was not Message: $json")
-        }
+    json.validate[Message] match {
+      case yes: JsSuccess[Message] => true mustBe true
+      case JsError(errors) => {
+        fail(s"Json was not Message: $json")
       }
+    }
   }
 
 }
