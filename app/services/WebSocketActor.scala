@@ -12,6 +12,7 @@ import play.api.Configuration
 import models.{User, Item}
 import scala.concurrent.ExecutionContext.Implicits.global
 import akka.pattern.pipe
+import akka.actor.PoisonPill
 
 // States in the FSM
 sealed trait State
@@ -45,7 +46,8 @@ class WebSocketActor(
                 }
                 case None => {
                   ws ! Json.toJson(FailureResponse("Authentication failure", ack): Message)
-                  stay // or die?
+                  self ! PoisonPill
+                  stay
                 }
               }
             }
@@ -53,7 +55,8 @@ class WebSocketActor(
               val msg = "Invalid message at this state (Unauthenticated)"
               Logger.warn(msg)
               ws ! Json.toJson(FailureResponse(msg, ack.getOrElse("NO_ACK_PROVIDED")): Message)
-              stay // or die?
+              self ! PoisonPill
+              stay
             }
           }
         }
@@ -61,7 +64,8 @@ class WebSocketActor(
           val msg = s"Could not validate json ($json) as Message"
           Logger.error(msg)
           ws ! Json.toJson(FailureResponse(msg, ack.getOrElse("NO_ACK_PROVIDED")): Message)
-          stay // or die?
+          self ! PoisonPill
+          stay
         }
 
       }
@@ -90,6 +94,7 @@ class WebSocketActor(
         case e: JsError => {
           Logger.error("Could not validate json as Message")
           ws ! Json.toJson(FailureResponse("Invalid message", ack.getOrElse("NO_ACK_PROVIDED")): Message)
+          self ! PoisonPill
           stay
         }
       }
@@ -104,6 +109,7 @@ class WebSocketActor(
   }
 
   override def postStop() = {
+    listActor ! ListActor.Unsubscribe
     Logger.info("WS closed")
   }
 }

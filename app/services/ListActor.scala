@@ -13,6 +13,7 @@ import scala.util.{Success, Failure}
 object ListActor {
   // Used by WebSocketActor to add itself to list of clients
   case object Subscribe
+  case object Unsubscribe // used by WebSocketActor to unsubscribe
   // Used by "pipeTo self" to propagate information to all clients
   case class SuccessfulAction(action: Action, response: Response, originalSender: ActorRef)
   case class FailedAction(failureResponse: FailureResponse, originalSender: ActorRef)
@@ -45,11 +46,17 @@ class ListActor @Inject() (itemService: ItemService)
     }
 
     case Subscribe => {
-      Logger.debug("Adding client to set")
+      Logger.debug("Subscribing client")
       clients += sender
     }
 
+    case Unsubscribe => {
+      Logger.debug("Unsubscribing client")
+      clients -= sender
+    }
+
     case action @ AddItem(contents, ack, clientId) => {
+      Logger.debug("the size of clients is: " + clients.size)
       Logger.debug(s"ListActor: Got ADD_ITEM($ack, $contents)")
       val uuidFuture: Future[Item.UUID] = itemService.add(contents, clientId)
       val theSender = sender
