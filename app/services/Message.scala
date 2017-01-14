@@ -23,7 +23,7 @@ case class AuthResponse(status: String, ack: String) extends Response // Authori
 case class FailureResponse(error: String, ack: String) extends Response
 case class UUIDResponse(status: String, uuid: Item.UUID, ack: String) extends Response
 case class GetStateResponse(items: Seq[Item], ack: String) extends Response
-
+case class Ack(ack: String) extends Response // expected response to relayed Actions
 
 // Json format
 object Message {
@@ -75,6 +75,9 @@ object AuthResponse {
 }
 object GetStateResponse {
   implicit val format: OFormat[GetStateResponse] = derived.oformat
+}
+object Ack {
+  implicit val format: OFormat[Ack] = derived.oformat
 }
 object Response {
   implicit val format: OFormat[Response] = derived.oformat

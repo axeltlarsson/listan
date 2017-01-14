@@ -5,14 +5,18 @@ import akka.actor.FSM.Event
 import play.api.libs.json.{Json, JsValue, JsError, JsSuccess}
 import play.Logger
 import scala.concurrent.duration._
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
+import scala.util.{Failure, Success}
+import java.util.concurrent.TimeoutException
 import javax.inject._
-import scala.util.{Success}
 import play.api.Configuration
 import models.{User, Item}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import akka.pattern.pipe
+import akka.pattern.after
 import akka.actor.PoisonPill
+import scala.collection.mutable
+import scala.language.postfixOps
 
 // States in the FSM
 sealed trait State
@@ -28,6 +32,8 @@ class WebSocketActor(
   ws: ActorRef,
   userService: UserService,
   listActor: ActorRef) extends LoggingFSM[State, Data] {
+
+  val ackMap = mutable.Map[String, Promise[Ack]]()
 
   startWith(Unauthenticated, NoData)
   ws ! Json.toJson(AuthRequest(): Message)
@@ -86,6 +92,9 @@ class WebSocketActor(
       val ack = (json \ "ack").asOpt[String]
       json.validate[Message] match {
         case s: JsSuccess[Message] => {
+          json.validate[Ack].foreach(a => {
+            ackMap.remove(a.ack).foreach(_.success(a))
+          })
           Logger.debug("WsActor got msg, sending it further up the chain to ListActor")
           listActor ! s.get
           stay
@@ -103,7 +112,20 @@ class WebSocketActor(
     }
     case Event(a: Action, _) => {
       ws ! Json.toJson(a: Message)
-      // TODO: Require response to the ack, and if not commit suicide
+
+      val ack = Promise[Ack]()
+      ackMap += ((Json.toJson(a: Message) \ "ack").as[String] -> ack)
+      lazy val ackF = ack.future
+      lazy val timeout = after(duration = 5 seconds, using = context.system.scheduler)(
+        Future.failed(new TimeoutException("No Ack provided within 1 second")))
+
+      Future firstCompletedOf Seq(ackF, timeout) onComplete {
+        case Success(x) => Logger.info("ack received within specified time")
+        case Failure(e) => {
+          Logger.warn(e.getMessage)
+          self ! PoisonPill
+        }
+      }
       stay
     }
   }
