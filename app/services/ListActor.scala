@@ -5,7 +5,7 @@ import javax.inject._
 import play.Logger
 import scala.collection.mutable
 import models.{User, Item}
-import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import akka.pattern.pipe
 import scala.util.{Success, Failure}

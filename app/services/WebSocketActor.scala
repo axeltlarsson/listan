@@ -10,7 +10,7 @@ import javax.inject._
 import scala.util.{Success}
 import play.api.Configuration
 import models.{User, Item}
-import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import akka.pattern.pipe
 import akka.actor.PoisonPill
 
@@ -76,7 +76,6 @@ class WebSocketActor(
     case Unauthenticated -> Authenticated =>
       stateData match {
         case _ => {
-          Logger.debug("Subscribing to listActor")
           listActor ! ListActor.Subscribe
         }
       }
@@ -104,6 +103,7 @@ class WebSocketActor(
     }
     case Event(a: Action, _) => {
       ws ! Json.toJson(a: Message)
+      // TODO: Require response to the ack, and if not commit suicide
       stay
     }
   }

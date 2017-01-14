@@ -10,7 +10,7 @@ import play.api.test.Helpers._
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.{bind, Injector}
 import scala.concurrent.{Future, Await}
-import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 import java.sql.Timestamp

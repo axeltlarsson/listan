@@ -85,8 +85,8 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
     "start in state Unauthenticated" in new Automaton {
       fsm.stateName mustBe Unauthenticated
       // This should trigger a warn log message
-      fsm ! Json.toJson(EditItem(uuid = "id", contents = "contents", ack = "123"): Message)
       fsm.stateName mustBe Unauthenticated
+      fsm ! Json.toJson(EditItem(uuid = "id", contents = "contents", ack = "123"): Message)
     }
 
     "reject invalid Auth" in new Automaton {
@@ -96,7 +96,6 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
       mockWsActor.expectMsg(500 millis, Json.toJson(AuthRequest(): Message))
       fsm ! Json.toJson(Auth("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ", "1234"): Message)
       mockWsActor.expectMsg(500 millis, Json.toJson(FailureResponse("Authentication failure", "1234"): Message))
-      fsm.stateName mustBe Unauthenticated
     }
 
     "handle AddItem and DeleteItem" in new Automaton with Authenticated {
