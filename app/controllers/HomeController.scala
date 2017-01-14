@@ -16,10 +16,6 @@ import services.UserService
 @Singleton
 class HomeController @Inject() (userService: UserService)(implicit exec: ExecutionContext) extends Controller with Secured {
 
-  def index = Action {
-    Ok(views.html.index("Your new application is ready."))
-  }
-
   private val loginData: Reads[(String, String)] =
     (JsPath \ "username").read[String] and
     (JsPath \ "password").read[String] tupled
@@ -45,9 +41,5 @@ class HomeController @Inject() (userService: UserService)(implicit exec: Executi
       }
     )
   }
-
-  def privateApi = Authenticated { request =>
-    Ok("This is some secret shit right here, be careful " + request.user)
-  }
-
 }
+

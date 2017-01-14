@@ -4,8 +4,6 @@ import play.api.http.DefaultHttpFilters
 import play.filters.cors.CORSFilter
 import play.api.mvc._
 
-import filters.ExampleFilter
-
 /**
  * This class configures filters that run on every request. This
  * class is queried by Play to get a list of filters.
@@ -22,7 +20,6 @@ import filters.ExampleFilter
 @Singleton
 class Filters @Inject() (
   env: Environment,
-  exampleFilter: ExampleFilter,
   corsFilter: CORSFilter) extends DefaultHttpFilters(corsFilter)
 /*
  *  {
@@ -36,3 +33,4 @@ class Filters @Inject() (
  *
  *}
  */
+// TODO: do not use corsFilter in production?

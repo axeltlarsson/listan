@@ -1,8 +1,7 @@
 import com.google.inject.AbstractModule
 import java.time.Clock
 
-import services.{ApplicationTimer, AtomicCounter, Counter, WebSocketActor,
-  WebSocketActorProvider, ListActor}
+import services.{ApplicationTimer, WebSocketActor, WebSocketActorProvider, ListActor}
 import play.api.{Environment, Configuration}
 import play.api.libs.concurrent.AkkaGuiceSupport
 import models.{UserRepository, SlickUserRepository, ItemRepository, SlickItemRepository}
@@ -25,8 +24,6 @@ class Module(environment: Environment, configuration: Configuration) extends Abs
     // Ask Guice to create an instance of ApplicationTimer when the
     // application starts.
     bind(classOf[ApplicationTimer]).asEagerSingleton()
-    // Set AtomicCounter as the implementation for Counter.
-    bind(classOf[Counter]).to(classOf[AtomicCounter])
     bind(classOf[UserRepository]).to(classOf[SlickUserRepository])
     bind(classOf[ItemRepository]).to(classOf[SlickItemRepository])
 
