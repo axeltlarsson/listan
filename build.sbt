@@ -26,4 +26,4 @@ libraryDependencies ++= Seq(
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 
 javaOptions in Test += "-Dconfig.file=conf/application.test.conf"
-javaOptions in Production += "-Dconfig.file=conf/application.prod.conf"
+javaOptions in Production += "-Dconfig.file=conf/application.prod.conf" // for 'sbt testProd'
