@@ -2,7 +2,14 @@ name := """listan-server"""
 
 version := "1.0-SNAPSHOT"
 
-lazy val root = (project in file(".")).enablePlugins(PlayScala)
+maintainer in Linux := "Axel Larsson <mail@axellarsson.nu>"
+
+packageSummary in Linux := "PlayScala backend of listan"
+
+
+packageDescription := """This is the backend to listan. It is built on top of Scala Play Framework."""
+
+lazy val root = (project in file(".")).enablePlugins(PlayScala, DebianPlugin, JavaServerAppPackaging)
 
 scalaVersion := "2.11.7"
 

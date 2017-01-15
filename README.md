@@ -1,7 +1,7 @@
 Listan-server
 =============
 This is the backend to [listan](https://github.com/AxelTLarsson/listan).
-It is build on top of Scala Play framework, however it relies heavily on akka
+It is built on top of Scala Play framework, however it relies heavily on akka
 for the actor system.
 
 The whole stack is more or less fully asynchronous and mostly functional. Slick
