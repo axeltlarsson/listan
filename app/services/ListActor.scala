@@ -56,8 +56,6 @@ class ListActor @Inject() (itemService: ItemService)
     }
 
     case action @ AddItem(contents, ack, clientId) => {
-      Logger.debug("the size of clients is: " + clients.size)
-      Logger.debug(s"ListActor: Got ADD_ITEM($ack, $contents)")
       val uuidFuture: Future[Item.UUID] = itemService.add(contents, clientId)
       val theSender = sender
       uuidFuture.map {

@@ -95,7 +95,7 @@ class WebSocketActor(
           json.validate[Ack].foreach(a => {
             ackMap.remove(a.ack).foreach(_.success(a))
           })
-          Logger.debug("WsActor got msg, sending it further up the chain to ListActor")
+          Logger.debug(s"WsActor received $json")
           listActor ! s.get
           stay
         }
