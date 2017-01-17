@@ -17,10 +17,6 @@ stop on runlevel [016]
 respawn
 respawn limit 4 20
 
-#pre-start script
-#  [ -d /var/run/${{app_name}} ] || install -m 755 -o ${{daemon_user}} -g ${{daemon_group}} -d /var/run/${{app_name}}
-#end script
-
 # set the working directory of the job processes
 chdir ${{chdir}}
 
