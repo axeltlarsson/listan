@@ -14,7 +14,8 @@ Running
 * `sbt test` for running the tests
 * `sbt run` for running in dev mode
 * `sbt testProd` for running the app locally in production mode
-(application.prod.conf will be used as configuration file)
+(application.prod.conf will be used as configuration file), however do not forget
+to export the required ENV variables `DB_PASSWORD` and `CRYPTO_SECRET`.
 
 
 Architecture
@@ -34,13 +35,19 @@ A custom protocol is used. It is based on the idea of the client sending `Action
 and the server responding with `Response`s and relaying the `Action`s to other
 clients. More details can be found in [`Message.scala`](./app/services/Message.scala).
 
-Deploying
----------
-`DB_PASSWORD` and `CRYPTO_SECRET` environment variables are required.
-`sbt dist` and a zip file will be produced under `target/universal` whose `bin` dir
-will contain a runnable executable (really just a shell script). That can be run
-from the command line, but do not forget to pass in the path to the production
-configuration like so:
+Installing
+----------
+Releases for debian are created with `sbt debian:packageBin`. The resulting .deb file
+is found in `target/listan-server_x.x.x`. These .deb files are also published under
+"Releases" on GitHub.
 
-`./bin/listan-server-1.0.0 -Dconfig.file=../conf/application.prod.conf`
+The only dependency required is Java 8 or later, but unfortunately it is not trivial to
+encode this requirement in the .deb in a satisfactory manner; it it was you would not have
+needed to install Java manually.
+
+Use `dpkg -i listan-server_x.x.x.deb` to install. Currently an upstart script is used and
+you need to somehow provide the required environment variables to the process. In theory,
+this could be done in `/etc/default/listan-server`, unfortunately though that does not work
+for some reason. So the easiest solution is to edit the generated upstart configuration file
+in `/etc/init/listan-server`.
 
