@@ -43,7 +43,6 @@ class SlickUserRepository @Inject()
   }
 
   override def authenticate(name: String, password: String): Future[Option[User]] = {
-    Logger.info(s"authenticate($name, $password)")
     find(name) map {
       case Seq(u) if (password.isBcrypted(u.passwordHash.getOrElse(""))) => Some(u)
       case _ => None

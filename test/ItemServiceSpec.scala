@@ -134,4 +134,24 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject with Before
       Await.result(repo.uncomplete("bogus"), 1 seconds) mustBe 0
     }
   }
+
+  "SlickItemRepository all()" should {
+    "return items sorted by created timestamp" in {
+      val itemsF = for {
+        item1 <- repo.add("1")
+        item2 <- repo.add("2")
+        item3 <- repo.add("3")
+        item4 <- repo.add("4")
+        compl <- repo.complete(item2)
+        items <- repo.all()
+      } yield items
+      val items = Await.result(itemsF, 1 second)
+      items must have length 4
+      items(0).contents mustBe "1"
+      items(1).contents mustBe "2"
+      items(2).contents mustBe "3"
+      items(3).contents mustBe "4"
+    }
+  }
+
 }

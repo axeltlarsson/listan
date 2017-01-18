@@ -57,7 +57,7 @@ class SlickItemRepository @Inject()
     } yield affectedRows)
   }
 
-  override def all(): Future[Seq[Item]] = db.run(items.result)
+  override def all(): Future[Seq[Item]] = db.run(items.sortBy(_.created).result)
 
   private class Items(tag: Tag) extends Table[Item](tag, "items") {
     def uuid = column[String]("uuid", O.PrimaryKey, O.AutoInc)

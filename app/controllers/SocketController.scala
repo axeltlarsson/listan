@@ -22,17 +22,17 @@ class SocketController @Inject() (
 
   def connect = WebSocket.acceptOrResult[JsValue, JsValue] {
     case requestHeader if sameOriginCheck(requestHeader) => {
-      Future.successful(Right(ActorFlow.actorRef(out => provider.props(out))))
+      Future.successful(Right(ActorFlow.actorRef(out => provider.props(out, ipAddress = requestHeader.remoteAddress))))
     }
     case rejected =>
       Logger.error(s"Request $rejected failed same origin check")
-      Future.successful(Left(Forbidden("forbidden")))  
+      Future.successful(Left(Forbidden("forbidden")))
   }
 
   def sameOriginCheck(requestHeader: RequestHeader): Boolean = {
     requestHeader.headers.get("Origin") match {
       case Some(originValue) if originMatches(originValue) =>
-        Logger.debug(s"originCheck: originValue = $originValue")
+        Logger.debug(s"[${requestHeader.remoteAddress}] originCheck: originValue = $originValue")
         true
       case Some(badOrigin) =>
         /*Logger.error(
@@ -41,7 +41,7 @@ class SocketController @Inject() (
         true // remember to change to false in production so to speak
       case None =>
         Logger.error(
-          "originCheck: rejecting request because no Origin header found")
+         s"[${requestHeader.remoteAddress}] originCheck: rejecting request because no Origin header found")
         false
     }
   }

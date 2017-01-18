@@ -31,7 +31,8 @@ case class UserData(user: User) extends Data
 class WebSocketActor(
   ws: ActorRef,
   userService: UserService,
-  listActor: ActorRef) extends LoggingFSM[State, Data] {
+  listActor: ActorRef,
+  ipAddress: String) extends LoggingFSM[State, Data] {
 
   val ackMap = mutable.Map[String, Promise[Ack]]()
 
@@ -59,7 +60,7 @@ class WebSocketActor(
             }
             case _ => {
               val msg = "Invalid message at this state (Unauthenticated)"
-              Logger.warn(msg)
+              Logger.warn(s"[$ipAddress] $msg")
               ws ! Json.toJson(FailureResponse(msg, ack.getOrElse("NO_ACK_PROVIDED")): Message)
               self ! PoisonPill
               stay
@@ -68,7 +69,7 @@ class WebSocketActor(
         }
         case e: JsError => {
           val msg = s"Could not validate json ($json) as Message"
-          Logger.error(msg)
+          Logger.error(s"[$ipAddress] $msg")
           ws ! Json.toJson(FailureResponse(msg, ack.getOrElse("NO_ACK_PROVIDED")): Message)
           self ! PoisonPill
           stay
@@ -82,6 +83,7 @@ class WebSocketActor(
     case Unauthenticated -> Authenticated =>
       stateData match {
         case _ => {
+          Logger.info(s"[$ipAddress] authenticated WebSocket")
           listActor ! ListActor.Subscribe
         }
       }
@@ -95,12 +97,12 @@ class WebSocketActor(
           json.validate[Ack].foreach(a => {
             ackMap.remove(a.ack).foreach(_.success(a))
           })
-          Logger.debug(s"WsActor received $json")
+          Logger.debug(s"[$ipAddress] received $json")
           listActor ! s.get
           stay
         }
         case e: JsError => {
-          Logger.error("Could not validate json as Message")
+          Logger.error(s"[$ipAddress] Could not validate json as Message")
           ws ! Json.toJson(FailureResponse("Invalid message", ack.getOrElse("NO_ACK_PROVIDED")): Message)
           self ! PoisonPill
           stay
@@ -120,9 +122,9 @@ class WebSocketActor(
         Future.failed(new TimeoutException("No Ack provided within 1 second")))
 
       Future firstCompletedOf Seq(ackF, timeout) onComplete {
-        case Success(x) => Logger.info("ack received within specified time")
+        case Success(x) => Logger.debug(s"[$ipAddress] ack received within specified time")
         case Failure(e) => {
-          Logger.warn(e.getMessage)
+          Logger.debug(s"[$ipAddress] Committing suicide: e.getMessage")
           self ! PoisonPill
         }
       }
@@ -132,15 +134,16 @@ class WebSocketActor(
 
   override def postStop() = {
     listActor ! ListActor.Unsubscribe
-    Logger.info("WS closed")
+    Logger.info(s"[$ipAddress] closed WebSocket")
   }
 }
 
 @Singleton
 class WebSocketActorProvider @Inject() (
   userService: UserService,
-  @Named("list-actor") listActor: ActorRef) {
+  @Named("list-actor") listActor: ActorRef,
+  remoteAddress: String) {
 
-  def props(ws: ActorRef) = Props(new WebSocketActor(ws, userService, listActor))
-  def get(ws: ActorRef) = new WebSocketActor(ws, userService, listActor)
+  def props(ws: ActorRef, ipAddress: String) = Props(new WebSocketActor(ws, userService, listActor, ipAddress))
+  def get(ws: ActorRef, ipAddress: String) = new WebSocketActor(ws, userService, listActor, ipAddress)
 }
