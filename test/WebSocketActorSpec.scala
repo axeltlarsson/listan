@@ -31,14 +31,14 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
       val userService = injector.instanceOf[UserService]
       val listActor: ActorRef = injector.instanceOf(BindingKey(classOf[ActorRef]).qualifiedWith("list-actor"))
       val mockWsActor = TestProbe()
-      val wsActorProvider: WebSocketActorProvider = new WebSocketActorProvider(userService, listActor)
-      val fsm = TestFSMRef(wsActorProvider.get(mockWsActor.ref))
+      val wsActorProvider = new WebSocketActorProvider(userService, listActor, ipAddress = "test-ip")
+      val fsm = TestFSMRef(wsActorProvider.get(mockWsActor.ref, ipAddress = "test-ip"))
   }
 
   trait ExtraClient {
     self: Automaton =>
     val mockWsActor2 = TestProbe()
-    val fsm2 = TestFSMRef(wsActorProvider.get(mockWsActor2.ref))
+    val fsm2 = TestFSMRef(wsActorProvider.get(mockWsActor2.ref, ipAddress = "test-ip2"))
     mockWsActor2.expectMsg(500 millis, Json.toJson(AuthRequest(): Message))
     fsm2 ! Json.toJson(Auth(token, "12345"): Message)
     mockWsActor2.expectMsg(500 millis, Json.toJson(AuthResponse("Authentication success", "12345"): Message))

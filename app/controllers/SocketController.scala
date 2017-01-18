@@ -22,7 +22,9 @@ class SocketController @Inject() (
 
   def connect = WebSocket.acceptOrResult[JsValue, JsValue] {
     case requestHeader if sameOriginCheck(requestHeader) => {
-      Future.successful(Right(ActorFlow.actorRef(out => provider.props(out, ipAddress = requestHeader.remoteAddress))))
+      val realIp = requestHeader.headers.get("X-Real-IP").getOrElse(requestHeader.remoteAddress)
+      Logger.info(s"[$realIp] is ${requestHeader.headers.get("User-Agent").getOrElse("unknown")}")
+      Future.successful(Right(ActorFlow.actorRef(out => provider.props(out, ipAddress = realIp))))
     }
     case rejected =>
       Logger.error(s"Request $rejected failed same origin check")

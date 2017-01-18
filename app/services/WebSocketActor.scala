@@ -142,7 +142,7 @@ class WebSocketActor(
 class WebSocketActorProvider @Inject() (
   userService: UserService,
   @Named("list-actor") listActor: ActorRef,
-  remoteAddress: String) {
+  ipAddress: String) {
 
   def props(ws: ActorRef, ipAddress: String) = Props(new WebSocketActor(ws, userService, listActor, ipAddress))
   def get(ws: ActorRef, ipAddress: String) = new WebSocketActor(ws, userService, listActor, ipAddress)
