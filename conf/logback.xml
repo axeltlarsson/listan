@@ -32,7 +32,7 @@
   <logger name="services.WebSocketActor" level="INFO" />
 
   <logger name="slick.jdbc" level="INFO"/>
-  <logger name="com.zaxxer.hikari" level="INFO/>
+  <logger name="com.zaxxer.hikari" level="INFO"/>
 
   <!-- Off these ones as they are annoying, and anyway we manage configuration ourselves -->
   <logger name="com.avaje.ebean.config.PropertyMapLoader" level="OFF" />
