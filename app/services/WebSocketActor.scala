@@ -97,11 +97,12 @@ class WebSocketActor(
           json.validate[Ack].foreach(a => {
             ackMap.remove(a.ack).foreach(_.success(a))
           })
-          Logger.debug(s"[$ipAddress] received $json")
-          if ((json \ "type").as[String] == "Ping")
+          if ((json \ "type").as[String] == "Ping") {
             ws ! Json.toJson(Pong(ack = ack.get): Message)
-          else
+          } else {
+            Logger.debug(s"[$ipAddress] received $json")
             listActor ! s.get
+          }
           stay
         }
         case e: JsError => {
