@@ -1,6 +1,6 @@
 name := """listan-server"""
 
-version := "1.0.3"
+version := "1.0.4"
 
 maintainer in Linux := "Axel Larsson <mail@axellarsson.nu>"
 
