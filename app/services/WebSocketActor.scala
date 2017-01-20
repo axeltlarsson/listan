@@ -98,7 +98,10 @@ class WebSocketActor(
             ackMap.remove(a.ack).foreach(_.success(a))
           })
           Logger.debug(s"[$ipAddress] received $json")
-          listActor ! s.get
+          if ((json \ "type").as[String] == "Ping")
+            ws ! Json.toJson(Pong(ack = ack.get): Message)
+          else
+            listActor ! s.get
           stay
         }
         case e: JsError => {

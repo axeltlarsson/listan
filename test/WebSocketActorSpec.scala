@@ -118,6 +118,16 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
         case JsError(errors) => fail("Could not validate JSON as Message")
       }
     }
+
+    "respond to Ping with Pong" in new Automaton with Authenticated {
+      fsm ! Json.toJson(Ping(ack = "pong-me"): Message)
+      val pongAck = for {
+        pong <- Option(mockWsActor.receiveOne(500 millis)).map(_.asInstanceOf[JsObject])
+        p <- pong.validate[Pong].asOpt
+      } yield p.ack
+      pongAck mustBe defined
+      pongAck.get mustBe "pong-me"
+    }
   }
 
   "System with multiple clients" should {

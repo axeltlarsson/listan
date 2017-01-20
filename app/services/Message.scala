@@ -9,6 +9,7 @@ import models.Item
 sealed trait Message
 case class Auth(token: String, ack: String) extends Message
 case class AuthRequest() extends Message
+case class Ping(ack: String) extends Message
 
 sealed trait Action extends Message
 case class AddItem(contents: String, ack: String, uuid: Option[String] = None) extends Action // uuid for relayed msg
@@ -24,6 +25,7 @@ case class FailureResponse(error: String, ack: String) extends Response
 case class UUIDResponse(status: String, uuid: Item.UUID, ack: String) extends Response
 case class GetStateResponse(items: Seq[Item], ack: String) extends Response
 case class Ack(ack: String) extends Response // expected response to relayed Actions
+case class Pong(ack: String) extends Response
 
 // Json format
 object Message {
@@ -38,6 +40,9 @@ object Auth {
 }
 object AuthRequest {
   implicit val format: OFormat[AuthRequest] = derived.oformat
+}
+object Ping {
+  implicit val format: OFormat[Ping] = derived.oformat
 }
 
 // Actions
@@ -78,6 +83,9 @@ object GetStateResponse {
 }
 object Ack {
   implicit val format: OFormat[Ack] = derived.oformat
+}
+object Pong {
+  implicit val format: OFormat[Pong] = derived.oformat
 }
 object Response {
   implicit val format: OFormat[Response] = derived.oformat

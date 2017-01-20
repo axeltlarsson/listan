@@ -21,6 +21,12 @@ class MessageSpec extends PlaySpec with OneAppPerTest {
     "Auth be" in {
       jsonSerializable(Auth(token = "eyJ0e...", ack = "12345..")) mustBe true
     }
+    "AuthRequest be" in {
+      jsonSerializable(AuthRequest()) mustBe true
+    }
+    "Ping be" in {
+      jsonSerializable(Ping(ack = "sldjf-234s-sdf")) mustBe true
+    }
     // Actions
     "AddItem be" in {
       jsonSerializable(AddItem(contents = "mjölk", ack = "123")) mustBe true
@@ -53,6 +59,9 @@ class MessageSpec extends PlaySpec with OneAppPerTest {
     }
     "GetStateResponse be" in {
       jsonSerializable(GetStateResponse(items = Seq(Item("mjölk"), Item("filmjölk")), ack = "123")) mustBe true
+    }
+    "Pong be" in {
+      jsonSerializable(Pong(ack = "lk2j3lj")) mustBe true
     }
   }
 }
