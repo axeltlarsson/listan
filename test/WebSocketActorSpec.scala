@@ -13,12 +13,13 @@ import akka.pattern.ask
 import akka.stream.Materializer
 import javax.inject._
 import play.api.mvc._
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import play.api.inject._
 import play.api.Configuration
 import models.{User, UserRepository}
 import scala.language.postfixOps
 import play.api.Logger
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
   implicit val system = ActorSystem("sys")
@@ -49,22 +50,26 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
     if (token == "") {
       fsm.stateName mustBe Unauthenticated
       // Get the token by calling /api/login with creds
-      val controller = injector.instanceOf[HomeController]
       val repo = injector.instanceOf[UserRepository]
+      val controller = injector.instanceOf[HomeController]
 
-      repo.insert(User.create("axel", "whatever"))
+      val existsAlready = Await.result(repo.all(), 500 millis).length > 0
+      if (!existsAlready)
+        Await.result(repo.insert(User.create("axel", "whatever")), 500 millis)
+
       val json = Json.parse("""
-      {
-        "username": "axel",
-        "password": "whatever"
-      }
-      """)
+        {
+          "username": "axel",
+          "password": "whatever"
+        }
+        """)
+
       val req = new FakeRequest(
         uri = "/api/login",
         method = "POST",
         headers = FakeHeaders(Seq("Content-type"-> "application/json")),
         body = json
-        )
+      )
       val Some(res) = route(app, req)
       status(res) mustEqual OK
       token = headers(res).get("Authorization").get.split("Bearer ")(1)

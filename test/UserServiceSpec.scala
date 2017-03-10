@@ -50,11 +50,11 @@ class UserServiceSpec extends PlaySpec with MockitoSugar  {
   "SlickUserRepository" should {
     "work with a test db" in new Inject {
       val repo = inject[UserRepository]
-      val user = User.create("axel", "password")
+      val user = User.create("axel", "whatever")
       repo.insert(user)
       val usersInDb = Await.result(repo.all(), 1 seconds)
       usersInDb(0).name mustBe "axel"
-      usersInDb(0).passwordHash must not be Some("password") // should be hashed duh
+      usersInDb(0).passwordHash must not be Some("whatever") // should be hashed duh
     }
   }
 }
