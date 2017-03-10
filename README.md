@@ -1,5 +1,4 @@
-Listan-server
-=============
+# Listan-server
 This is the backend to [listan](https://github.com/AxelTLarsson/listan).
 It is built on top of Scala Play framework, however it relies heavily on akka
 for the actor system.
@@ -9,17 +8,21 @@ is used as the database layer. Guice is used for dependency injection. This make
 it easy to write good tests and mock out specific modules. Akka provides rather good
 testing tools that is invaluable when testing the actor system.
 
-Running
--------
+## Running
 * `sbt test` for running the tests
 * `sbt run` for running in dev mode
 * `sbt testProd` for running the app locally in production mode
 (application.prod.conf will be used as configuration file), however do not forget
 to export the required ENV variables `DB_PASSWORD` and `CRYPTO_SECRET`.
+### Docker
+`sbt dist`
+
+`docker build -t listan-server .`
+
+`docker run -it --rm -p 9000:9000 listan-server -Dconfig.file=conf/application.conf`.
 
 
-Architecture
-------------
+## Architecture
 The backend consists of two routes: /api/login and /api/ws. The /api/login route
 accepts a `POST` with keys `username` and `password`. If the correct credentials
 are given a `JSON` response with a header `Authorization: Bearer <token>`
@@ -29,14 +32,12 @@ The route /api/ws accepts WebSocket connections and requires that the client
 provides a valid JWT token (as required from /api/login). Each WebSocket
 connection is maintained by an akka actor.
 
-WebSocket Protocol
-------------------
+### WebSocket Protocol
 A custom protocol is used. It is based on the idea of the client sending `Action`s
 and the server responding with `Response`s and relaying the `Action`s to other
 clients. More details can be found in [`Message.scala`](./app/services/Message.scala).
 
-Installing
-----------
+## Installing
 Releases for debian are created with `sbt debian:packageBin`. The resulting .deb file
 is found in `target/listan-server_x.x.x`. These .deb files are also published under
 "Releases" on GitHub.
@@ -51,3 +52,18 @@ this could be done in `/etc/default/listan-server`, unfortunately though that do
 for some reason. So the easiest solution is to edit the generated upstart configuration file
 in `/etc/init/listan-server`.
 
+### Docker
+First setup a database (Docker for that coming soon).
+
+`sbt dist`
+
+`docker build -t listan-server`
+
+```docker
+docker create --name listan-server \
+-e DB_URL=<database url, e.g. localhost/listan> \
+-e DB_USER=<database username> \
+-e DB_PASSWORD=<database password> \
+-e CRYPTO_SECRET=<crypto secret> \
+listan-server
+```
