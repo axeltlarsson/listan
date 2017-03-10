@@ -5,6 +5,7 @@ RUN unzip listan-server-1.0.4.zip
 
 ENV DB_URL=localhost/listan \
     DB_USER=listan \
+    DB_PASSWORD=pasword \
     CRYPTO_SECRET=changeme
 
 ENV PATH=/listan-server-1.0.4:$PATH

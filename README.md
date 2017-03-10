@@ -53,17 +53,35 @@ for some reason. So the easiest solution is to edit the generated upstart config
 in `/etc/init/listan-server`.
 
 ### Docker
-First setup a database (Docker for that coming soon).
-
 `sbt dist`
+
+Make `DB_PASSWORD` and `CRYPTO_SECRET` available to the shell before continuing:
+
+Then: `docker-compose create` or:
 
 `docker build -t listan-server`
 
-```docker
+`docker network create listan-net`
+
+```shell
+docker create --name listan-mysql \
+-e MYSQL_RANDOM_ROOT_PASSWORD=yes \
+-e MYSQL_DATABASE=listan \
+-e MYSQL_USER=listan \
+-e MYSQL_PASSWORD=$DB_PASSWORD \
+--network listan-net \
+mysql
+```
+
+```shell
 docker create --name listan-server \
--e DB_URL=<database url, e.g. localhost/listan> \
--e DB_USER=<database username> \
--e DB_PASSWORD=<database password> \
--e CRYPTO_SECRET=<crypto secret> \
+-e DB_URL=listan-mysql/listan \
+-e DB_USER=listan \
+-e DB_PASSWORD=$DB_PASSWORD \
+-e CRYPTO_SECRET=$CRYPTO_SECRET \
+--network listan-net \
 listan-server
 ```
+
+Then you can start the services with `docker start listan-mysql listan-server`.
+
