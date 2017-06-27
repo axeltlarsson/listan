@@ -10,7 +10,7 @@ testing tools that is invaluable when testing the actor system.
 
 ## Running
 * `sbt test` for running the tests
-* `sbt run` for running in dev mode
+* `sbt run` for running in dev mode (default dev user auth is `axel:whatever`)
 * `sbt testProd` for running the app locally in production mode
 (application.prod.conf will be used as configuration file), however do not forget
 to export the required ENV variables `DB_PASSWORD` and `CRYPTO_SECRET`.

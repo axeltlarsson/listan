@@ -15,8 +15,8 @@ class UserService @Inject() (userRepo: UserRepository, configuration: Configurat
 
   def authenticate(token: String): Option[User] = {
     for {
-      key <- configuration.getString("play.crypto.secret")
-      decoded <- JwtJson.decodeJson(token, key, Seq(JwtAlgorithm.HmacSHA256)).toOption
+      key <- configuration.getOptional[String]("play.http.secret.key")
+      decoded <- JwtJson.decodeJson(token, key, Seq(JwtAlgorithm.HS256)).toOption
       user <- (decoded \ "user").validate[User].asOpt
     } yield user
   }

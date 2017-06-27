@@ -9,12 +9,13 @@ import scala.concurrent.{ExecutionContext, Future}
 import play.Logger
 import scala.language.postfixOps
 import pdi.jwt._
+import pdi.jwt.JwtSession._
 
 import models.User
 import services.UserService
 
 @Singleton
-class HomeController @Inject() (userService: UserService)(implicit exec: ExecutionContext) extends Controller with Secured {
+class HomeController @Inject() (userService: UserService)(implicit ec: ExecutionContext) extends Controller {
 
   private val loginData: Reads[(String, String)] =
     (JsPath \ "username").read[String] and

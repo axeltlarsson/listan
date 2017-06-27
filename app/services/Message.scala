@@ -2,6 +2,7 @@ package services
 
 import play.api.libs.json._
 import julienrf.json.derived
+import julienrf.json.derived.NameAdapter
 import models.Item
 
 // The algebraic data type presentation of messages
@@ -36,57 +37,57 @@ object Message {
 }
 
 object Auth {
-  implicit val format: OFormat[Auth] = derived.oformat
+  implicit val format: OFormat[Auth] = derived.oformat(NameAdapter.identity)
 }
 object AuthRequest {
-  implicit val format: OFormat[AuthRequest] = derived.oformat
+  implicit val format: OFormat[AuthRequest] = derived.oformat(NameAdapter.identity)
 }
 object Ping {
-  implicit val format: OFormat[Ping] = derived.oformat
+  implicit val format: OFormat[Ping] = derived.oformat(NameAdapter.identity)
 }
 
 // Actions
 object EditItem {
-  implicit val format: OFormat[EditItem] = derived.oformat
+  implicit val format: OFormat[EditItem] = derived.oformat(NameAdapter.identity)
 }
 object AddItem {
-  implicit val format: OFormat[AddItem] = derived.oformat
+  implicit val format: OFormat[AddItem] = derived.oformat(NameAdapter.identity)
 }
 object CompleteItem {
- implicit val format: OFormat[CompleteItem] = derived.oformat
+ implicit val format: OFormat[CompleteItem] = derived.oformat(NameAdapter.identity)
 }
 object UncompleteItem {
- implicit val format: OFormat[UncompleteItem] = derived.oformat
+ implicit val format: OFormat[UncompleteItem] = derived.oformat(NameAdapter.identity)
 }
 object DeleteItem {
-  implicit val format: OFormat[DeleteItem] = derived.oformat
+  implicit val format: OFormat[DeleteItem] = derived.oformat(NameAdapter.identity)
 }
 object GetState {
- implicit val format: OFormat[GetState] = derived.oformat
+ implicit val format: OFormat[GetState] = derived.oformat(NameAdapter.identity)
 }
 object Action {
-  implicit val format: OFormat[Action] = derived.oformat
+  implicit val format: OFormat[Action] = derived.oformat(NameAdapter.identity)
 }
 
 // Responses
 object FailureResponse {
-  implicit val format: OFormat[FailureResponse] = derived.oformat
+  implicit val format: OFormat[FailureResponse] = derived.oformat(NameAdapter.identity)
 }
 object UUIDResponse {
-  implicit val format: OFormat[UUIDResponse] = derived.oformat
+  implicit val format: OFormat[UUIDResponse] = derived.oformat(NameAdapter.identity)
 }
 object AuthResponse {
-  implicit val format: OFormat[AuthResponse] = derived.oformat
+  implicit val format: OFormat[AuthResponse] = derived.oformat(NameAdapter.identity)
 }
 object GetStateResponse {
-  implicit val format: OFormat[GetStateResponse] = derived.oformat
+  implicit val format: OFormat[GetStateResponse] = derived.oformat(NameAdapter.identity)
 }
 object Ack {
-  implicit val format: OFormat[Ack] = derived.oformat
+  implicit val format: OFormat[Ack] = derived.oformat(NameAdapter.identity)
 }
 object Pong {
-  implicit val format: OFormat[Pong] = derived.oformat
+  implicit val format: OFormat[Pong] = derived.oformat(NameAdapter.identity)
 }
 object Response {
-  implicit val format: OFormat[Response] = derived.oformat
+  implicit val format: OFormat[Response] = derived.oformat(NameAdapter.identity)
 }

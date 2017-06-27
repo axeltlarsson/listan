@@ -1,6 +1,6 @@
 name := """listan-server"""
 
-version := "1.0.4"
+version := "1.1.0"
 
 maintainer in Linux := "Axel Larsson <mail@axellarsson.nu>"
 
@@ -10,23 +10,24 @@ packageDescription := """This is the backend to listan. It is built on top of Sc
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala, DebianPlugin, JavaServerAppPackaging)
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.12.2"
 
 libraryDependencies ++= Seq(
-  cache,
+  ehcache,
   ws,
-  "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % Test,
-  "com.pauldijou" %% "jwt-play" % "0.8.0",
-  "com.pauldijou" %% "jwt-play-json" % "0.8.0",
-  "org.julienrf" %% "play-json-derived-codecs" % "3.3",
-  "com.typesafe.akka" %% "akka-testkit" % "2.4.9",
-  "org.mockito" % "mockito-core" % "2.0.0-beta.118",
-  "com.typesafe.play" %% "play-slick" % "2.0.0",
-  "com.typesafe.play" %% "play-slick-evolutions" % "2.0.0",
-  "com.h2database" % "h2" % "1.4.192",
-  "mysql" % "mysql-connector-java" % "5.1.34",
-  "com.github.t3hnar" %% "scala-bcrypt" % "3.0",
-  filters
+  "org.scalatestplus.play" %% "scalatestplus-play" % "3.0.0" % Test,
+  "com.pauldijou" %% "jwt-play" % "0.13.0",
+  "com.pauldijou" %% "jwt-play-json" % "0.13.0",
+  "org.julienrf" %% "play-json-derived-codecs" % "4.0.0-RC1",
+  "com.typesafe.akka" %% "akka-testkit" % "2.5.3",
+  "org.mockito" % "mockito-core" % "2.8.47" % Test,
+  "com.typesafe.play" %% "play-slick" % "3.0.0",
+  "com.typesafe.play" %% "play-slick-evolutions" % "3.0.0",
+  "com.h2database" % "h2" % "1.4.196",
+  "mysql" % "mysql-connector-java" % "5.1.42",
+  "com.github.t3hnar" %% "scala-bcrypt" % "3.1",
+  filters,
+  guice
 )
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
