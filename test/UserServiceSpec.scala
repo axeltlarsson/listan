@@ -1,26 +1,16 @@
 import org.scalatestplus.play._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.mockito.Mockito._
-import org.mockito.Matchers._
-import org.scalatest._
 
-import play.api.test._
-import play.api.test.Helpers._
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.inject.{bind, Injector}
-import play.api.Configuration
+import play.api.inject.bind
 import scala.concurrent.{Future, Await}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
-import play.api.db.slick.DatabaseConfigProvider
-
-import play.api.inject.BindingKey
-import play.api.inject.QualifierInstance
-import play.db.NamedDatabaseImpl
 
 
-import models.{User, UserRepository, SlickUserRepository}
+import models.{User, UserRepository}
 import services.{UserService}
 
 class UserServiceSpec extends PlaySpec with MockitoSugar  {

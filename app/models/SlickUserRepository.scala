@@ -2,17 +2,11 @@ package models
 import javax.inject._
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.db.slick.HasDatabaseConfigProvider
-import play.api.db.slick.NamedDatabaseConfigProvider
-import play.api.db.slick._
-import play.db.NamedDatabase
-import slick.driver.JdbcProfile
-import scala.concurrent.{Future, Await}
-import scala.concurrent.duration.DurationInt
+import slick.jdbc.JdbcProfile
+import scala.concurrent.Future
 import scala.language.postfixOps
 import java.sql.Timestamp
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Success, Failure}
-import play.Logger
 import com.github.t3hnar.bcrypt._
 
 @Singleton
@@ -20,7 +14,7 @@ class SlickUserRepository @Inject()
     (protected val dbConfigProvider: DatabaseConfigProvider)
     extends HasDatabaseConfigProvider[JdbcProfile] with UserRepository {
 
-  import driver.api._
+  import profile.api._
 
   private val users = TableQuery[UsersTable]
 

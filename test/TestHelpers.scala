@@ -1,5 +1,4 @@
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.inject.Injector
 import scala.reflect.ClassTag
 
 trait Inject {

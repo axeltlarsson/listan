@@ -4,22 +4,16 @@ import play.api.test.Helpers._
 import play.api.libs.json._
 import akka.testkit.TestFSMRef
 import akka.actor._
-import akka.testkit.{TestActorRef, TestProbe}
+import akka.testkit.{TestProbe}
 import scala.concurrent.duration._
 import services._
 import controllers.HomeController
 import akka.actor.ActorSystem
-import akka.pattern.ask
-import akka.stream.Materializer
-import javax.inject._
 import play.api.mvc._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await}
 import play.api.inject._
-import play.api.Configuration
 import models.{User, UserRepository}
 import scala.language.postfixOps
-import play.api.Logger
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
   implicit val system = ActorSystem("sys")
@@ -64,7 +58,7 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
         }
         """)
 
-      val req = new FakeRequest(
+      val req = FakeRequest(
         uri = "/api/login",
         method = "POST",
         headers = FakeHeaders(Seq("Content-type"-> "application/json")),
