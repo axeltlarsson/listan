@@ -2,13 +2,16 @@ package services
 
 import akka.actor._
 import javax.inject._
+
 import play.Logger
+
 import scala.collection.mutable
-import models.{User, Item}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import scala.concurrent.Future
+import models.{Item, User}
+
+import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern.pipe
-import scala.util.{Success, Failure}
+
+import scala.util.{Failure, Success}
 
 object ListActor {
   // Used by WebSocketActor to add itself to list of clients
@@ -20,9 +23,9 @@ object ListActor {
 }
 
 @Singleton
-class ListActor @Inject() (itemService: ItemService)
-  extends Actor {
-
+class ListActor @Inject()(itemService: ItemService)
+                         (implicit ec: ExecutionContext)
+                          extends Actor {
   import ListActor._
 
   val clients: mutable.Set[ActorRef] = mutable.Set[ActorRef]()
@@ -69,11 +72,9 @@ class ListActor @Inject() (itemService: ItemService)
     case action @ EditItem(uuid, contents, ack) => {
       val rowsFuture: Future[Int] = itemService.edit(uuid, contents)
       val theSender = sender
-      rowsFuture.map { rows =>
-        rows match {
-          case 1 => SuccessfulAction(action, UUIDResponse("Edited item", uuid, ack), theSender)
-          case 0 => FailedAction(FailureResponse("Could not find item to edit", ack), theSender)
-        }
+      rowsFuture.map{
+        case 1 => SuccessfulAction(action, UUIDResponse("Edited item", uuid, ack), theSender)
+        case 0 => FailedAction(FailureResponse("Could not find item to edit", ack), theSender)
       }.recover {
         case e => failureAction(e, ack, theSender)
       } pipeTo self
@@ -108,11 +109,9 @@ class ListActor @Inject() (itemService: ItemService)
    case action @ DeleteItem(uuid, ack) => {
      val rowsFuture: Future[Int] = itemService.delete(uuid)
      val theSender = sender
-     rowsFuture.map { rows =>
-       rows match {
-         case 1 => SuccessfulAction(action, UUIDResponse("Deleted item", uuid, ack), theSender)
-         case 0 => FailedAction(FailureResponse("Could not find item to delete", ack), theSender)
-       }
+     rowsFuture.map{
+       case 1 => SuccessfulAction(action, UUIDResponse("Deleted item", uuid, ack), theSender)
+       case 0 => FailedAction(FailureResponse("Could not find item to delete", ack), theSender)
      }.recover {
        case e => failureAction(e, ack, theSender)
      } pipeTo self

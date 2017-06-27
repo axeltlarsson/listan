@@ -1,20 +1,19 @@
 package services
 
 import akka.actor._
-import akka.actor.FSM.Event
-import play.api.libs.json.{Json, JsValue, JsError, JsSuccess}
+import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
 import play.Logger
+
 import scala.concurrent.duration._
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success}
 import java.util.concurrent.TimeoutException
 import javax.inject._
-import play.api.Configuration
-import models.{User, Item}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import akka.pattern.pipe
+
+import models.User
 import akka.pattern.after
 import akka.actor.PoisonPill
+
 import scala.collection.mutable
 import scala.language.postfixOps
 
@@ -28,11 +27,9 @@ sealed trait Data
 case object NoData extends Data
 case class UserData(user: User) extends Data
 
-class WebSocketActor(
-  ws: ActorRef,
-  userService: UserService,
-  listActor: ActorRef,
-  ipAddress: String) extends LoggingFSM[State, Data] {
+class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor: ActorRef, ipAddress: String)
+                              (implicit ec: ExecutionContext)
+                              extends LoggingFSM[State, Data] {
 
   val ackMap = mutable.Map[String, Promise[Ack]]()
 
@@ -143,10 +140,9 @@ class WebSocketActor(
 }
 
 @Singleton
-class WebSocketActorProvider @Inject() (
-  userService: UserService,
-  @Named("list-actor") listActor: ActorRef,
-  ipAddress: String) {
+class WebSocketActorProvider @Inject()(userService: UserService, @Named("list-actor") listActor: ActorRef,
+                                       ipAddress: String)
+                                      (implicit ec: ExecutionContext) {
 
   def props(ws: ActorRef, ipAddress: String) = Props(new WebSocketActor(ws, userService, listActor, ipAddress))
   def get(ws: ActorRef, ipAddress: String) = new WebSocketActor(ws, userService, listActor, ipAddress)

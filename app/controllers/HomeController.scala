@@ -15,7 +15,9 @@ import models.User
 import services.UserService
 
 @Singleton
-class HomeController @Inject() (userService: UserService)(implicit ec: ExecutionContext) extends Controller {
+class HomeController @Inject()(cc: ControllerComponents, userService: UserService)
+                              (implicit ec: ExecutionContext)
+                              extends AbstractController(cc) {
 
   private val loginData: Reads[(String, String)] =
     (JsPath \ "username").read[String] and

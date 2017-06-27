@@ -15,10 +15,11 @@ import play.api.libs.json.{JsValue}
 import services.{WebSocketActorProvider}
 
 @Singleton
-class SocketController @Inject() (
-  implicit sys: ActorSystem,
-  mat: Materializer,
-  provider: WebSocketActorProvider) extends Controller {
+class SocketController @Inject()(cc: ControllerComponents)
+                                (implicit sys: ActorSystem,
+                                 mat: Materializer,
+                                 provider: WebSocketActorProvider)
+                                extends AbstractController(cc) {
 
   def connect = WebSocket.acceptOrResult[JsValue, JsValue] {
     case requestHeader if sameOriginCheck(requestHeader) => {

@@ -1,16 +1,18 @@
 package models
 import javax.inject._
+
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.db.slick.HasDatabaseConfigProvider
 import slick.jdbc.JdbcProfile
-import scala.concurrent.Future
+
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 import java.sql.Timestamp
-import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton
 class SlickItemRepository @Inject()
     (protected val dbConfigProvider: DatabaseConfigProvider)
+    (implicit ec: ExecutionContext)
     extends HasDatabaseConfigProvider[JdbcProfile] with ItemRepository {
 
   import profile.api._
