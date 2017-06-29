@@ -1,12 +1,10 @@
 import org.scalatestplus.play._
-import play.api.test._
-import play.api.test.Helpers._
 import services._
 import play.api.libs.json._
-import play.api.Logger
 import models.Item
+import org.scalatestplus.play.guice.GuiceOneAppPerTest
 
-class MessageSpec extends PlaySpec with OneAppPerTest {
+class MessageSpec extends PlaySpec with GuiceOneAppPerTest {
 
   def jsonSerializable(msg: Message): Boolean = {
     val json = Json.toJson(msg)

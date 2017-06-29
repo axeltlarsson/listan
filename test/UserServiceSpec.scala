@@ -1,28 +1,27 @@
 import org.scalatestplus.play._
 import org.scalatest.mockito.MockitoSugar
 import org.mockito.Mockito._
-
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.bind
-import scala.concurrent.{Future, Await}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
+
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
-
-
 import models.{User, UserRepository}
-import services.{UserService}
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+import services.UserService
 
 class UserServiceSpec extends PlaySpec with MockitoSugar  {
 
   trait MockUserRepo {
     val mockUserRepo = mock[UserRepository]
-    when(mockUserRepo.authenticate("axel", "password")) thenReturn Future{Some(User("axel"))}
-    when(mockUserRepo.authenticate("axel", "wrong")) thenReturn Future{None}
     val app = new GuiceApplicationBuilder()
       .overrides(bind[UserRepository].toInstance(mockUserRepo))
       .build
     val userService = app.injector.instanceOf[UserService]
+    implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
+    when(mockUserRepo.authenticate("axel", "password")) thenReturn Future{Some(User("axel"))}
+    when(mockUserRepo.authenticate("axel", "wrong")) thenReturn Future{None}
   }
 
   "UserService#authenticate" should {

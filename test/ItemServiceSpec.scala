@@ -1,24 +1,17 @@
 import org.scalatestplus.play._
-import org.scalatest.mock.MockitoSugar
-import org.mockito.Mockito._
-import org.mockito.Matchers._
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest._
 import org.scalatest.Matchers._
-
-import play.api.test._
-import play.api.test.Helpers._
-import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.inject.{bind, Injector}
-import scala.concurrent.{Future, Await}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 import java.sql.Timestamp
 
-import models.{Item, ItemRepository, SlickItemRepository}
+import models.ItemRepository
 
 class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject with BeforeAndAfter {
   lazy val repo = inject[ItemRepository]
+  implicit val ec = injector.instanceOf[ExecutionContext]
 
   after {
     /* Delete all items in repo */

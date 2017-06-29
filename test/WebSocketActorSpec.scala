@@ -4,18 +4,24 @@ import play.api.test.Helpers._
 import play.api.libs.json._
 import akka.testkit.TestFSMRef
 import akka.actor._
-import akka.testkit.{TestProbe}
+import akka.testkit.TestProbe
+import javax.inject.Singleton
+
 import scala.concurrent.duration._
 import services._
 import controllers.HomeController
 import akka.actor.ActorSystem
 import play.api.mvc._
-import scala.concurrent.{Await}
+
+import scala.concurrent.{Await, ExecutionContext}
 import play.api.inject._
 import models.{User, UserRepository}
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+
 import scala.language.postfixOps
 
-class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
+@Singleton
+class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Results {
   implicit val system = ActorSystem("sys")
   var token = ""
 
@@ -24,6 +30,7 @@ class WebSocketActorSpec extends PlaySpec with OneServerPerSuite with Results {
       val app = new GuiceApplicationBuilder().build
       val injector: Injector = app.injector
       val userService = injector.instanceOf[UserService]
+      implicit val ec = injector.instanceOf[ExecutionContext]
       val listActor: ActorRef = injector.instanceOf(BindingKey(classOf[ActorRef]).qualifiedWith("list-actor"))
       val mockWsActor = TestProbe()
       val wsActorProvider = new WebSocketActorProvider(userService, listActor, ipAddress = "test-ip")
