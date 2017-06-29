@@ -11,22 +11,19 @@ testing tools that is invaluable when testing the actor system.
 ## Running
 * `sbt test` for running the tests
 * `sbt run` for running in dev mode (default dev user auth is `axel:whatever`)
-* `sbt testProd` for running the app locally in production mode
+* `sbt runProd` for running the app locally in production mode
 (application.prod.conf will be used as configuration file), however do not forget
 to export the required ENV variables `DB_PASSWORD` and `CRYPTO_SECRET`.
 ### Docker
 `sbt dist`
 
-`docker build -t listan-server .`
-
-`docker run -it --rm -p 9000:9000 listan-server -Dconfig.file=conf/application.conf`.
+`docker-compose up` which will also spin up a MySQL database.
 
 
 ## Architecture
 The backend consists of two routes: /api/login and /api/ws. The /api/login route
 accepts a `POST` with keys `username` and `password`. If the correct credentials
-are given a `JSON` response with a header `Authorization: Bearer <token>`
-and a payload also containing the JWT token is returned.
+are given a `JSON` response with a payload containing the JWT token is returned.
 
 The route /api/ws accepts WebSocket connections and requires that the client
 provides a valid JWT token (as required from /api/login). Each WebSocket
@@ -57,31 +54,5 @@ in `/etc/init/listan-server`.
 
 Make `DB_PASSWORD` and `CRYPTO_SECRET` available to the shell before continuing:
 
-Then: `docker-compose create` or:
-
-`docker build -t listan-server`
-
-`docker network create listan-net`
-
-```shell
-docker create --name listan-mysql \
--e MYSQL_RANDOM_ROOT_PASSWORD=yes \
--e MYSQL_DATABASE=listan \
--e MYSQL_USER=listan \
--e MYSQL_PASSWORD=$DB_PASSWORD \
---network listan-net \
-mysql
-```
-
-```shell
-docker create --name listan-server \
--e DB_URL=listan-mysql/listan \
--e DB_USER=listan \
--e DB_PASSWORD=$DB_PASSWORD \
--e CRYPTO_SECRET=$CRYPTO_SECRET \
---network listan-net \
-listan-server
-```
-
-Then you can start the services with `docker start listan-mysql listan-server`.
+Then: `docker-compose -f docker-compose.yml -f docker-compose.prod.yml up`
 

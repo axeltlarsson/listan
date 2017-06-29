@@ -37,7 +37,7 @@ class HomeController @Inject()(cc: ControllerComponents, userService: UserServic
               created = None,
               updated = None)
             val session = JwtSession() + ("user", safeUser)
-            Ok(Json.toJson(session.serialize)).addingToJwtSession("user", safeUser)
+            Ok(Json.toJson(session.serialize))
           }
           case None => Unauthorized
         }
