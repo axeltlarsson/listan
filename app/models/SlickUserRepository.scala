@@ -19,13 +19,13 @@ class SlickUserRepository @Inject()
 
   import profile.api._
 
-  private val users = TableQuery[UsersTable]
+  val usersTable = TableQuery[UsersTable]
 
-  override def all(): Future[Seq[User]] = db.run(users.result)
+  override def all(): Future[Seq[User]] = db.run(usersTable.result)
 
-  override def insert(user: User): Future[Unit] = db.run(users += user).map { _ => () }
+  override def insert(user: User): Future[Unit] = db.run(usersTable += user).map { _ => () }
 
-  def find(name: String): Future[Seq[User]] = db.run(users.filter(_.name === name).result)
+  def find(name: String): Future[Seq[User]] = db.run(usersTable.filter(_.name === name).result)
 
   private class UsersTable(tag: Tag) extends Table[User](tag, "users") {
     def uuid = column[String]("uuid", O.PrimaryKey, O.AutoInc)

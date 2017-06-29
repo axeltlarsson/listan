@@ -13,6 +13,7 @@ object Item {
 }
 case class Item(
   contents: String,
+  list_uuid: String,
   completed: Boolean = false,
   uuid: Option[Item.UUID] = None,
   created: Option[Timestamp] = None,

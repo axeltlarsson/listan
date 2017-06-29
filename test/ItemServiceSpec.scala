@@ -29,7 +29,7 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject with Before
 
     "return uuid and actually insert the item correctly" in {
       val allItems0 = Await.result(repo.all(), 1 seconds)
-      allItems0.length mustBe 0 // this currently fails when testing all tests, but ok for testOnly
+      allItems0.length mustBe 0
       val uuid = Await.result(repo.add("some contents"), 1 seconds)
       uuid.length must be > 20
 

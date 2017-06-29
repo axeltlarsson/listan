@@ -17,10 +17,10 @@ class SlickItemRepository @Inject()
 
   import profile.api._
 
-  private val items = TableQuery[Items]
+  private val items = TableQuery[ItemsTable]
 
-  override def add(contents: String, id: Option[Item.UUID] = None): Future[Item.UUID] = {
-    val item: Item = Item(contents, uuid = id)
+  override def add(contents: String, list: Lst, id: Option[Item.UUID] = None): Future[Item.UUID] = {
+    val item: Item = Item(contents, list_uuid = list.uuid.get, uuid = id)
     if (id.isDefined) {
       db.run(DBIO.seq(items forceInsert item)).map {_ => id.get}
     } else {
@@ -56,12 +56,14 @@ class SlickItemRepository @Inject()
 
   override def all(): Future[Seq[Item]] = db.run(items.sortBy(_.created).result)
 
-  private class Items(tag: Tag) extends Table[Item](tag, "items") {
+  private class ItemsTable(tag: Tag) extends Table[Item](tag, "items") {
     def uuid = column[String]("uuid", O.PrimaryKey, O.AutoInc)
     def contents = column[String]("contents")
+    def list_uuid = column[String]("list_uuid", O.AccutoInc)
     def completed = column[Boolean]("completed")
     def created = column[Timestamp]("created", O.AutoInc)
     def updated = column[Timestamp]("updated", O.AutoInc)
+    def foreign_list = foreignKey("LIST_FK", "list_uuid", models.SlickListRepository.ListsTable)(_.uuid)
 
     def * = (contents, completed, uuid.?, created.?, updated.?) <>
       ((Item.apply _).tupled, Item.unapply)
