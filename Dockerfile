@@ -1,18 +1,20 @@
 FROM openjdk:8
 
-COPY ./target/universal/listan-server-1.0.4.zip /
-RUN unzip listan-server-1.0.4.zip
-
 ENV DB_URL=localhost/listan \
     DB_USER=listan \
     DB_PASSWORD=pasword \
-    CRYPTO_SECRET=changeme
+    CRYPTO_SECRET=changeme \
+    VERSION=1.1.0
 
-ENV PATH=/listan-server-1.0.4:$PATH
+COPY ./target/universal/listan-server-${VERSION}.zip /
+RUN unzip listan-server-${VERSION}.zip
+
+
+ENV PATH=/listan-server-${VERSION}:$PATH
 
 EXPOSE 9000
 
-WORKDIR /listan-server-1.0.4
+WORKDIR /listan-server-${VERSION}
 ENTRYPOINT ["bin/listan-server"]
 CMD ["-Dconfig.file=conf/application.prod.conf"]
 

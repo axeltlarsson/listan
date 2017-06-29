@@ -4,25 +4,17 @@ services:
   listan-server:
     container_name: listan-server
     build: .
-    restart: unless-stopped
     environment:
       DB_URL: listan-mysql/listan
       DB_USER: listan
       DB_PASSWORD: "$DB_PASSWORD"
       CRYPTO_SECRET: "$CRYPTO_SECRET"
-    networks:
-      - listan-net
   listan-mysql:
     container_name: listan-mysql
     image: "mysql:5"
-    restart: unless-stopped
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: "yes"
       MYSQL_DATABASE: listan
       MYSQL_USER: listan
       MYSQL_PASSWORD: "$DB_PASSWORD"
-    networks:
-      - listan-net
-networks:
-  listan-net:
 

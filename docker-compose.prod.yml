@@ -1,0 +1,22 @@
+# Used in production
+# It adds the app and db to a new isolated network: "listan-net"
+
+version: '3'
+
+services:
+  listan-server:
+    restart: unless-stopped
+    networks:
+      - listan-net
+  listan-mysql:
+    restart: unless-stopped
+    volumes:
+      - db-volume:/var/lib/mysql
+    networks:
+      - listan-net
+
+volumes:
+  db-volume:
+networks:
+  listan-net:
+
