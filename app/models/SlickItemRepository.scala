@@ -11,24 +11,24 @@ import java.sql.Timestamp
 
 @Singleton
 class SlickItemRepository @Inject()
-    (protected val dbConfigProvider: DatabaseConfigProvider)
+    (protected val dbConfigProvider: DatabaseConfigProvider, private[models] val lstRepo: SlickItemListRepository)
     (implicit ec: ExecutionContext)
     extends HasDatabaseConfigProvider[JdbcProfile] with ItemRepository {
 
   import profile.api._
 
-  private val items = TableQuery[ItemsTable]
+  private[models] val items = TableQuery[Items]
 
-  override def add(contents: String, list: Lst, id: Option[Item.UUID] = None): Future[Item.UUID] = {
-    val item: Item = Item(contents, list_uuid = list.uuid.get, uuid = id)
-    if (id.isDefined) {
-      db.run(DBIO.seq(items forceInsert item)).map {_ => id.get}
+  override def add(contents: String, listUUID: String, uuid: Option[String] = None): Future[String] = {
+    val item: Item = Item(uuid = uuid, contents = contents, listUuid = listUUID)
+    if (uuid.isDefined) {
+      db.run(DBIO.seq(items forceInsert item)).map {_ => uuid.get}
     } else {
       db.run((items returning items.map(_.uuid)) += item)
     }
   }
 
-  override def delete(uuid: Item.UUID): Future[Int] = {
+  override def delete(uuid: String): Future[Int] = {
     val action = items.filter(_.uuid === uuid)
     db.run(action.delete)
   }
@@ -38,7 +38,7 @@ class SlickItemRepository @Inject()
     db.run(action.update(contents))
   }
 
-  override def complete(uuid: Item.UUID): Future[Int] = {
+  override def complete(uuid: String): Future[Int] = {
     val selectCompleted = for { i <- items if i.uuid === uuid } yield i.completed
     db.run(for {
       maybeItem <- items.filter(_.uuid === uuid).result.headOption
@@ -46,7 +46,7 @@ class SlickItemRepository @Inject()
     } yield affectedRows)
   }
 
-  override def uncomplete(uuid: Item.UUID): Future[Int] = {
+  override def uncomplete(uuid: String): Future[Int] = {
     val selectCompleted = for { i <- items if i.uuid === uuid } yield i.completed
     db.run(for {
       maybeItem <- items.filter(_.uuid === uuid).result.headOption
@@ -56,16 +56,16 @@ class SlickItemRepository @Inject()
 
   override def all(): Future[Seq[Item]] = db.run(items.sortBy(_.created).result)
 
-  private class ItemsTable(tag: Tag) extends Table[Item](tag, "items") {
+  private[models] class Items(tag: Tag) extends Table[Item](tag, "items") {
     def uuid = column[String]("uuid", O.PrimaryKey, O.AutoInc)
     def contents = column[String]("contents")
-    def list_uuid = column[String]("list_uuid", O.AccutoInc)
     def completed = column[Boolean]("completed")
+    def list_uuid = column[String]("list_uuid", O.AutoInc)
     def created = column[Timestamp]("created", O.AutoInc)
     def updated = column[Timestamp]("updated", O.AutoInc)
-    def foreign_list = foreignKey("LIST_FK", "list_uuid", models.SlickListRepository.ListsTable)(_.uuid)
+    def foreign_list = foreignKey("LIST_FK", list_uuid, lstRepo.lsts)(_.uuid)
 
-    def * = (contents, completed, uuid.?, created.?, updated.?) <>
+    def * = (uuid.?, contents, completed, list_uuid, created.?, updated.?) <>
       ((Item.apply _).tupled, Item.unapply)
 
   }

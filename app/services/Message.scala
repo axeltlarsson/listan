@@ -3,7 +3,8 @@ package services
 import play.api.libs.json._
 import julienrf.json.derived
 import julienrf.json.derived.NameAdapter
-import models.Item
+import models.{Item, ItemList}
+import models.ItemList._
 
 // The algebraic data type presentation of messages
 // ex: {"action": {"type": "DELETE_ITEM", "id": "1a"}}
@@ -13,22 +14,29 @@ case class AuthRequest() extends Message
 case class Ping(ack: String) extends Message
 
 sealed trait Action extends Message
-case class AddItem(contents: String, ack: String, uuid: Option[String] = None) extends Action // uuid for relayed msg
+case class AddItem(contents: String, list: String, ack: String, uuid: Option[String] = None) extends Action // uuid for relayed msg
 case class EditItem(uuid: String, contents: String, ack: String) extends Action
 case class CompleteItem(uuid: String, ack: String) extends Action
 case class UncompleteItem(uuid: String, ack: String) extends Action
 case class DeleteItem(uuid: String, ack: String) extends Action
 case class GetState(ack: String) extends Action
+case class AddList(name: String, description: Option[String], ack: String, uuid: Option[String] = None) extends Action
+case class UpdateListName(uuid: String, name: String, ack: String) extends Action
+case class UpdateListDescription(uuid: String, description: String, ack: String) extends Action
+case class DeleteList(uuid: String, ack: String) extends Action
+
 
 sealed trait Response extends Message
 case class AuthResponse(status: String, ack: String) extends Response // Authorised
 case class FailureResponse(error: String, ack: String) extends Response
-case class UUIDResponse(status: String, uuid: Item.UUID, ack: String) extends Response
-case class GetStateResponse(items: Seq[Item], ack: String) extends Response
+case class UUIDResponse(status: String, uuid: String, ack: String) extends Response
+case class GetStateResponse(lists: Seq[(ItemList, Seq[Item])], ack: String) extends Response
 case class Ack(ack: String) extends Response // expected response to relayed Actions
 case class Pong(ack: String) extends Response
 
-// Json format
+/*----------------------------------------------------------------------
+                      JSON format
+-----------------------------------------------------------------------*/
 object Message {
   implicit val msgDataReads: Reads[Message] =
     derived.flat.reads((__ \ "type").read[String])
@@ -65,6 +73,19 @@ object DeleteItem {
 object GetState {
  implicit val format: OFormat[GetState] = derived.oformat(NameAdapter.identity)
 }
+object AddList {
+  implicit val format: OFormat[AddList] = derived.oformat(NameAdapter.identity)
+}
+object UpdateListName {
+  implicit val format: OFormat[UpdateListName] = derived.oformat(NameAdapter.identity)
+}
+object UpdateListDescription {
+  implicit val format: OFormat[UpdateListDescription] = derived.oformat(NameAdapter.identity)
+}
+object DeleteList {
+  implicit val format: OFormat[DeleteList] = derived.oformat(NameAdapter.identity)
+}
+
 object Action {
   implicit val format: OFormat[Action] = derived.oformat(NameAdapter.identity)
 }

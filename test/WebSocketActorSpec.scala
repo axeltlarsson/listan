@@ -105,7 +105,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
     }
 
     "handle AddItem and DeleteItem" in new Automaton with Authenticated {
-      fsm ! Json.toJson(AddItem("some contents that is to be added", "someAckNbr"): Message)
+      fsm ! Json.toJson(AddItem("some contents that is to be added", "listuuid", "someAckNbr"): Message)
       val res = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
       // Must be some way to make the following code compose better
       res.validate[Message] match {
@@ -140,7 +140,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
 
     "handle AddItem, EditItem, DeleteItem" in new Automaton with Authenticated with ExtraClient {
       /* Add item */
-      fsm ! Json.toJson(AddItem("some contents that is to be added", "ackNbr"): Message)
+      fsm ! Json.toJson(AddItem("some contents that is to be added", "listuuid", "ackNbr"): Message)
       // mockWsActor should get UUIDResponse
       val resAdd = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
       assertMessage(resAdd)
@@ -152,7 +152,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       (relayedAdd \ "uuid").as[String] mustBe uuid
 
       /* Add extra item from mockWsActor2 */
-      fsm2 ! Json.toJson(AddItem("extra item", "extra-ack-nbr"): Message)
+      fsm2 ! Json.toJson(AddItem("extra item", "listuuid", "extra-ack-nbr"): Message)
       // mockWsActor2 should get UUIDResponse for "extra item"
       val resExtraAdd = mockWsActor2.receiveOne(500 millis).asInstanceOf[JsObject]
       assertMessage(resExtraAdd)

@@ -2,16 +2,31 @@ import org.scalatestplus.play._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest._
 import org.scalatest.Matchers._
+
 import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 import java.sql.Timestamp
 
-import models.ItemRepository
+import models.{ItemRepository, ItemList, User, UserRepository}
+import services.{ItemListService, UserService}
 
 class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject with BeforeAndAfter {
   lazy val repo = inject[ItemRepository]
   implicit val ec = injector.instanceOf[ExecutionContext]
+
+  trait ListHelper {
+    private val lstService = injector.instanceOf[ItemListService]
+    private val uRepo = injector.instanceOf[UserRepository]
+    val userUUID = Await.result(uRepo.insert(User.create("name", "password")), 100 millis)
+    val user = Await.result(uRepo.authenticate("name", "password"), 100 millis)
+    println(s"user authenticated: $user")
+    private val listUUIDF = for {
+      listUUID <- lstService.add("a list", user = user.get)
+    } yield listUUID
+    val listUUID = Await.result(listUUIDF, 1 seconds)
+    println(s"listUUID: $listUUID")
+  }
 
   after {
     /* Delete all items in repo */
@@ -20,17 +35,17 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject with Before
   }
 
   "SlickItemRepository#add(contents)" should {
-    "accept a client-given uuid" in {
+    "accept a client-given uuid" in new ListHelper {
       val clientUuid = "abc-123"
-      val uuid = Await.result(repo.add("an item", Option(clientUuid)), 100 millis)
+      val uuid = Await.result(repo.add("an item", listUUID = listUUID, id = Option(clientUuid)), 100 millis)
       val allItems = Await.result(repo.all(), 100 millis)
       uuid mustBe clientUuid
     }
 
-    "return uuid and actually insert the item correctly" in {
+    "return uuid and actually insert the item correctly" in new ListHelper {
       val allItems0 = Await.result(repo.all(), 1 seconds)
       allItems0.length mustBe 0
-      val uuid = Await.result(repo.add("some contents"), 1 seconds)
+      val uuid = Await.result(repo.add("some contents", listUUID = listUUID), 1 seconds)
       uuid.length must be > 20
 
       val allItems = Await.result(repo.all(), 1 seconds)
@@ -41,10 +56,10 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject with Before
   }
 
   "SlickItemRepository" should {
-    "set set created and updated timestamps on add" in {
+    "set set created and updated timestamps on add" in new ListHelper {
       // Add item
       val creation = new Timestamp(System.currentTimeMillis())
-      val uuid = Await.result(repo.add("item"), 100 millis)
+      val uuid = Await.result(repo.add("item", listUUID = listUUID), 100 millis)
       val item = Await.result(repo.all(), 100 millis).find(_.uuid.exists(_ == uuid))
       item mustBe defined
       item.foreach(i => {
@@ -69,9 +84,9 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject with Before
   }
 
   "SlickItemRepository#delete(uuid)" should {
-    "return nbr of rows affected and actually delete the item" in {
+    "return nbr of rows affected and actually delete the item" in  new ListHelper {
       val affectedRows = for {
-        uuid <- repo.add("to be deleted")
+        uuid <- repo.add("to be deleted", listUUID = listUUID)
         affectedRows <- repo.delete(uuid)
       } yield affectedRows
       Await.result(affectedRows, 1 seconds) mustBe 1
@@ -85,9 +100,9 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject with Before
   }
 
   "SlickItemRepository#edit(uuid, contents)" should {
-    "properly update contents of item" in {
+    "properly update contents of item" in new ListHelper {
       val affectedRows = for {
-        uuid <- repo.add("to be updated")
+        uuid <- repo.add("to be updated", listUUID = listUUID)
         affectedRows <- repo.edit(uuid, "updated contents")
       } yield affectedRows
       Await.result(affectedRows, 1 seconds) mustBe 1
@@ -99,10 +114,10 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject with Before
   }
 
   "SlickItemRepository complete and uncomplete" should {
-    "work" in {
+    "work" in  new ListHelper {
       val affectedRows = for {
-        uuid <- repo.add("Complete me!")
-        uuid2 <- repo.add("Do NOT complete me")
+        uuid <- repo.add("Complete me!", listUUID = listUUID)
+        uuid2 <- repo.add("Do NOT complete me", listUUID = listUUID)
         affectedRows <- repo.complete(uuid)
       } yield affectedRows
       Await.result(affectedRows, 1 seconds) mustBe 1
@@ -129,12 +144,12 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject with Before
   }
 
   "SlickItemRepository all()" should {
-    "return items sorted by created timestamp" in {
+    "return items sorted by created timestamp" in new ListHelper {
       val itemsF = for {
-        item1 <- repo.add("1")
-        item2 <- repo.add("2")
-        item3 <- repo.add("3")
-        item4 <- repo.add("4")
+        item1 <- repo.add("1", listUUID = listUUID)
+        item2 <- repo.add("2", listUUID = listUUID)
+        item3 <- repo.add("3", listUUID = listUUID)
+        item4 <- repo.add("4", listUUID = listUUID)
         compl <- repo.complete(item2)
         items <- repo.all()
       } yield items

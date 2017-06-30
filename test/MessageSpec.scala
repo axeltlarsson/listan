@@ -1,7 +1,7 @@
 import org.scalatestplus.play._
 import services._
 import play.api.libs.json._
-import models.Item
+import models.{Item, ItemList}
 import org.scalatestplus.play.guice.GuiceOneAppPerTest
 
 class MessageSpec extends PlaySpec with GuiceOneAppPerTest {
@@ -27,7 +27,7 @@ class MessageSpec extends PlaySpec with GuiceOneAppPerTest {
     }
     // Actions
     "AddItem be" in {
-      jsonSerializable(AddItem(contents = "mjölk", ack = "123")) mustBe true
+      jsonSerializable(AddItem(contents = "mjölk", list = "abc", ack = "123")) mustBe true
     }
     "EditItem be" in {
       jsonSerializable(EditItem(uuid = "sldfj-234-sdfj", contents = "filmjölk", ack = "124")) mustBe true
@@ -56,7 +56,15 @@ class MessageSpec extends PlaySpec with GuiceOneAppPerTest {
       jsonSerializable(UUIDResponse(status = "Added item", uuid = "123", ack = "124")) mustBe true
     }
     "GetStateResponse be" in {
-      jsonSerializable(GetStateResponse(items = Seq(Item("mjölk"), Item("filmjölk")), ack = "123")) mustBe true
+      val lsts = Seq(
+        ItemList(name = "a list", description = Some("descr"), userUuid = "user2", uuid = Some("abc")) -> Seq(
+          Item(contents = "an item", listUuid = "abc"),
+          Item(contents = "item 2", listUuid = "abc")),
+        ItemList(name = "another list", description = Some("description two"), userUuid = "user2", uuid = Some("ab2")) -> Seq(
+          Item(contents = "item 1 in list two", listUuid = "ab2")
+        )
+      )
+      jsonSerializable(GetStateResponse(lsts, ack = "123")) mustBe true
     }
     "Pong be" in {
       jsonSerializable(Pong(ack = "lk2j3lj")) mustBe true

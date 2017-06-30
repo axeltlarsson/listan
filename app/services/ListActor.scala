@@ -6,7 +6,7 @@ import javax.inject._
 import play.Logger
 
 import scala.collection.mutable
-import models.{Item, User}
+import models.{Item, ItemList, User}
 
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern.pipe
@@ -23,7 +23,7 @@ object ListActor {
 }
 
 @Singleton
-class ListActor @Inject()(itemService: ItemService)
+class ListActor @Inject()(itemService: ItemService, lstService: ItemListService)
                          (implicit ec: ExecutionContext)
                           extends Actor {
   import ListActor._
@@ -58,8 +58,8 @@ class ListActor @Inject()(itemService: ItemService)
       clients -= sender
     }
 
-    case action @ AddItem(contents, ack, clientId) => {
-      val uuidFuture: Future[Item.UUID] = itemService.add(contents, clientId)
+    case action @ AddItem(contents, lst, ack, clientId) => {
+      val uuidFuture: Future[String] = itemService.add(contents, lst, clientId)
       val theSender = sender
       uuidFuture.map {
         uuid => SuccessfulAction(action.copy(uuid = Some(uuid)), UUIDResponse("Added item", uuid, action.ack), theSender)
@@ -118,10 +118,10 @@ class ListActor @Inject()(itemService: ItemService)
    }
 
    case action @ GetState(ack) => {
-     val itemsFuture: Future[Seq[Item]] = itemService.all()
+     val itemsFuture: Future[Seq[ItemList]] = lstService.all()
      val theSender = sender
      itemsFuture onComplete {
-       case Success(items) => theSender ! GetStateResponse(items, ack)
+       case Success(items) => theSender ! GetStateResponse(???, ack)
        case Failure(t) => theSender ! FailureResponse(t.getMessage, ack)
      }
    }

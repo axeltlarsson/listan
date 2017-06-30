@@ -1,10 +1,10 @@
 import com.google.inject.AbstractModule
 import java.time.Clock
 
-import services.{ApplicationTimer, WebSocketActor, WebSocketActorProvider, ListActor}
-import play.api.{Environment, Configuration}
+import services.{ApplicationTimer, ListActor, WebSocketActor, WebSocketActorProvider}
+import play.api.{Configuration, Environment}
 import play.api.libs.concurrent.AkkaGuiceSupport
-import models.{UserRepository, SlickUserRepository, ItemRepository, SlickItemRepository}
+import models._
 
 /**
  * This class is a Guice module that tells Guice how to bind several
@@ -26,6 +26,7 @@ class Module(environment: Environment, configuration: Configuration) extends Abs
     bind(classOf[ApplicationTimer]).asEagerSingleton()
     bind(classOf[UserRepository]).to(classOf[SlickUserRepository])
     bind(classOf[ItemRepository]).to(classOf[SlickItemRepository])
+    bind(classOf[LstRepository]).to(classOf[SlickItemListRepository])
 
     bindActor[ListActor]("list-actor")
   }

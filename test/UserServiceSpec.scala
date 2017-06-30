@@ -20,14 +20,14 @@ class UserServiceSpec extends PlaySpec with MockitoSugar  {
       .build
     val userService = app.injector.instanceOf[UserService]
     implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
-    when(mockUserRepo.authenticate("axel", "password")) thenReturn Future{Some(User("axel"))}
+    when(mockUserRepo.authenticate("axel", "password")) thenReturn Future{Some(User(name = "axel"))}
     when(mockUserRepo.authenticate("axel", "wrong")) thenReturn Future{None}
   }
 
   "UserService#authenticate" should {
     "return correct user for valid password" in new MockUserRepo {
       val maybeUser = Await.result(userService.authenticate("axel", "password"), 1 seconds)
-      maybeUser mustBe Some(User("axel"))
+      maybeUser mustBe Some(User(name = "axel"))
     }
 
     "return None for user with invalid password" in new MockUserRepo {
@@ -40,8 +40,8 @@ class UserServiceSpec extends PlaySpec with MockitoSugar  {
     "work with a test db" in new Inject {
       val repo = inject[UserRepository]
       val user = User.create("axel", "whatever")
-      repo.insert(user)
-      val usersInDb = Await.result(repo.all(), 1 seconds)
+      val uuid = Await.result(repo.insert(user), 100 millis)
+      val usersInDb = Await.result(repo.all(), 100 millis)
       usersInDb(0).name mustBe "axel"
       usersInDb(0).passwordHash must not be Some("whatever") // should be hashed duh
     }

@@ -1,13 +1,13 @@
 package services
 
-import models.{ItemRepository, Item}
+import models.{Item, ItemRepository, ItemList}
 import javax.inject._
+
 import scala.concurrent.Future
-import play.Logger
 
 @Singleton
 class ItemService @Inject()(itemRepo: ItemRepository) {
-  def add(contents: String, uuid: Option[Item.UUID] = None): Future[Item.UUID] = itemRepo.add(contents, uuid)
+  def add(contents: String, lstUUID: String, uuid: Option[String] = None): Future[String] = itemRepo.add(contents, lstUUID, uuid)
   def complete(uuid: String): Future[Int] = itemRepo.complete(uuid)
   def uncomplete(uuid: String): Future[Int] = itemRepo.uncomplete(uuid)
   def edit(uuid: String, contents: String): Future[Int] = itemRepo.edit(uuid, contents)

@@ -19,15 +19,18 @@ class SlickUserRepository @Inject()
 
   import profile.api._
 
-  val usersTable = TableQuery[UsersTable]
+  private[models] val users = TableQuery[Users]
 
-  override def all(): Future[Seq[User]] = db.run(usersTable.result)
+  override def all(): Future[Seq[User]] = db.run(users.result)
 
-  override def insert(user: User): Future[Unit] = db.run(usersTable += user).map { _ => () }
+  override def insert(user: User): Future[User.UUID] = {
+    println(s"INSERTING USER: $user")
+    db.run((users returning users.map(_.uuid)) += user)
+  }
 
-  def find(name: String): Future[Seq[User]] = db.run(usersTable.filter(_.name === name).result)
+  private def findByName(name: String): Future[Seq[User]] = db.run(users.filter(_.name === name).result)
 
-  private class UsersTable(tag: Tag) extends Table[User](tag, "users") {
+  private[models] class Users(tag: Tag) extends Table[User](tag, "users") {
     def uuid = column[String]("uuid", O.PrimaryKey, O.AutoInc)
     def name = column[String]("name")
     def passwordHash = column[String]("password_hash")
@@ -36,12 +39,12 @@ class SlickUserRepository @Inject()
 
     def idx = index("users_name_index", (name))
 
-    def * = (name, uuid.?, passwordHash.?, created.?, updated.?) <> ((User.apply _).tupled, User.unapply)
+    def * = (uuid.?, name, passwordHash.?, created.?, updated.?) <> ((User.apply _).tupled, User.unapply)
   }
 
   override def authenticate(name: String, password: String): Future[Option[User]] = {
-    find(name) map {
-      case Seq(u) if (password.isBcrypted(u.passwordHash.getOrElse(""))) => Some(u)
+    findByName(name) map {
+      case Seq(u) if password.isBcrypted(u.passwordHash.getOrElse(""))=> Some(u)
       case _ => None
     }
   }
