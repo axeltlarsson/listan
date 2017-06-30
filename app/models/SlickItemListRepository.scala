@@ -56,7 +56,7 @@ class SlickItemListRepository @Inject()(protected val dbConfigProvider: Database
     def uuid = column[String]("uuid", O.PrimaryKey, O.AutoInc)
     def name = column[String]("name")
     def description = column[String]("description")
-    def user_uuid = column[String]("user_uuid", O.AutoInc)
+    def user_uuid = column[String]("user_uuid")
     def created = column[Timestamp]("created", O.AutoInc)
     def updated = column[Timestamp]("updated", O.AutoInc)
     def foreign_user = foreignKey("user_uuid", user_uuid, userRepo.users)(_.uuid)
