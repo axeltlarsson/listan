@@ -8,31 +8,28 @@ import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 import java.sql.Timestamp
 
-import models.{ItemRepository, ItemList, User, UserRepository}
+import models.{ItemRepository, User, UserRepository}
+import org.scalatestplus.play.guice.GuiceOneAppPerTest
 import services.{ItemListService, UserService}
 
-class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject with BeforeAndAfter {
-  lazy val repo = inject[ItemRepository]
-  implicit val ec = injector.instanceOf[ExecutionContext]
+class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerTest {
 
+
+  /* Inserts an empty list and provides ec, itemRepo */
   trait ListHelper {
+    private val injector = app.injector
+    val repo = injector.instanceOf[ItemRepository]
+    implicit val ec = injector.instanceOf[ExecutionContext]
     private val lstService = injector.instanceOf[ItemListService]
     private val uRepo = injector.instanceOf[UserRepository]
-    val userUUID = Await.result(uRepo.insert(User.create("name", "password")), 100 millis)
-    val user = Await.result(uRepo.authenticate("name", "password"), 100 millis)
-    println(s"user authenticated: $user")
     private val listUUIDF = for {
+      userUUUID <- uRepo.insert(User.create("name", "password"))
+      user <- uRepo.authenticate("name", "password")
       listUUID <- lstService.add("a list", user = user.get)
     } yield listUUID
     val listUUID = Await.result(listUUIDF, 1 seconds)
-    println(s"listUUID: $listUUID")
   }
 
-  after {
-    /* Delete all items in repo */
-    val items = Await.result(repo.all(), 100 millis)
-    items.foreach(i => Await.result(repo.delete(i.uuid.get), 20 millis))
-  }
 
   "SlickItemRepository#add(contents)" should {
     "accept a client-given uuid" in new ListHelper {
@@ -84,7 +81,7 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject with Before
   }
 
   "SlickItemRepository#delete(uuid)" should {
-    "return nbr of rows affected and actually delete the item" in  new ListHelper {
+    "return nbr of rows affected and actually delete the item" in new ListHelper {
       val affectedRows = for {
         uuid <- repo.add("to be deleted", listUUID = listUUID)
         affectedRows <- repo.delete(uuid)
@@ -94,7 +91,7 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject with Before
       allItems.length mustBe 0
     }
 
-    "not crash for non-existing uuid" in {
+    "not crash for non-existing uuid" in new ListHelper {
       Await.result(repo.delete("bogus"), 1 seconds) mustBe 0
     }
   }
@@ -108,7 +105,7 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject with Before
       Await.result(affectedRows, 1 seconds) mustBe 1
     }
 
-    "do not crash when trying to edit non-existing item" in {
+    "do not crash when trying to edit non-existing item" in new ListHelper {
       Await.result(repo.edit("bogus", "updated value"), 1 seconds) mustBe 0
     }
   }
@@ -128,7 +125,7 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject with Before
         .filter(_.contents == "Do NOT complete me").head
       item2.completed mustBe false
 
-      Await.result(repo.uncomplete(item.uuid.get), 1 seconds) mustBe 1
+      Await.result(repo.unComplete(item.uuid.get), 1 seconds) mustBe 1
       val itemUncompleted = Await.result(repo.all(), 1 seconds)
         .filter(_.contents == "Complete me!").head
       itemUncompleted.completed mustBe false
@@ -137,9 +134,9 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with Inject with Before
       item22.completed mustBe false // (still)
     }
 
-    "not crash for non-existing uuid" in  {
+    "not crash for non-existing uuid" in new ListHelper {
       Await.result(repo.complete("bogus"), 1 seconds) mustBe 0
-      Await.result(repo.uncomplete("bogus"), 1 seconds) mustBe 0
+      Await.result(repo.unComplete("bogus"), 1 seconds) mustBe 0
     }
   }
 

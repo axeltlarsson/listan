@@ -10,6 +10,7 @@ import scala.language.postfixOps
 import models.{User, UserRepository}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import services.UserService
+import testhelpers.InjectHelper
 
 class UserServiceSpec extends PlaySpec with MockitoSugar  {
 
@@ -37,8 +38,8 @@ class UserServiceSpec extends PlaySpec with MockitoSugar  {
   }
 
   "SlickUserRepository" should {
-    "work with a test db" in new Inject {
-      val repo = inject[UserRepository]
+    "work with a test db" in new InjectHelper {
+      val repo = injector.instanceOf[UserRepository]
       val user = User.create("axel", "whatever")
       val uuid = Await.result(repo.insert(user), 100 millis)
       val usersInDb = Await.result(repo.all(), 100 millis)

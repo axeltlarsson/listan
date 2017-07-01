@@ -4,7 +4,8 @@ import play.api.libs.json._
 import models.{Item, ItemList}
 import org.scalatestplus.play.guice.GuiceOneAppPerTest
 
-class MessageSpec extends PlaySpec with GuiceOneAppPerTest {
+
+class MessageSpec extends PlaySpec {
 
   def jsonSerializable(msg: Message): Boolean = {
     val json = Json.toJson(msg)
@@ -56,7 +57,7 @@ class MessageSpec extends PlaySpec with GuiceOneAppPerTest {
       jsonSerializable(UUIDResponse(status = "Added item", uuid = "123", ack = "124")) mustBe true
     }
     "GetStateResponse be" in {
-      val lsts = Seq(
+      val lists = Seq(
         ItemList(name = "a list", description = Some("descr"), userUuid = "user2", uuid = Some("abc")) -> Seq(
           Item(contents = "an item", listUuid = "abc"),
           Item(contents = "item 2", listUuid = "abc")),
@@ -64,7 +65,7 @@ class MessageSpec extends PlaySpec with GuiceOneAppPerTest {
           Item(contents = "item 1 in list two", listUuid = "ab2")
         )
       )
-      jsonSerializable(GetStateResponse(lsts, ack = "123")) mustBe true
+      jsonSerializable(GetStateResponse(lists, ack = "123")) mustBe true
     }
     "Pong be" in {
       jsonSerializable(Pong(ack = "lk2j3lj")) mustBe true

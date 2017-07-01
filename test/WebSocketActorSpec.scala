@@ -28,7 +28,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
   trait Automaton {
       import play.api.inject.guice.GuiceApplicationBuilder
       val app = new GuiceApplicationBuilder().build
-      val injector: Injector = app.injector
+      val injector= app.injector
       val userService = injector.instanceOf[UserService]
       implicit val ec = injector.instanceOf[ExecutionContext]
       val listActor: ActorRef = injector.instanceOf(BindingKey(classOf[ActorRef]).qualifiedWith("list-actor"))
@@ -38,6 +38,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
   }
 
   trait ExtraClient {
+    // Require Automaton to use this
     self: Automaton =>
     val mockWsActor2 = TestProbe()
     val fsm2 = TestFSMRef(wsActorProvider.get(mockWsActor2.ref, ipAddress = "test-ip2"))
@@ -47,6 +48,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
   }
 
   trait Authenticated {
+    // Require Automaton to use this
     self: Automaton =>
     if (token == "") {
       fsm.stateName mustBe Unauthenticated
@@ -73,7 +75,8 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       )
       val Some(res) = route(app, req)
       status(res) mustEqual OK
-      token = headers(res).get("Authorization").get.split("Bearer ")(1)
+      token = contentAsString(res)
+      println(s"token: $token")
     }
 
     // Try to authenticate with the token

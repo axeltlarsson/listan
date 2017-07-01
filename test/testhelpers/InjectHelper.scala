@@ -1,8 +1,8 @@
-import play.api.inject.guice.GuiceApplicationBuilder
-import scala.reflect.ClassTag
+package testhelpers
 
-trait Inject {
+import play.api.inject.guice.GuiceApplicationBuilder
+
+trait InjectHelper {
   lazy val injector = (new GuiceApplicationBuilder).injector
-  def inject[T: ClassTag]: T = injector.instanceOf[T]
 }
 
