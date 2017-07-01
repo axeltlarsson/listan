@@ -3,7 +3,7 @@
 # --- !Ups
 CREATE TABLE lists (
   uuid varchar(255) NOT NULL PRIMARY KEY,
-  name varchar(255) NOT NULL,
+  name varchar(255) NOT NULL UNIQUE,
   description varchar(255),
   user_uuid varchar(255) NOT NULL,
   created datetime DEFAULT CURRENT_TIMESTAMP,

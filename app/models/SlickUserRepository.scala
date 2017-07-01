@@ -32,7 +32,7 @@ class SlickUserRepository @Inject()
 
   private[models] class Users(tag: Tag) extends Table[User](tag, "users") {
     def uuid = column[String]("uuid", O.PrimaryKey, O.AutoInc)
-    def name = column[String]("name")
+    def name = column[String]("name", O.Unique)
     def passwordHash = column[String]("password_hash")
     def created = column[Timestamp]("created", O.AutoInc)
     def updated = column[Timestamp]("updated", O.AutoInc)

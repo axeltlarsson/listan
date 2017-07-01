@@ -54,7 +54,7 @@ class SlickItemListRepository @Inject()(protected val dbConfigProvider: Database
 
   private[models] class Lsts(tag: Tag) extends Table[ItemList](tag, "lists") {
     def uuid = column[String]("uuid", O.PrimaryKey, O.AutoInc)
-    def name = column[String]("name")
+    def name = column[String]("name", O.Unique)
     def description = column[String]("description")
     def user_uuid = column[String]("user_uuid")
     def created = column[Timestamp]("created", O.AutoInc)
