@@ -46,7 +46,7 @@ class SlickItemRepository @Inject()
     } yield affectedRows)
   }
 
-  override def uncomplete(uuid: String): Future[Int] = {
+  override def unComplete(uuid: String): Future[Int] = {
     val selectCompleted = for { i <- items if i.uuid === uuid } yield i.completed
     db.run(for {
       maybeItem <- items.filter(_.uuid === uuid).result.headOption
@@ -63,7 +63,7 @@ class SlickItemRepository @Inject()
     def list_uuid = column[String]("list_uuid")
     def created = column[Timestamp]("created", O.AutoInc)
     def updated = column[Timestamp]("updated", O.AutoInc)
-    def foreign_list = foreignKey("LIST_FK", list_uuid, lstRepo.lsts)(_.uuid)
+    def foreign_list = foreignKey("LIST_FK", list_uuid, lstRepo.itemLists)(_.uuid)
 
     def * = (uuid.?, contents, completed, list_uuid, created.?, updated.?) <>
       ((Item.apply _).tupled, Item.unapply)

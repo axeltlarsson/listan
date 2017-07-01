@@ -94,7 +94,7 @@ class ListActor @Inject()(itemService: ItemService, lstService: ItemListService)
     }
 
     case action @ UncompleteItem(uuid, ack) => {
-      val rowsFuture: Future[Int] = itemService.uncomplete(uuid)
+      val rowsFuture: Future[Int] = itemService.unComplete(uuid)
       val theSender = sender
       rowsFuture.map { rows =>
         if (rows == 1)

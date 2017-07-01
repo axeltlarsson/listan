@@ -75,8 +75,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       )
       val Some(res) = route(app, req)
       status(res) mustEqual OK
-      token = contentAsString(res)
-      println(s"token: $token")
+      token  = contentAsJson(res).as[String]
     }
 
     // Try to authenticate with the token
@@ -92,7 +91,6 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
 
   "WebSocketActor" should {
     "start in state Unauthenticated" in new Automaton {
-      fsm.stateName mustBe Unauthenticated
       // This should trigger a warn log message
       fsm.stateName mustBe Unauthenticated
       fsm ! Json.toJson(EditItem(uuid = "id", contents = "contents", ack = "123"): Message)
@@ -103,7 +101,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       // that is entirely expected
       fsm.stateName mustBe Unauthenticated
       mockWsActor.expectMsg(500 millis, Json.toJson(AuthRequest(): Message))
-      fsm ! Json.toJson(Auth("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ", "1234"): Message)
+      fsm ! Json.toJson(Auth("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MDAxNTIwOTEsInVzZXIiOnsibmFtZSI6ImF4ZWwifX0.Pbgoh0juq2xRcGVIzeiJBDP2-jHHEYKwQ6lOzdt5YvY", "1234"): Message)
       mockWsActor.expectMsg(500 millis, Json.toJson(FailureResponse("Authentication failure", "1234"): Message))
     }
 

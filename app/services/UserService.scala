@@ -9,6 +9,7 @@ import pdi.jwt.{JwtJson, JwtAlgorithm}
 
 @Singleton
 class UserService @Inject() (userRepo: UserRepository, configuration: Configuration) {
+
   def authenticate(name: String, password: String): Future[Option[User]] = {
     userRepo.authenticate(name, password)
   }

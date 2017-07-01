@@ -19,7 +19,7 @@ class SocketController @Inject()(cc: ControllerComponents)
                                 (implicit sys: ActorSystem,
                                  mat: Materializer,
                                  provider: WebSocketActorProvider)
-                                extends AbstractController(cc) {
+                                 extends AbstractController(cc) {
 
   def connect = WebSocket.acceptOrResult[JsValue, JsValue] {
     case requestHeader if sameOriginCheck(requestHeader) => {
@@ -32,7 +32,7 @@ class SocketController @Inject()(cc: ControllerComponents)
       Future.successful(Left(Forbidden("forbidden")))
   }
 
-  def sameOriginCheck(requestHeader: RequestHeader): Boolean = {
+  private def sameOriginCheck(requestHeader: RequestHeader): Boolean = {
     requestHeader.headers.get("Origin") match {
       case Some(originValue) if originMatches(originValue) =>
         Logger.debug(s"[${requestHeader.remoteAddress}] originCheck: originValue = $originValue")
@@ -49,7 +49,7 @@ class SocketController @Inject()(cc: ControllerComponents)
     }
   }
 
-  def originMatches(origin: String): Boolean = {
+  private def originMatches(origin: String): Boolean = {
     origin.contains("localhost:9000")
   }
 

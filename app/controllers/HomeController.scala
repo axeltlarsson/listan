@@ -15,7 +15,7 @@ import models.User
 import services.UserService
 
 @Singleton
-class HomeController @Inject()(cc: ControllerComponents, userService: UserService)
+class HomeController @Inject()(cc: ControllerComponents, userService: UserService, configuration: Configuration)
                               (implicit ec: ExecutionContext)
                               extends AbstractController(cc) {
 
@@ -24,6 +24,7 @@ class HomeController @Inject()(cc: ControllerComponents, userService: UserServic
     (JsPath \ "password").read[String] tupled
 
   def login = Action.async(parse.json) { implicit request =>
+    println("*"*10 + "login")
     request.body.validate(loginData).fold(
       errors => Future {
         BadRequest(JsError.toJson(errors))

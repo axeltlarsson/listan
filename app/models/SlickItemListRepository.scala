@@ -15,7 +15,7 @@ class SlickItemListRepository @Inject()(protected val dbConfigProvider: Database
                                         extends HasDatabaseConfigProvider[JdbcProfile] with LstRepository {
   import profile.api._
 
-  private[models] val lsts = TableQuery[Lsts]
+  private[models] val itemLists = TableQuery[ItemLists]
 
   override def add(name: String, description: Option[String], user: User,
                    uuid: Option[ItemList.UUID] = None): Future[ItemList.UUID] = {
@@ -23,36 +23,33 @@ class SlickItemListRepository @Inject()(protected val dbConfigProvider: Database
                        description = description,
                        userUuid = user.uuid.get,
                        uuid = uuid)
-    println(s"inserting $itemList")
     if (uuid.isDefined) {
-      println("uuid defined")
-      db.run(DBIO.seq(lsts forceInsert itemList)).map {_ => uuid.get}
+      db.run(DBIO.seq(itemLists forceInsert itemList)).map { _ => uuid.get}
     } else {
-      println("uuid not defined")
-      db.run((lsts returning lsts.map(_.uuid)) += itemList)
+      db.run((itemLists returning itemLists.map(_.uuid)) += itemList)
     }
   }
 
   override def updateName(name: String, uuid: ItemList.UUID): Future[Boolean] = {
-    val action = for { l <- lsts if l.uuid === uuid } yield l.name
+    val action = for {l <- itemLists if l.uuid === uuid } yield l.name
     db.run(action.update(name)).map(_ == 1)
   }
 
   override def updateDescription(description: String, uuid: ItemList.UUID): Future[Boolean] = {
-    val action = for { l <- lsts if l.uuid === uuid } yield l.description
+    val action = for {l <- itemLists if l.uuid === uuid } yield l.description
     db.run(action.update(description)).map(_ == 1)
   }
 
 
   override def delete(uuid: ItemList.UUID): Future[Boolean] = {
-    val action = lsts.filter(_.uuid === uuid)
+    val action = itemLists.filter(_.uuid === uuid)
     db.run(action.delete).map(_ == 1)
   }
 
 
-  override def all(): Future[Seq[ItemList]] = db.run(lsts.sortBy(_.created).result)
+  override def all(): Future[Seq[ItemList]] = db.run(itemLists.sortBy(_.created).result)
 
-  private[models] class Lsts(tag: Tag) extends Table[ItemList](tag, "lists") {
+  private[models] class ItemLists(tag: Tag) extends Table[ItemList](tag, "lists") {
     def uuid = column[String]("uuid", O.PrimaryKey, O.AutoInc)
     def name = column[String]("name", O.Unique)
     def description = column[String]("description")

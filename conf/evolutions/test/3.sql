@@ -21,7 +21,4 @@ ALTER TABLE items
 DROP TABLE lists;
 
 ALTER TABLE items
-    DROP FOREIGN KEY list_uuid;
-
-ALTER TABLE items
     DROP COLUMN list_uuid;
