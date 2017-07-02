@@ -5,7 +5,7 @@ import play.api.db.evolutions.Evolutions
 
 trait EvolutionsHelper {
   // Require an Injector to use this
-  this: InjectHelper =>
+  self: InjectHelper =>
 
   def clean() = {
     val dbApi = injector.instanceOf[DBApi]

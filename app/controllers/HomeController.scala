@@ -24,7 +24,6 @@ class HomeController @Inject()(cc: ControllerComponents, userService: UserServic
     (JsPath \ "password").read[String] tupled
 
   def login = Action.async(parse.json) { implicit request =>
-    println("*"*10 + "login")
     request.body.validate(loginData).fold(
       errors => Future {
         BadRequest(JsError.toJson(errors))
@@ -38,7 +37,7 @@ class HomeController @Inject()(cc: ControllerComponents, userService: UserServic
               created = None,
               updated = None)
             val session = JwtSession() + ("user", safeUser)
-            Ok(Json.toJson(session.serialize))
+            Ok(Json.obj("token" -> session.serialize))
           }
           case None => Unauthorized
         }

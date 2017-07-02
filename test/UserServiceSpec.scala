@@ -2,17 +2,17 @@ import org.scalatestplus.play._
 import org.scalatest.mockito.MockitoSugar
 import org.mockito.Mockito._
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.inject.bind
+import play.api.inject.{Injector, bind}
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 import models.{User, UserRepository}
-import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+import org.scalatestplus.play.guice.{GuiceOneAppPerSuite, GuiceOneServerPerSuite}
 import services.UserService
-import testhelpers.InjectHelper
+import testhelpers.{InjectHelper, ListHelper}
 
-class UserServiceSpec extends PlaySpec with MockitoSugar  {
+class UserServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite {
 
   trait MockUserRepo {
     val mockUserRepo = mock[UserRepository]
@@ -38,8 +38,8 @@ class UserServiceSpec extends PlaySpec with MockitoSugar  {
   }
 
   "SlickUserRepository" should {
-    "work with a test db" in new InjectHelper {
-      val repo = injector.instanceOf[UserRepository]
+    "work with a test db" in {
+      val repo = app.injector.instanceOf[UserRepository]
       val user = User.create("axel", "whatever")
       val uuid = Await.result(repo.insert(user), 100 millis)
       val usersInDb = Await.result(repo.all(), 100 millis)

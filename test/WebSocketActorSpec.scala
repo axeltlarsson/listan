@@ -17,24 +17,23 @@ import scala.concurrent.{Await, ExecutionContext}
 import play.api.inject._
 import models.{User, UserRepository}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+import testhelpers.{InjectHelper, ListHelper}
 
 import scala.language.postfixOps
 
 @Singleton
-class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Results {
+class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Results with InjectHelper {
+  val listUUID = ListHelper.createList(injector)
   implicit val system = ActorSystem("sys")
   var token = ""
 
   trait Automaton {
-      import play.api.inject.guice.GuiceApplicationBuilder
-      val app = new GuiceApplicationBuilder().build
-      val injector= app.injector
-      val userService = injector.instanceOf[UserService]
-      implicit val ec = injector.instanceOf[ExecutionContext]
-      val listActor: ActorRef = injector.instanceOf(BindingKey(classOf[ActorRef]).qualifiedWith("list-actor"))
-      val mockWsActor = TestProbe()
-      val wsActorProvider = new WebSocketActorProvider(userService, listActor, ipAddress = "test-ip")
-      val fsm = TestFSMRef(wsActorProvider.get(mockWsActor.ref, ipAddress = "test-ip"))
+    implicit val exec = injector.instanceOf[ExecutionContext]
+    val userService = injector.instanceOf[UserService]
+    val listActor: ActorRef = injector.instanceOf(BindingKey(classOf[ActorRef]).qualifiedWith("list-actor"))
+    val mockWsActor = TestProbe()
+    val wsActorProvider = new WebSocketActorProvider(userService, listActor, ipAddress = "test-ip")
+    val fsm = TestFSMRef(wsActorProvider.get(mockWsActor.ref, ipAddress = "test-ip"))
   }
 
   trait ExtraClient {
@@ -75,8 +74,10 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       )
       val Some(res) = route(app, req)
       status(res) mustEqual OK
-      token  = contentAsJson(res).as[String]
+      token = contentAsJson(res).apply("token").as[String]
     }
+
+
 
     // Try to authenticate with the token
     mockWsActor.expectMsg(500 millis, Json.toJson(AuthRequest(): Message))
@@ -88,6 +89,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       case _ => fail("user.name was not axel")
     }
   }
+
 
   "WebSocketActor" should {
     "start in state Unauthenticated" in new Automaton {
@@ -106,7 +108,8 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
     }
 
     "handle AddItem and DeleteItem" in new Automaton with Authenticated {
-      fsm ! Json.toJson(AddItem("some contents that is to be added", "listuuid", "someAckNbr"): Message)
+      implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
+      fsm ! Json.toJson(AddItem("some contents that is to be added", list = listUUID, "someAckNbr"): Message)
       val res = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
       // Must be some way to make the following code compose better
       res.validate[Message] match {
@@ -140,8 +143,9 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
   "System with multiple clients" should {
 
     "handle AddItem, EditItem, DeleteItem" in new Automaton with Authenticated with ExtraClient {
+      implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
       /* Add item */
-      fsm ! Json.toJson(AddItem("some contents that is to be added", "listuuid", "ackNbr"): Message)
+      fsm ! Json.toJson(AddItem("some contents that is to be added", list = listUUID, "ackNbr"): Message)
       // mockWsActor should get UUIDResponse
       val resAdd = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
       assertMessage(resAdd)
@@ -153,7 +157,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       (relayedAdd \ "uuid").as[String] mustBe uuid
 
       /* Add extra item from mockWsActor2 */
-      fsm2 ! Json.toJson(AddItem("extra item", "listuuid", "extra-ack-nbr"): Message)
+      fsm2 ! Json.toJson(AddItem("extra item", list = listUUID, "extra-ack-nbr"): Message)
       // mockWsActor2 should get UUIDResponse for "extra item"
       val resExtraAdd = mockWsActor2.receiveOne(500 millis).asInstanceOf[JsObject]
       assertMessage(resExtraAdd)
@@ -243,7 +247,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
 
   }
 
-  def assertMessage(json: JsObject): Unit = {
+  private def assertMessage(json: JsObject): Unit = {
     json.validate[Message] match {
       case yes: JsSuccess[Message] => true mustBe true
       case JsError(errors) => {

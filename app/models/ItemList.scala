@@ -13,10 +13,10 @@ object ItemList {
 }
 
 case class ItemList(
-                     uuid: Option[ItemList.UUID] = None,
-                     name: String,
-                     description: Option[String],
-                     userUuid:  User.UUID,
-                     created: Option[Timestamp] = None,
-                     updated: Option[Timestamp] = None
+  uuid: Option[ItemList.UUID] = None,
+  name: String,
+  description: Option[String],
+  userUuid:  User.UUID,
+  created: Option[Timestamp] = None,
+  updated: Option[Timestamp] = None
 )
