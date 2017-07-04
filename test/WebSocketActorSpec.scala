@@ -16,19 +16,32 @@ import play.api.mvc._
 import scala.concurrent.{Await, ExecutionContext}
 import play.api.inject._
 import models.{User, UserRepository}
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-import testhelpers.{InjectHelper, ListHelper}
+import play.api.inject.guice.GuiceApplicationBuilder
+import testhelpers.{EvolutionsHelper, ListHelper}
 
 import scala.language.postfixOps
 
 @Singleton
-class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Results with InjectHelper {
-  val listUUID = ListHelper.createList(injector)
-  implicit val system = ActorSystem("sys")
+class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Results with BeforeAndAfter
+                                          with EvolutionsHelper with ListHelper {
+  var listUUID = ""
+  override val injector = app.injector
+  implicit val ec = injector.instanceOf[ExecutionContext]
   var token = ""
+  implicit val system = ActorSystem("sys")
+
+  before {
+    evolve()
+    listUUID = createList()(ec)
+  }
+
+  after {
+    clean()
+  }
 
   trait Automaton {
-    implicit val exec = injector.instanceOf[ExecutionContext]
     val userService = injector.instanceOf[UserService]
     val listActor: ActorRef = injector.instanceOf(BindingKey(classOf[ActorRef]).qualifiedWith("list-actor"))
     val mockWsActor = TestProbe()
@@ -53,10 +66,8 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       fsm.stateName mustBe Unauthenticated
       // Get the token by calling /api/login with creds
       val repo = injector.instanceOf[UserRepository]
-      val controller = injector.instanceOf[HomeController]
 
-      val existsAlready = Await.result(repo.all(), 500 millis).length > 0
-      if (!existsAlready)
+      if (!Await.result(repo.authenticate("axel", "whatever"), 500 millis).isDefined)
         Await.result(repo.insert(User.create("axel", "whatever")), 500 millis)
 
       val json = Json.parse("""
@@ -108,7 +119,6 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
     }
 
     "handle AddItem and DeleteItem" in new Automaton with Authenticated {
-      implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
       fsm ! Json.toJson(AddItem("some contents that is to be added", list = listUUID, "someAckNbr"): Message)
       val res = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
       // Must be some way to make the following code compose better
@@ -143,7 +153,6 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
   "System with multiple clients" should {
 
     "handle AddItem, EditItem, DeleteItem" in new Automaton with Authenticated with ExtraClient {
-      implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
       /* Add item */
       fsm ! Json.toJson(AddItem("some contents that is to be added", list = listUUID, "ackNbr"): Message)
       // mockWsActor should get UUIDResponse

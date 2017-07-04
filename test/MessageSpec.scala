@@ -2,16 +2,17 @@ import org.scalatestplus.play._
 import services._
 import play.api.libs.json._
 import models.{Item, ItemList}
-import org.scalatestplus.play.guice.GuiceOneAppPerTest
+import play.api.Logger
 
 
 class MessageSpec extends PlaySpec {
+  val log = Logger(this.getClass)
 
   def jsonSerializable(msg: Message): Boolean = {
     val json = Json.toJson(msg)
-    // Logger.debug(Json.prettyPrint(json))
+    Logger.warn(Json.prettyPrint(json))
     json.validate[Message] match {
-      case s: JsSuccess[Message] => true
+      case _: JsSuccess[Message] => true
       case _ => false
     }
   }

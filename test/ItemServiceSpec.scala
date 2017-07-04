@@ -9,29 +9,34 @@ import scala.language.postfixOps
 import java.sql.Timestamp
 
 import models.{ItemRepository, User, UserRepository}
-import org.scalatestplus.play.guice.GuiceOneAppPerTest
-import services.{ItemListService, UserService}
-import testhelpers.{InjectHelper, ListHelper}
+import org.scalatestplus.play.guice.{GuiceOneAppPerSuite, GuiceOneAppPerTest}
+import play.api.inject.guice.GuiceApplicationBuilder
+import testhelpers.{EvolutionsHelper, ListHelper}
 
-class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerTest with InjectHelper {
-  val listUUID = ListHelper.createList(injector)
+class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfter with EvolutionsHelper with ListHelper {
+  override val injector = (new GuiceApplicationBuilder()).injector
+  implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
+  val repo = injector.instanceOf[ItemRepository]
+  var listUUID = ""
 
-  /* Provide userRepo val `repo` */
-  trait Repo {
-    val repo = injector.instanceOf[ItemRepository]
+  before {
+    evolve()
+    listUUID = createList()(ec)
+  }
+
+  after {
+    clean()
   }
 
   "SlickItemRepository#add(contents)" should {
-    "accept a client-given uuid" in new Repo {
-      implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
+    "accept a client-given uuid" in {
       val clientUuid = "abc-123"
       val uuid = Await.result(repo.add("an item", listUUID = listUUID, id = Option(clientUuid)), 100 millis)
       val allItems = Await.result(repo.all(), 100 millis)
       uuid mustBe clientUuid
     }
 
-    "return uuid and actually insert the item correctly" in new Repo {
-      implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
+    "return uuid and actually insert the item correctly" in {
       val allItems0 = Await.result(repo.all(), 1 seconds)
       allItems0.length mustBe 0
       val uuid = Await.result(repo.add("some contents", listUUID = listUUID), 1 seconds)
@@ -45,8 +50,7 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerTest
   }
 
   "SlickItemRepository" should {
-    "set set created and updated timestamps on add" in new Repo {
-      implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
+    "set set created and updated timestamps on add" in {
       // Add item
       val creation = new Timestamp(System.currentTimeMillis())
       val uuid = Await.result(repo.add("item", listUUID = listUUID), 100 millis)
@@ -74,8 +78,7 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerTest
   }
 
   "SlickItemRepository#delete(uuid)" should {
-    "return nbr of rows affected and actually delete the item" in new Repo {
-      implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
+    "return nbr of rows affected and actually delete the item" in {
       val affectedRows = for {
         uuid <- repo.add("to be deleted", listUUID = listUUID)
         affectedRows <- repo.delete(uuid)
@@ -85,15 +88,13 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerTest
       allItems.length mustBe 0
     }
 
-    "not crash for non-existing uuid" in new Repo {
-      implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
+    "not crash for non-existing uuid" in {
       Await.result(repo.delete("bogus"), 1 seconds) mustBe 0
     }
   }
 
   "SlickItemRepository#edit(uuid, contents)" should {
-    "properly update contents of item" in new Repo {
-      implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
+    "properly update contents of item" in {
       val affectedRows = for {
         uuid <- repo.add("to be updated", listUUID = listUUID)
         affectedRows <- repo.edit(uuid, "updated contents")
@@ -101,15 +102,13 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerTest
       Await.result(affectedRows, 1 seconds) mustBe 1
     }
 
-    "do not crash when trying to edit non-existing item" in new Repo {
-      implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
+    "do not crash when trying to edit non-existing item" in {
       Await.result(repo.edit("bogus", "updated value"), 1 seconds) mustBe 0
     }
   }
 
   "SlickItemRepository complete and uncomplete" should {
-    "work" in new Repo {
-      implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
+    "work" in {
       val affectedRows = for {
         uuid <- repo.add("Complete me!", listUUID = listUUID)
         uuid2 <- repo.add("Do NOT complete me", listUUID = listUUID)
@@ -132,16 +131,14 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerTest
       item22.completed mustBe false // (still)
     }
 
-    "not crash for non-existing uuid" in new Repo {
-      implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
+    "not crash for non-existing uuid" in {
       Await.result(repo.complete("bogus"), 1 seconds) mustBe 0
       Await.result(repo.unComplete("bogus"), 1 seconds) mustBe 0
     }
   }
 
   "SlickItemRepository all()" should {
-    "return items sorted by created timestamp" in new Repo {
-      implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
+    "return items sorted by created timestamp" in {
       val itemsF = for {
         item1 <- repo.add("1", listUUID = listUUID)
         item2 <- repo.add("2", listUUID = listUUID)
