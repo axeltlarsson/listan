@@ -50,7 +50,7 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuit
   }
 
   "SlickItemRepository" should {
-    "set set created and updated timestamps on add" in {
+    "set created and updated timestamps on add" in {
       // Add item
       val creation = new Timestamp(System.currentTimeMillis())
       val uuid = Await.result(repo.add("item", listUUID = listUUID), 100 millis)

@@ -26,7 +26,7 @@ class Module(environment: Environment, configuration: Configuration) extends Abs
     bind(classOf[ApplicationTimer]).asEagerSingleton()
     bind(classOf[UserRepository]).to(classOf[SlickUserRepository])
     bind(classOf[ItemRepository]).to(classOf[SlickItemRepository])
-    bind(classOf[LstRepository]).to(classOf[SlickItemListRepository])
+    bind(classOf[ItemListRepository]).to(classOf[SlickItemListRepository])
 
     bindActor[ListActor]("list-actor")
   }

@@ -12,7 +12,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class SlickItemListRepository @Inject()(protected val dbConfigProvider: DatabaseConfigProvider,
                                         private[models] val userRepo: SlickUserRepository)
                                        (implicit ec: ExecutionContext)
-                                        extends HasDatabaseConfigProvider[JdbcProfile] with LstRepository {
+                                        extends HasDatabaseConfigProvider[JdbcProfile] with ItemListRepository {
   import profile.api._
 
   private[models] val itemLists = TableQuery[ItemLists]
