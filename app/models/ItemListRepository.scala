@@ -7,6 +7,7 @@ trait ItemListRepository {
   def updateName(name: String, uuid: ItemList.UUID): Future[Boolean]
   def updateDescription(description: String, uuid: ItemList.UUID): Future[Boolean]
   def delete(uuid: ItemList.UUID): Future[Boolean]
-  def all(): Future[Seq[ItemList]]
+  def get(uuid: ItemList.UUID): Future[Option[ItemList]]
+  def listsByUser(user: User): Future[Seq[ItemList]]
 }
 

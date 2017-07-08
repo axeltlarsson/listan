@@ -19,5 +19,8 @@ class ItemListService @Inject()(repo: ItemListRepository) {
 
   def delete(uuid: ItemList.UUID): Future[Boolean] = repo.delete(uuid)
 
-  def all(): Future[Seq[ItemList]] = repo.all()
+  def get(uuid: ItemList.UUID): Future[Option[ItemList]] = repo.get(uuid)
+
+  def listsByUser(user: User): Future[Seq[ItemList]] = repo.listsByUser(user)
+
 }

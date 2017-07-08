@@ -31,21 +31,21 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuit
   "SlickItemRepository#add(contents)" should {
     "accept a client-given uuid" in {
       val clientUuid = "abc-123"
-      val uuid = Await.result(repo.add("an item", listUUID = listUUID, id = Option(clientUuid)), 100 millis)
-      val allItems = Await.result(repo.all(), 100 millis)
+      val uuid = Await.result(repo.add("an item", listUUID = listUUID, uuid = Option(clientUuid)), 100 millis)
       uuid mustBe clientUuid
     }
 
     "return uuid and actually insert the item correctly" in {
-      val allItems0 = Await.result(repo.all(), 1 seconds)
-      allItems0.length mustBe 0
       val uuid = Await.result(repo.add("some contents", listUUID = listUUID), 1 seconds)
       uuid.length must be > 20
 
-      val allItems = Await.result(repo.all(), 1 seconds)
-      allItems(0).contents mustBe "some contents"
-      allItems(0).completed mustBe false
-      allItems(0).uuid.get mustBe uuid
+      val item = Await.result(repo.get(uuid), 10 millis)
+      item mustBe defined
+      item.foreach(i => {
+        i.contents mustBe "some contents"
+        i.completed mustBe false
+        i.uuid.get mustBe uuid
+      })
     }
   }
 
@@ -54,7 +54,7 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuit
       // Add item
       val creation = new Timestamp(System.currentTimeMillis())
       val uuid = Await.result(repo.add("item", listUUID = listUUID), 100 millis)
-      val item = Await.result(repo.all(), 100 millis).find(_.uuid.exists(_ == uuid))
+      val item = Await.result(repo.get(uuid), 10 millis)
       item mustBe defined
       item.foreach(i => {
         // Check that created and updated fields are ~equal to creation
@@ -66,7 +66,7 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuit
       // Update item
       val update = new Timestamp(System.currentTimeMillis())
       Await.result(repo.edit(uuid, "update"), 100 millis)
-      val updatedItem = Await.result(repo.all(), 100 millis).find(_.uuid.exists(_ == uuid))
+      val updatedItem = Await.result(repo.get(uuid), 10 millis)
       updatedItem.foreach(i => {
         // Created field should still be ~equal to creation, updated ~equal update
         i.created mustBe defined
@@ -79,13 +79,14 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuit
 
   "SlickItemRepository#delete(uuid)" should {
     "return nbr of rows affected and actually delete the item" in {
-      val affectedRows = for {
+      val rowsUuidPair = Await.result(for {
         uuid <- repo.add("to be deleted", listUUID = listUUID)
         affectedRows <- repo.delete(uuid)
-      } yield affectedRows
-      Await.result(affectedRows, 1 seconds) mustBe 1
-      val allItems = Await.result(repo.all(), 1 seconds)
-      allItems.length mustBe 0
+      } yield (affectedRows, uuid),
+        10 millis)
+      rowsUuidPair._1 mustBe 1
+      val item = Await.result(repo.get(rowsUuidPair._2), 10 millis)
+      item mustBe None
     }
 
     "not crash for non-existing uuid" in {
@@ -109,26 +110,28 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuit
 
   "SlickItemRepository complete and uncomplete" should {
     "work" in {
-      val affectedRows = for {
-        uuid <- repo.add("Complete me!", listUUID = listUUID)
+      val results = Await.result(for {
+        uuid1 <- repo.add("Complete me!", listUUID = listUUID)
         uuid2 <- repo.add("Do NOT complete me", listUUID = listUUID)
-        affectedRows <- repo.complete(uuid)
-      } yield affectedRows
-      Await.result(affectedRows, 1 seconds) mustBe 1
-      val item = Await.result(repo.all(), 1 seconds)
-        .filter(_.contents == "Complete me!").head
-      item.completed mustBe true
-      val item2 = Await.result(repo.all(), 1 seconds)
-        .filter(_.contents == "Do NOT complete me").head
-      item2.completed mustBe false
+        success <- repo.complete(uuid1)
+      } yield (success, uuid1, uuid2),
+        10 millis)
+      results._1 mustBe 1
+      val item = Await.result(repo.get(results._2), 10 millis)
+      item mustBe defined
+      item.get.completed mustBe true
 
-      Await.result(repo.unComplete(item.uuid.get), 1 seconds) mustBe 1
-      val itemUncompleted = Await.result(repo.all(), 1 seconds)
-        .filter(_.contents == "Complete me!").head
-      itemUncompleted.completed mustBe false
-      val item22 = Await.result(repo.all(), 1 seconds)
-        .filter(_.contents == "Do NOT complete me").head
-      item22.completed mustBe false // (still)
+      val item2 = Await.result(repo.get(results._3), 10 millis)
+      item2 mustBe defined
+      item2.get.completed mustBe false
+
+      Await.result(repo.unComplete(item.get.uuid.get), 1 seconds) mustBe 1
+      val itemUnCompleted = Await.result(repo.get(item.get.uuid.get), 10 millis)
+      itemUnCompleted mustBe defined
+      itemUnCompleted.get.completed mustBe false
+
+      val item22 = Await.result(repo.get(item2.get.uuid.get), 10 millis)
+      item22.get.completed mustBe false // (still)
     }
 
     "not crash for non-existing uuid" in {
@@ -145,7 +148,7 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuit
         item3 <- repo.add("3", listUUID = listUUID)
         item4 <- repo.add("4", listUUID = listUUID)
         compl <- repo.complete(item2)
-        items <- repo.all()
+        items <- repo.itemsByList(listUUID)
       } yield items
       val items = Await.result(itemsF, 1 second)
       items must have length 4

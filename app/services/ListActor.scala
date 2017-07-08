@@ -118,7 +118,7 @@ class ListActor @Inject()(itemService: ItemService, lstService: ItemListService)
    }
 
    case action @ GetState(ack) => {
-     val itemsFuture: Future[Seq[ItemList]] = lstService.all()
+     val itemsFuture: Future[Seq[ItemList]] = ???
      val theSender = sender
      itemsFuture onComplete {
        case Success(items) => theSender ! GetStateResponse(???, ack)

@@ -9,6 +9,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 import java.sql.Timestamp
 
+
 @Singleton
 class SlickItemRepository @Inject()
     (protected val dbConfigProvider: DatabaseConfigProvider, private[models] val lstRepo: SlickItemListRepository)
@@ -19,7 +20,7 @@ class SlickItemRepository @Inject()
 
   private[models] val items = TableQuery[Items]
 
-  override def add(contents: String, listUUID: String, uuid: Option[String] = None): Future[String] = {
+  override def add(contents: String, listUUID: ItemList.UUID, uuid: Option[Item.UUID] = None): Future[Item.UUID] = {
     val item: Item = Item(uuid = uuid, contents = contents, listUuid = listUUID)
     if (uuid.isDefined) {
       db.run(DBIO.seq(items forceInsert item)).map {_ => uuid.get}
@@ -28,17 +29,17 @@ class SlickItemRepository @Inject()
     }
   }
 
-  override def delete(uuid: String): Future[Int] = {
+  override def delete(uuid: Item.UUID): Future[Int] = {
     val action = items.filter(_.uuid === uuid)
     db.run(action.delete)
   }
 
-  override def edit(uuid: String, contents: String): Future[Int] = {
+  override def edit(uuid: Item.UUID, contents: String): Future[Int] = {
     val action = for { i <- items if i.uuid === uuid } yield i.contents
     db.run(action.update(contents))
   }
 
-  override def complete(uuid: String): Future[Int] = {
+  override def complete(uuid: Item.UUID): Future[Int] = {
     val selectCompleted = for { i <- items if i.uuid === uuid } yield i.completed
     db.run(for {
       maybeItem <- items.filter(_.uuid === uuid).result.headOption
@@ -46,7 +47,7 @@ class SlickItemRepository @Inject()
     } yield affectedRows)
   }
 
-  override def unComplete(uuid: String): Future[Int] = {
+  override def unComplete(uuid: Item.UUID): Future[Int] = {
     val selectCompleted = for { i <- items if i.uuid === uuid } yield i.completed
     db.run(for {
       maybeItem <- items.filter(_.uuid === uuid).result.headOption
@@ -54,7 +55,16 @@ class SlickItemRepository @Inject()
     } yield affectedRows)
   }
 
-  override def all(): Future[Seq[Item]] = db.run(items.sortBy(_.created).result)
+  override def get(uuid: Item.UUID): Future[Option[Item]] = {
+    val action = items.filter(_.uuid === uuid).result.headOption
+    db.run(action)
+  }
+
+  override def itemsByList(listUuid: ItemList.UUID): Future[Seq[Item]] = {
+    val action = items.filter(_.list_uuid === listUuid).sortBy(_.created).result
+    db.run(action)
+  }
+
 
   private[models] class Items(tag: Tag) extends Table[Item](tag, "items") {
     def uuid = column[String]("uuid", O.PrimaryKey, O.AutoInc)
@@ -63,7 +73,8 @@ class SlickItemRepository @Inject()
     def list_uuid = column[String]("list_uuid")
     def created = column[Timestamp]("created", O.AutoInc)
     def updated = column[Timestamp]("updated", O.AutoInc)
-    def foreign_list = foreignKey("LIST_FK", list_uuid, lstRepo.itemLists)(_.uuid)
+    def foreign_list = foreignKey("LIST_FK", list_uuid, lstRepo.itemLists)(_.uuid, onUpdate=ForeignKeyAction.Restrict,
+                                                                                   onDelete=ForeignKeyAction.Cascade)
 
     def * = (uuid.?, contents, completed, list_uuid, created.?, updated.?) <>
       ((Item.apply _).tupled, Item.unapply)

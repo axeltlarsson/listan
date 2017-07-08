@@ -2,6 +2,7 @@ package models
 
 import java.sql.Timestamp
 import javax.inject._
+
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import slick.jdbc.JdbcProfile
 
@@ -46,8 +47,15 @@ class SlickItemListRepository @Inject()(protected val dbConfigProvider: Database
     db.run(action.delete).map(_ == 1)
   }
 
+  override def get(uuid: ItemList.UUID): Future[Option[ItemList]] = {
+    val action = itemLists.filter(_.uuid === uuid).result.headOption
+    db.run(action)
+  }
 
-  override def all(): Future[Seq[ItemList]] = db.run(itemLists.sortBy(_.created).result)
+  override def listsByUser(user: User): Future[Seq[ItemList]] = {
+    val action = itemLists.filter(_.user_uuid === user.uuid).sortBy(_.created).result
+    db.run(action)
+  }
 
   private[models] class ItemLists(tag: Tag) extends Table[ItemList](tag, "lists") {
     def uuid = column[String]("uuid", O.PrimaryKey, O.AutoInc)
@@ -56,7 +64,8 @@ class SlickItemListRepository @Inject()(protected val dbConfigProvider: Database
     def user_uuid = column[String]("user_uuid")
     def created = column[Timestamp]("created", O.AutoInc)
     def updated = column[Timestamp]("updated", O.AutoInc)
-    def foreign_user = foreignKey("user_uuid", user_uuid, userRepo.users)(_.uuid)
+    def foreign_user = foreignKey("user_uuid", user_uuid, userRepo.users)(_.uuid, onUpdate=ForeignKeyAction.Restrict,
+                                                                                  onDelete=ForeignKeyAction.Cascade)
 
     def * = (uuid.?, name, description.?, user_uuid, created.?, updated.?) <>
       ((ItemList.apply _).tupled, ItemList.unapply)

@@ -3,10 +3,11 @@ package models
 import scala.concurrent.Future
 
 trait ItemRepository {
-  def add(contents: String, listUUID: String, id: Option[String] = None): Future[String]
-  def complete(uuid: String): Future[Int]
-  def unComplete(uuid: String): Future[Int]
-  def edit(uuid: String, contents: String): Future[Int]
-  def delete(uuid: String): Future[Int]
-  def all(): Future[Seq[Item]]
+  def add(contents: String, listUUID: ItemList.UUID, uuid: Option[String] = None): Future[Item.UUID]
+  def complete(uuid: Item.UUID): Future[Int]
+  def unComplete(uuid: Item.UUID): Future[Int]
+  def edit(uuid: Item.UUID, contents: String): Future[Int]
+  def delete(uuid: Item.UUID): Future[Int]
+  def get(uuid: Item.UUID): Future[Option[Item]]
+  def itemsByList(listUuid: ItemList.UUID): Future[Seq[Item]]
 }

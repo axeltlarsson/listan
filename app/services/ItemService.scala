@@ -6,18 +6,20 @@ import javax.inject._
 import scala.concurrent.Future
 
 @Singleton
-class ItemService @Inject()(itemRepo: ItemRepository) {
+class ItemService @Inject()(repo: ItemRepository) {
 
-  def add(contents: String, listUuid: ItemList.UUID, uuid: Option[Item.UUID] = None): Future[String] =
-    itemRepo.add(contents, listUuid, uuid)
+  def add(contents: String, listUuid: ItemList.UUID, uuid: Option[Item.UUID] = None): Future[Item.UUID] =
+    repo.add(contents, listUuid, uuid)
 
-  def complete(uuid: String): Future[Int] = itemRepo.complete(uuid)
+  def complete(uuid: Item.UUID): Future[Int] = repo.complete(uuid)
 
-  def unComplete(uuid: Item.UUID): Future[Int] = itemRepo.unComplete(uuid)
+  def unComplete(uuid: Item.UUID): Future[Int] = repo.unComplete(uuid)
 
-  def edit(uuid: Item.UUID, contents: String): Future[Int] = itemRepo.edit(uuid, contents)
+  def edit(uuid: Item.UUID, contents: String): Future[Int] = repo.edit(uuid, contents)
 
-  def delete(uuid: Item.UUID): Future[Int] = itemRepo.delete(uuid)
+  def delete(uuid: Item.UUID): Future[Int] = repo.delete(uuid)
 
-  def all(): Future[Seq[Item]] = itemRepo.all()
+  def get(uuid: Item.UUID): Future[Option[Item]] = repo.get(uuid)
+
+  def itemsByList(listUUID: ItemList.UUID): Future[Seq[Item]] = repo.itemsByList(listUUID)
 }
