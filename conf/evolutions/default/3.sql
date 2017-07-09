@@ -20,7 +20,9 @@ ALTER TABLE items
     ADD list_uuid varchar(255) NOT NULL;
 
 ALTER TABLE items
-    ADD FOREIGN KEY (list_uuid) REFERENCES lists(uuid);
+    ADD FOREIGN KEY (list_uuid)
+        REFERENCES lists(uuid)
+        ON DELETE CASCADE;
 
 # --- !Downs
 DROP TABLE lists;

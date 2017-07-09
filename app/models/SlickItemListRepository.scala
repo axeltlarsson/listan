@@ -32,19 +32,20 @@ class SlickItemListRepository @Inject()(protected val dbConfigProvider: Database
   }
 
   override def updateName(name: String, uuid: ItemList.UUID): Future[Boolean] = {
-    val action = for {l <- itemLists if l.uuid === uuid } yield l.name
-    db.run(action.update(name)).map(_ == 1)
+    val query = for {l <- itemLists if l.uuid === uuid } yield l.name
+    db.run(query.update(name)).map(_ == 1)
   }
 
   override def updateDescription(description: String, uuid: ItemList.UUID): Future[Boolean] = {
-    val action = for {l <- itemLists if l.uuid === uuid } yield l.description
-    db.run(action.update(description)).map(_ == 1)
+    val query = for {l <- itemLists if l.uuid === uuid } yield l.description
+    db.run(query.update(description)).map(_ == 1)
   }
 
-
   override def delete(uuid: ItemList.UUID): Future[Boolean] = {
-    val action = itemLists.filter(_.uuid === uuid)
-    db.run(action.delete).map(_ == 1)
+    // `ON DELETE CASCADE` on the foreign key to lists in items ensures items are deleted first
+    val query = itemLists.filter(_.uuid === uuid)
+    val action = query.delete.map(_ == 1)
+    db.run(action)
   }
 
   override def get(uuid: ItemList.UUID): Future[Option[ItemList]] = {
@@ -64,8 +65,7 @@ class SlickItemListRepository @Inject()(protected val dbConfigProvider: Database
     def user_uuid = column[String]("user_uuid")
     def created = column[Timestamp]("created", O.AutoInc)
     def updated = column[Timestamp]("updated", O.AutoInc)
-    def foreign_user = foreignKey("user_uuid", user_uuid, userRepo.users)(_.uuid, onUpdate=ForeignKeyAction.Restrict,
-                                                                                  onDelete=ForeignKeyAction.Cascade)
+    def foreign_user = foreignKey("user_uuid", user_uuid, userRepo.users)(_.uuid, onUpdate=ForeignKeyAction.Restrict)
 
     def * = (uuid.?, name, description.?, user_uuid, created.?, updated.?) <>
       ((ItemList.apply _).tupled, ItemList.unapply)

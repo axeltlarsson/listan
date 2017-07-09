@@ -15,6 +15,7 @@ class SlickItemRepository @Inject()
     (protected val dbConfigProvider: DatabaseConfigProvider, private[models] val lstRepo: SlickItemListRepository)
     (implicit ec: ExecutionContext)
     extends HasDatabaseConfigProvider[JdbcProfile] with ItemRepository {
+  dbConfigProvider.get.profile
 
   import profile.api._
 
@@ -64,7 +65,6 @@ class SlickItemRepository @Inject()
     val action = items.filter(_.list_uuid === listUuid).sortBy(_.created).result
     db.run(action)
   }
-
 
   private[models] class Items(tag: Tag) extends Table[Item](tag, "items") {
     def uuid = column[String]("uuid", O.PrimaryKey, O.AutoInc)
