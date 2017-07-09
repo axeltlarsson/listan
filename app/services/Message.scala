@@ -14,12 +14,12 @@ case class AuthRequest() extends Message
 case class Ping(ack: String) extends Message
 
 sealed trait Action extends Message
-case class AddItem(contents: String, list: String, ack: String, uuid: Option[String] = None) extends Action // uuid for relayed msg
+case class AddItem(contents: String, list_uuid: String, ack: String, uuid: Option[String] = None) extends Action // uuid for relayed msg
 case class EditItem(uuid: String, contents: String, ack: String) extends Action
 case class CompleteItem(uuid: String, ack: String) extends Action
-case class UncompleteItem(uuid: String, ack: String) extends Action
+case class UnCompleteItem(uuid: String, ack: String) extends Action
 case class DeleteItem(uuid: String, ack: String) extends Action
-case class GetState(ack: String) extends Action
+case class GetState(ack: String, user: Option[String] = None) extends Action // user added by WebSocketActor when authenticated
 case class AddList(name: String, description: Option[String], ack: String, uuid: Option[String] = None) extends Action
 case class UpdateListName(uuid: String, name: String, ack: String) extends Action
 case class UpdateListDescription(uuid: String, description: String, ack: String) extends Action
@@ -64,8 +64,8 @@ object AddItem {
 object CompleteItem {
  implicit val format: OFormat[CompleteItem] = derived.oformat(NameAdapter.identity)
 }
-object UncompleteItem {
- implicit val format: OFormat[UncompleteItem] = derived.oformat(NameAdapter.identity)
+object UnCompleteItem {
+ implicit val format: OFormat[UnCompleteItem] = derived.oformat(NameAdapter.identity)
 }
 object DeleteItem {
   implicit val format: OFormat[DeleteItem] = derived.oformat(NameAdapter.identity)

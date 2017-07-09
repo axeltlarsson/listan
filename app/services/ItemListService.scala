@@ -1,11 +1,13 @@
 package services
 
 import javax.inject._
-import models.{ItemList, ItemListRepository, User}
-import scala.concurrent.Future
+
+import models._
+
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class ItemListService @Inject()(repo: ItemListRepository) {
+class ItemListService @Inject()(repo: ItemListRepository, itemRepo: ItemRepository)(implicit ec: ExecutionContext) {
 
   def add(name: String, description: Option[String] = None, user: User,
          uuid: Option[ItemList.UUID] = None): Future[ItemList.UUID] = {
@@ -22,5 +24,15 @@ class ItemListService @Inject()(repo: ItemListRepository) {
   def get(uuid: ItemList.UUID): Future[Option[ItemList]] = repo.get(uuid)
 
   def listsByUser(user: User): Future[Seq[ItemList]] = repo.listsByUser(user)
+
+  def itemListsByUser(user: User): Future[Seq[(ItemList, Seq[Item])]] = {
+    for {
+      lists <- listsByUser(user)
+      // Doing just lists.map(itemRepo.itemsByList(_.uuid)) would become Seq[Future[Seq[Item]]
+      // traverse fixes this into Future[Seq[Item]], then the .map on the future transforms the Seq[Item] into a tuple
+      // of (ItemList, Seq[Item]) which is what we want
+      items <- Future.traverse(lists)(list => itemRepo.itemsByList(list.uuid.get).map(items => (list, items)))
+    } yield items
+  }
 
 }

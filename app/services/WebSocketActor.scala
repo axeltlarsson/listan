@@ -43,6 +43,7 @@ class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor
         case s: JsSuccess[Message] => {
           s.get match {
             case Auth(token, ack) => {
+
               userService.authenticate(token) match {
                 case Some(user) => {
                   ws ! Json.toJson(AuthResponse("Authentication success", ack): Message)
@@ -87,7 +88,8 @@ class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor
   }
 
   when(Authenticated) {
-    case Event(json: JsValue, _) =>
+    // Event received as json from client WebSocket, validate and send to listActor if appropriate
+    case Event(json: JsValue, userData: UserData) =>
       val ack = (json \ "ack").asOpt[String]
       json.validate[Message] match {
         case s: JsSuccess[Message] => {
@@ -96,6 +98,19 @@ class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor
           })
           if ((json \ "type").as[String] == "Ping") {
             ws ! Json.toJson(Pong(ack = ack.get): Message)
+          } else if ((json \ "type").as[String] == "GetState") {
+            // Add user information to message
+            json.validate[GetState].asOpt match {
+              case Some(m) => {
+                listActor ! m.copy(user = Some(userData.user.name))
+              }
+              case None => {
+                Logger.error(s"[$ipAddress] Could not validate json as GetState Message")
+                ws ! Json.toJson(FailureResponse("Invalid GetState message", ack.getOrElse("NO_ACK_PROVIDED")): Message)
+                self ! PoisonPill
+                stay
+              }
+            }
           } else {
             Logger.debug(s"[$ipAddress] received $json")
             listActor ! s.get
@@ -109,10 +124,12 @@ class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor
           stay
         }
       }
+    // Response received from listActor, relay as json to client WebSocket
     case Event(r: Response, _) =>  {
       ws ! Json.toJson(r: Message)
       stay
     }
+    // Action received from listActor (triggered by other clients), relay as json to client WebSocket
     case Event(a: Action, _) => {
       ws ! Json.toJson(a: Message)
 

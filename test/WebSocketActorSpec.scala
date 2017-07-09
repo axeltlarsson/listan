@@ -15,7 +15,7 @@ import play.api.mvc._
 
 import scala.concurrent.{Await, ExecutionContext}
 import play.api.inject._
-import models.{User, UserRepository}
+import models.{Item, ItemList, User, UserRepository}
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -42,8 +42,8 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
   }
 
   trait Automaton {
-    val userService = injector.instanceOf[UserService]
-    val listActor: ActorRef = injector.instanceOf(BindingKey(classOf[ActorRef]).qualifiedWith("list-actor"))
+    private val userService = injector.instanceOf[UserService]
+    private val listActor: ActorRef = injector.instanceOf(BindingKey(classOf[ActorRef]).qualifiedWith("list-actor"))
     val mockWsActor = TestProbe()
     val wsActorProvider = new WebSocketActorProvider(userService, listActor, ipAddress = "test-ip")
     val fsm = TestFSMRef(wsActorProvider.get(mockWsActor.ref, ipAddress = "test-ip"))
@@ -60,6 +60,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
   }
 
   trait Authenticated {
+    // N.B. Will only be `instantiated` once, even if used by many tests...
     // Require Automaton to use this
     self: Automaton =>
     if (token == "") {
@@ -67,13 +68,13 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       // Get the token by calling /api/login with creds
       val repo = injector.instanceOf[UserRepository]
 
-      if (!Await.result(repo.authenticate("axel", "whatever"), 500 millis).isDefined)
-        Await.result(repo.insert(User.create("axel", "whatever")), 500 millis)
+      if (!Await.result(repo.authenticate("name", "password"), 500 millis).isDefined)
+        Await.result(repo.insert(User.create("name", "password")), 500 millis)
 
       val json = Json.parse("""
         {
-          "username": "axel",
-          "password": "whatever"
+          "username": "name",
+          "password": "password"
         }
         """)
 
@@ -88,16 +89,14 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       token = contentAsJson(res).apply("token").as[String]
     }
 
-
-
     // Try to authenticate with the token
     mockWsActor.expectMsg(500 millis, Json.toJson(AuthRequest(): Message))
     fsm ! Json.toJson(Auth(token, "ackNbr"): Message)
     mockWsActor.expectMsg(500 millis, Json.toJson(AuthResponse("Authentication success", "ackNbr"): Message))
     fsm.stateName mustBe Authenticated
     fsm.stateData match {
-      case UserData(user) => user.name mustBe "axel"
-      case _ => fail("user.name was not axel")
+      case UserData(user) => user.name mustBe "name"
+      case _ => fail("user.name was not `name`")
     }
   }
 
@@ -119,7 +118,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
     }
 
     "handle AddItem and DeleteItem" in new Automaton with Authenticated {
-      fsm ! Json.toJson(AddItem("some contents that is to be added", list = listUUID, "someAckNbr"): Message)
+      fsm ! Json.toJson(AddItem("some contents that is to be added", list_uuid = listUUID, "someAckNbr"): Message)
       val res = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
       // Must be some way to make the following code compose better
       res.validate[Message] match {
@@ -154,7 +153,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
 
     "handle AddItem, EditItem, DeleteItem" in new Automaton with Authenticated with ExtraClient {
       /* Add item */
-      fsm ! Json.toJson(AddItem("some contents that is to be added", list = listUUID, "ackNbr"): Message)
+      fsm ! Json.toJson(AddItem("some contents that is to be added", list_uuid = listUUID, "ackNbr"): Message)
       // mockWsActor should get UUIDResponse
       val resAdd = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
       assertMessage(resAdd)
@@ -166,7 +165,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       (relayedAdd \ "uuid").as[String] mustBe uuid
 
       /* Add extra item from mockWsActor2 */
-      fsm2 ! Json.toJson(AddItem("extra item", list = listUUID, "extra-ack-nbr"): Message)
+      fsm2 ! Json.toJson(AddItem("extra item", list_uuid = listUUID, "extra-ack-nbr"): Message)
       // mockWsActor2 should get UUIDResponse for "extra item"
       val resExtraAdd = mockWsActor2.receiveOne(500 millis).asInstanceOf[JsObject]
       assertMessage(resExtraAdd)
@@ -204,7 +203,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       (relayedComplete \ "uuid").as[String] mustBe uuid
 
       /* mockWsActor2 sends UncompleteItem for extra item */
-      fsm2 ! Json.toJson(UncompleteItem(uuidExtraAdd, "uncomplete-ack"): Message)
+      fsm2 ! Json.toJson(UnCompleteItem(uuidExtraAdd, "uncomplete-ack"): Message)
       // mockWsActor2 should get UUIDResponse
       val resUncomplete = mockWsActor2.receiveOne(500 millis).asInstanceOf[JsObject]
       assertMessage(resUncomplete)
@@ -221,13 +220,16 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       // mockWsActor should get GetStateResponse
       val resState = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
       assertMessage(resState)
-      val items = (resState \ "items").as[Seq[models.Item]]
+      val lists = (resState \ "lists").as[Seq[(ItemList, Seq[Item])]]
       // the items list should contain the correct items
-      items must have length 2
+      lists must have length 1
+      val (itemList, items) = lists(0)
       items(0).contents must (be ("changed content") or be ("extra item"))
       items(0).contents must not be (items(1).contents)
       items(1).contents must (be ("changed content") or be ("extra item"))
       items(0).completed must not be (items(1).completed)
+      itemList.description mustBe None
+      itemList.name mustBe "a list" // as per ListHelper
 
       /* Let mockWsActor1 send DeleteItem */
       fsm ! Json.toJson(DeleteItem(uuid, "ack"): Message)

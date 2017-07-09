@@ -163,6 +163,37 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
       user2Lists must have length(1)
     }
 
+    "itemListByUser should return ItemList:s for user with their respective Item:s" in new Users {
+      val itemService = injector.instanceOf[ItemService]
+      // Add lists
+      val uuid1 = Await.result(service.add(name = "list1 by user 1", user = users._1.get), 10 millis)
+      val uuid2 = Await.result(service.add(name = "list2 by user 2", user = users._2.get), 10 millis)
+      val uuid3 = Await.result(service.add(name = "list3 also by user 1", user = users._1.get), 10 millis)
+
+      // Add items to lists
+      val items = Await.result(for {
+        item1 <- itemService.add("item 1 list 1", uuid1)
+        item2 <- itemService.add("item 2 list 2", uuid2)
+        item3 <- itemService.add("item 3 list 3", uuid3)
+        item4 <- itemService.add("item 4 list 1", uuid1)
+        item5 <- itemService.add("item 5 list 1", uuid1)
+      } yield (item1, item2, item3, item4, item5),
+        10 millis)
+
+      val user1Lists = Await.result(service.itemListsByUser(users._1.get), 10 millis)
+      user1Lists must have length(2)
+      user1Lists(0)._1.name mustBe "list1 by user 1"
+      user1Lists(0)._2 must have length 3
+      user1Lists(0)._2(2).contents mustBe "item 5 list 1"
+      user1Lists(1)._1.name mustBe "list3 also by user 1"
+      user1Lists(1)._2 must have length 1
+
+      val user2Lists = Await.result(service.itemListsByUser(users._2.get), 10 millis)
+      user2Lists must have length 1
+      user2Lists(0)._1.name mustBe "list2 by user 2"
+      user2Lists(0)._2 must have length 1
+
+    }
   }
 }
 

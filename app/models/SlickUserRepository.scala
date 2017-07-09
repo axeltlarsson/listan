@@ -27,7 +27,7 @@ class SlickUserRepository @Inject()
     db.run((users returning users.map(_.uuid)) += user)
   }
 
-  private def findByName(name: String): Future[Seq[User]] = db.run(users.filter(_.name === name).result)
+  override def findByName(name: String): Future[Option[User]] = db.run(users.filter(_.name === name).result.headOption)
 
   private[models] class Users(tag: Tag) extends Table[User](tag, "users") {
     def uuid = column[String]("uuid", O.PrimaryKey, O.AutoInc)
@@ -43,7 +43,7 @@ class SlickUserRepository @Inject()
 
   override def authenticate(name: String, password: String): Future[Option[User]] = {
     findByName(name) map {
-      case Seq(u) if password.isBcrypted(u.passwordHash.getOrElse(""))=> Some(u)
+      case Some(u) if password.isBcrypted(u.passwordHash.getOrElse(""))=> Some(u)
       case _ => None
     }
   }

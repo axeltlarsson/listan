@@ -29,7 +29,7 @@ class MessageSpec extends PlaySpec {
     }
     // Actions
     "AddItem be" in {
-      jsonSerializable(AddItem(contents = "mjölk", list = "abc", ack = "123")) mustBe true
+      jsonSerializable(AddItem(contents = "mjölk", list_uuid = "abc", ack = "123")) mustBe true
     }
     "EditItem be" in {
       jsonSerializable(EditItem(uuid = "sldfj-234-sdfj", contents = "filmjölk", ack = "124")) mustBe true
@@ -38,7 +38,7 @@ class MessageSpec extends PlaySpec {
       jsonSerializable(CompleteItem(uuid = "124", ack = "124")) mustBe true
     }
     "UncompleteItem be" in {
-      jsonSerializable(UncompleteItem(uuid = "124", ack = "124")) mustBe true
+      jsonSerializable(UnCompleteItem(uuid = "124", ack = "124")) mustBe true
     }
     "DeleteItem be" in {
       jsonSerializable(DeleteItem(uuid = "124", ack = "124")) mustBe true

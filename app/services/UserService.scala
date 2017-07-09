@@ -22,4 +22,6 @@ class UserService @Inject() (userRepo: UserRepository, configuration: Configurat
     } yield user
   }
 
+  def findByName(name: String): Future[Option[User]] = userRepo.findByName(name)
+
 }

@@ -1,16 +1,16 @@
 package services
 
-import akka.actor._
 import javax.inject._
 
+import akka.actor._
+import akka.pattern.pipe
+import models.UserRepository
 import play.Logger
 
 import scala.collection.mutable
-import models.{Item, ItemList, User}
-
-import scala.concurrent.{ExecutionContext, Future}
-import akka.pattern.pipe
-
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
 object ListActor {
@@ -23,7 +23,7 @@ object ListActor {
 }
 
 @Singleton
-class ListActor @Inject()(itemService: ItemService, lstService: ItemListService)
+class ListActor @Inject()(itemService: ItemService, itemListService: ItemListService, userService: UserService)
                          (implicit ec: ExecutionContext)
                           extends Actor {
   import ListActor._
@@ -93,7 +93,7 @@ class ListActor @Inject()(itemService: ItemService, lstService: ItemListService)
       } pipeTo self
     }
 
-    case action @ UncompleteItem(uuid, ack) => {
+    case action @ UnCompleteItem(uuid, ack) => {
       val rowsFuture: Future[Int] = itemService.unComplete(uuid)
       val theSender = sender
       rowsFuture.map { rows =>
@@ -117,12 +117,21 @@ class ListActor @Inject()(itemService: ItemService, lstService: ItemListService)
      } pipeTo self
    }
 
-   case action @ GetState(ack) => {
-     val itemsFuture: Future[Seq[ItemList]] = ???
+   case action @ GetState(ack, userName) => {
      val theSender = sender
-     itemsFuture onComplete {
-       case Success(items) => theSender ! GetStateResponse(???, ack)
-       case Failure(t) => theSender ! FailureResponse(t.getMessage, ack)
+     val listFuture = for {
+       userFromDB <- userService.findByName(userName.getOrElse(""))
+       lists <- if (userFromDB.isDefined) itemListService.itemListsByUser(userFromDB.get)
+                else Future.failed(throw new Exception(s"Could not find a user `${userName.getOrElse("")}` in database"))
+     } yield lists
+
+     listFuture onComplete {
+       case Success(lists) => {
+         theSender ! GetStateResponse(lists, ack)
+       }
+       case Failure(t) =>  {
+         theSender ! FailureResponse(t.getMessage, ack)
+       }
      }
    }
   }
