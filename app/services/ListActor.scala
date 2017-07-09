@@ -4,7 +4,7 @@ import javax.inject._
 
 import akka.actor._
 import akka.pattern.pipe
-import models.UserRepository
+import models.{Item, ItemList, UserRepository}
 import play.Logger
 
 import scala.collection.mutable
@@ -15,7 +15,7 @@ import scala.util.{Failure, Success}
 
 object ListActor {
   // Used by WebSocketActor to add itself to list of clients
-  case object Subscribe
+  case class Subscribe(userName: String)
   case object Unsubscribe // used by WebSocketActor to unsubscribe
   // Used by "pipeTo self" to propagate information to all clients
   case class SuccessfulAction(action: Action, response: Response, originalSender: ActorRef)
@@ -28,7 +28,7 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
                           extends Actor {
   import ListActor._
 
-  val clients: mutable.Set[ActorRef] = mutable.Set[ActorRef]()
+  val clients: mutable.Map[ActorRef, String] = mutable.Map[ActorRef, String]()
 
   def failureAction(e: Throwable, ack: String, sender: ActorRef): FailedAction = {
     Logger.error(e.getMessage)
@@ -39,7 +39,7 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
 
     // Propagate successful actions to all but original sender
     case SuccessfulAction(action, response, originalSender) => {
-      clients.filter(_ != originalSender).foreach(_ ! action)
+      clients.keys.filter(_ != originalSender).foreach(_ ! action)
       originalSender ! response
     }
 
@@ -48,9 +48,9 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
       originalSender ! failureResponse
     }
 
-    case Subscribe => {
-      Logger.debug("Subscribing client")
-      clients += sender
+    case Subscribe(userName) => {
+      Logger.debug(s"Subscribing client $userName")
+      clients += (sender -> userName)
     }
 
     case Unsubscribe => {
@@ -59,7 +59,7 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
     }
 
     case action @ AddItem(contents, lst, ack, clientId) => {
-      val uuidFuture: Future[String] = itemService.add(contents, lst, clientId)
+      val uuidFuture: Future[Item.UUID] = itemService.add(contents, lst, clientId)
       val theSender = sender
       uuidFuture.map {
         uuid => SuccessfulAction(action.copy(uuid = Some(uuid)), UUIDResponse("Added item", uuid, action.ack), theSender)
@@ -117,7 +117,8 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
      } pipeTo self
    }
 
-   case action @ GetState(ack, userName) => {
+   case action @ GetState(ack) => {
+     val userName = clients.get(sender)
      val theSender = sender
      val listFuture = for {
        userFromDB <- userService.findByName(userName.getOrElse(""))

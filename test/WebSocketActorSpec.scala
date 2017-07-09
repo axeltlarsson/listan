@@ -259,6 +259,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
   }
 
   private def assertMessage(json: JsObject): Unit = {
+    assert(json != null, "json was null!")
     json.validate[Message] match {
       case yes: JsSuccess[Message] => true mustBe true
       case JsError(errors) => {

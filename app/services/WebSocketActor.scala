@@ -25,7 +25,7 @@ case object Authenticated extends State
 // State data
 sealed trait Data
 case object NoData extends Data
-case class UserData(user: User) extends Data
+final case class UserData(user: User) extends Data
 
 class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor: ActorRef, ipAddress: String)
                               (implicit ec: ExecutionContext)
@@ -46,6 +46,7 @@ class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor
 
               userService.authenticate(token) match {
                 case Some(user) => {
+                  Logger.debug(s"Successfully authenticated user `${user.name}`")
                   ws ! Json.toJson(AuthResponse("Authentication success", ack): Message)
                   goto(Authenticated) using UserData(user)
                 }
@@ -79,11 +80,12 @@ class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor
 
   onTransition {
     case Unauthenticated -> Authenticated =>
-      stateData match {
-        case _ => {
-          Logger.info(s"[$ipAddress] authenticated WebSocket")
-          listActor ! ListActor.Subscribe
+      nextStateData match {
+        case UserData(user) => {
+          Logger.info(s"[$ipAddress] authenticated WebSocket for user `${user.name}`")
+          listActor ! ListActor.Subscribe(user.name)
         }
+        case NoData => Logger.error("No user data associated with WebSocketActor")
       }
   }
 
@@ -98,19 +100,6 @@ class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor
           })
           if ((json \ "type").as[String] == "Ping") {
             ws ! Json.toJson(Pong(ack = ack.get): Message)
-          } else if ((json \ "type").as[String] == "GetState") {
-            // Add user information to message
-            json.validate[GetState].asOpt match {
-              case Some(m) => {
-                listActor ! m.copy(user = Some(userData.user.name))
-              }
-              case None => {
-                Logger.error(s"[$ipAddress] Could not validate json as GetState Message")
-                ws ! Json.toJson(FailureResponse("Invalid GetState message", ack.getOrElse("NO_ACK_PROVIDED")): Message)
-                self ! PoisonPill
-                stay
-              }
-            }
           } else {
             Logger.debug(s"[$ipAddress] received $json")
             listActor ! s.get
@@ -118,7 +107,7 @@ class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor
           stay
         }
         case e: JsError => {
-          Logger.error(s"[$ipAddress] Could not validate json as Message")
+          Logger.error(s"[$ipAddress] Could not validate json as Message $e")
           ws ! Json.toJson(FailureResponse("Invalid message", ack.getOrElse("NO_ACK_PROVIDED")): Message)
           self ! PoisonPill
           stay

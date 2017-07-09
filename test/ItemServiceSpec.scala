@@ -115,7 +115,7 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuit
         uuid2 <- repo.add("Do NOT complete me", listUUID = listUUID)
         success <- repo.complete(uuid1)
       } yield (success, uuid1, uuid2),
-        10 millis)
+        100 millis)
       results._1 mustBe 1
       val item = Await.result(repo.get(results._2), 10 millis)
       item mustBe defined
