@@ -256,6 +256,15 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       (relayedDelExtra \ "uuid").as[String] mustBe uuidExtraAdd
     }
 
+    "handle adding, editing and deleting lists" in new Automaton with Authenticated with ExtraClient {
+      // Add a list
+      fsm ! Json.toJson(AddList(name = "a new list", description = None, ack = "msg1"): Message)
+      val resAdd = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
+      assertMessage(resAdd)
+      println(Json.prettyPrint(resAdd))
+
+    }
+
   }
 
   private def assertMessage(json: JsObject): Unit = {

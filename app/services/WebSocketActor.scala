@@ -2,7 +2,7 @@ package services
 
 import akka.actor._
 import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
-import play.Logger
+import play.api.Logger
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future, Promise}
@@ -20,6 +20,7 @@ import scala.language.postfixOps
 // States in the FSM
 sealed trait State
 case object Unauthenticated extends State
+case object PendingSubscription extends State
 case object Authenticated extends State
 
 // State data
@@ -27,11 +28,14 @@ sealed trait Data
 case object NoData extends Data
 final case class UserData(user: User) extends Data
 
+
 class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor: ActorRef, ipAddress: String)
                               (implicit ec: ExecutionContext)
                               extends LoggingFSM[State, Data] {
 
+  import ListActor.{SubscriptionFailed, SubscriptionFailed}
   val ackMap = mutable.Map[String, Promise[Ack]]()
+  val logger = Logger(this.getClass.getName)
 
   startWith(Unauthenticated, NoData)
   ws ! Json.toJson(AuthRequest(): Message)
@@ -46,9 +50,9 @@ class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor
 
               userService.authenticate(token) match {
                 case Some(user) => {
-                  Logger.debug(s"Successfully authenticated user `${user.name}`")
+                  logger.debug(s"Successfully authenticated user `${user.name}`")
                   ws ! Json.toJson(AuthResponse("Authentication success", ack): Message)
-                  goto(Authenticated) using UserData(user)
+                  goto(PendingSubscription) using UserData(user)
                 }
                 case None => {
                   ws ! Json.toJson(FailureResponse("Authentication failure", ack): Message)
@@ -59,7 +63,7 @@ class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor
             }
             case _ => {
               val msg = "Invalid message at this state (Unauthenticated)"
-              Logger.warn(s"[$ipAddress] $msg")
+              logger.warn(s"[$ipAddress] $msg")
               ws ! Json.toJson(FailureResponse(msg, ack.getOrElse("NO_ACK_PROVIDED")): Message)
               self ! PoisonPill
               stay
@@ -68,7 +72,7 @@ class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor
         }
         case e: JsError => {
           val msg = s"Could not validate json ($json) as Message"
-          Logger.error(s"[$ipAddress] $msg")
+          logger.error(s"[$ipAddress] $msg")
           ws ! Json.toJson(FailureResponse(msg, ack.getOrElse("NO_ACK_PROVIDED")): Message)
           self ! PoisonPill
           stay
@@ -79,14 +83,20 @@ class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor
   }
 
   onTransition {
-    case Unauthenticated -> Authenticated =>
+    case Unauthenticated -> PendingSubscription =>
       nextStateData match {
         case UserData(user) => {
-          Logger.info(s"[$ipAddress] authenticated WebSocket for user `${user.name}`")
+          logger.info(s"[$ipAddress] authenticated WebSocket for user `${user.name}`")
           listActor ! ListActor.Subscribe(user.name)
         }
-        case NoData => Logger.error("No user data associated with WebSocketActor")
+        case NoData => logger.error("No user data associated with WebSocketActor")
       }
+  }
+
+  when(PendingSubscription) {
+    case Event(msg: SubscriptionFailed,state) => {
+      ListActor.SubscriptionFailed
+    }
   }
 
   when(Authenticated) {
@@ -101,13 +111,13 @@ class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor
           if ((json \ "type").as[String] == "Ping") {
             ws ! Json.toJson(Pong(ack = ack.get): Message)
           } else {
-            Logger.debug(s"[$ipAddress] received $json")
+            logger.debug(s"[$ipAddress] received $json")
             listActor ! s.get
           }
           stay
         }
         case e: JsError => {
-          Logger.error(s"[$ipAddress] Could not validate json as Message $e")
+          logger.error(s"[$ipAddress] Could not validate json as Message $e")
           ws ! Json.toJson(FailureResponse("Invalid message", ack.getOrElse("NO_ACK_PROVIDED")): Message)
           self ! PoisonPill
           stay
@@ -129,9 +139,9 @@ class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor
         Future.failed(new TimeoutException("No Ack provided within 1 second")))
 
       Future firstCompletedOf Seq(ackF, timeout) onComplete {
-        case Success(x) => Logger.debug(s"[$ipAddress] ack received within specified time")
+        case Success(x) => logger.debug(s"[$ipAddress] ack received within specified time")
         case Failure(e) => {
-          Logger.debug(s"[$ipAddress] Committing suicide: e.getMessage")
+          logger.debug(s"[$ipAddress] Committing suicide: e.getMessage")
           self ! PoisonPill
         }
       }
@@ -140,8 +150,8 @@ class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor
   }
 
   override def postStop() = {
-    listActor ! ListActor.Unsubscribe
-    Logger.info(s"[$ipAddress] closed WebSocket")
+    listActor ! ListActor.UnSubscribe
+    logger.info(s"[$ipAddress] closed WebSocket")
   }
 }
 

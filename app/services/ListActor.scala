@@ -4,8 +4,8 @@ import javax.inject._
 
 import akka.actor._
 import akka.pattern.pipe
-import models.{Item, ItemList, UserRepository}
-import play.Logger
+import models.{Item, ItemList, User, UserRepository}
+import play.api.Logger
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -16,8 +16,10 @@ import scala.util.{Failure, Success}
 object ListActor {
   // Used by WebSocketActor to add itself to list of clients
   case class Subscribe(userName: String)
-  case object Unsubscribe // used by WebSocketActor to unsubscribe
-  // Used by "pipeTo self" to propagate information to all clients
+  case object SubscriptionSucceeded // tells WebSocketActor it was subscribed
+  case object SubscriptionFailed // tells WebSocketActor it could not be subscribed
+  case object UnSubscribe // used by WebSocketActor to unsubscribe
+  // Can be used by "pipeTo self" to propagate information to all clients
   case class SuccessfulAction(action: Action, response: Response, originalSender: ActorRef)
   case class FailedAction(failureResponse: FailureResponse, originalSender: ActorRef)
 }
@@ -28,10 +30,11 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
                           extends Actor {
   import ListActor._
 
-  val clients: mutable.Map[ActorRef, String] = mutable.Map[ActorRef, String]()
+  val logger = Logger(this.getClass.getName)
+  val clients: mutable.Map[ActorRef, User] = mutable.Map[ActorRef, User]()
 
   def failureAction(e: Throwable, ack: String, sender: ActorRef): FailedAction = {
-    Logger.error(e.getMessage)
+    logger.error(e.getMessage)
     FailedAction(FailureResponse("An error ocurred, see server logs", ack), sender)
   }
 
@@ -49,19 +52,36 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
     }
 
     case Subscribe(userName) => {
-      Logger.debug(s"Subscribing client $userName")
-      clients += (sender -> userName)
+      logger.debug(s"Looking up `$userName` for subscription to listActor...")
+      val userFuture = userService.findByName(userName)
+      val theSender = sender
+      userFuture.map {
+        case Some(user) => {
+          logger.debug(s"Subscription of user `${user.name}` successful")
+          clients += (theSender -> user)
+          SubscriptionSucceeded
+        }
+        case None => {
+          logger.warn(s"Subscription of `$userName` failed (user name not found)")
+          SubscriptionFailed
+        }
+      }.recover {
+        case e => {
+          logger.error(s"Could not subscribe `$userName`: $e")
+          SubscriptionFailed
+        }
+      } pipeTo theSender
     }
 
-    case Unsubscribe => {
-      Logger.debug("Unsubscribing client")
+    case UnSubscribe => {
+      logger.debug("Unsubscribing client")
       clients -= sender
     }
 
     case action @ AddItem(contents, lst, ack, clientId) => {
       val uuidFuture: Future[Item.UUID] = itemService.add(contents, lst, clientId)
       val theSender = sender
-      uuidFuture.map {
+      uuidFuture.map{
         uuid => SuccessfulAction(action.copy(uuid = Some(uuid)), UUIDResponse("Added item", uuid, action.ack), theSender)
       }.recover {
         case e => failureAction(e, ack, sender)
@@ -83,11 +103,9 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
     case action @ CompleteItem(uuid, ack) => {
       val rowsFuture: Future[Int] = itemService.complete(uuid)
       val theSender = sender
-      rowsFuture.map { rows =>
-        if (rows == 1)
-          SuccessfulAction(action, UUIDResponse("Completed item", uuid, ack), theSender)
-        else
-          FailedAction(FailureResponse("Could not find item to complete", ack), theSender)
+      rowsFuture.map{
+        case 1 => SuccessfulAction(action, UUIDResponse("Completed item", uuid, ack), theSender)
+        case _ => FailedAction(FailureResponse("Could not find item to complete", ack), theSender)
       }.recover {
         case e => failureAction(e, ack, theSender)
       } pipeTo self
@@ -96,11 +114,9 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
     case action @ UnCompleteItem(uuid, ack) => {
       val rowsFuture: Future[Int] = itemService.unComplete(uuid)
       val theSender = sender
-      rowsFuture.map { rows =>
-        if (rows == 1)
-          SuccessfulAction(action, UUIDResponse("Uncompleted item", uuid, ack), theSender)
-        else
-          FailedAction(FailureResponse("Could not find item to uncomplete", ack), theSender)
+      rowsFuture.map{
+        case 1 => SuccessfulAction(action, UUIDResponse("Uncompleted item", uuid, ack), theSender)
+        case _ => FailedAction(FailureResponse("Could not find item to uncomplete", ack), theSender)
       }.recover {
         case e => failureAction(e, ack, theSender)
       } pipeTo self
@@ -117,23 +133,46 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
      } pipeTo self
    }
 
-   case action @ GetState(ack) => {
-     val userName = clients.get(sender)
+   case GetState(ack) => {
      val theSender = sender
+     val user = clients.get(sender)
      val listFuture = for {
-       userFromDB <- userService.findByName(userName.getOrElse(""))
-       lists <- if (userFromDB.isDefined) itemListService.itemListsByUser(userFromDB.get)
-                else Future.failed(throw new Exception(s"Could not find a user `${userName.getOrElse("")}` in database"))
+       lists <- if (user.isDefined) itemListService.itemListsByUser(user.get)
+                else Future.failed(throw new Exception("Sender of GetState is not a subscribed client!"))
      } yield lists
 
-     listFuture onComplete {
-       case Success(lists) => {
-         theSender ! GetStateResponse(lists, ack)
+     // Pipe directly to theSender since we do not want the response to go out to all subscribed clients
+     listFuture.map{
+       lists => GetStateResponse(lists, ack)
+     }.recover{
+       case e => {
+         logger.error(s"Could not get state reponse: $e")
+         FailureResponse("Could not get state response, check server logs for details", ack)
        }
-       case Failure(t) =>  {
-         theSender ! FailureResponse(t.getMessage, ack)
-       }
-     }
+     } pipeTo theSender
    }
+
+    case action @ AddList(name, description, ack, uuid) => {
+      val theSender = sender
+      val user_uuid = for {
+        user <- clients.get(theSender)
+        user_uuid <- user.uuid
+      } yield user_uuid
+
+      val uuidFuture = for {
+        listUuid <- if (user_uuid.isDefined) itemListService.add(name, description, user_uuid.get, uuid)
+                 else Future.failed(throw new Exception("Sender of AddList is not a subscribed client"))
+      } yield listUuid
+
+      uuidFuture.map{
+        listUuid => SuccessfulAction(action, UUIDResponse("Added list", listUuid, ack), theSender)
+      }.recover{
+        case e => failureAction(e, ack, theSender)
+      } pipeTo self
+    }
+
+    case message => {
+      logger.error(s"Received unhandled message $message")
+    }
   }
 }

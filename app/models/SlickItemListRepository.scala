@@ -18,11 +18,11 @@ class SlickItemListRepository @Inject()(protected val dbConfigProvider: Database
 
   private[models] val itemLists = TableQuery[ItemLists]
 
-  override def add(name: String, description: Option[String], user: User,
+  override def add(name: String, description: Option[String], user_uuid: User.UUID,
                    uuid: Option[ItemList.UUID] = None): Future[ItemList.UUID] = {
     val itemList: ItemList = ItemList(name = name,
                        description = description,
-                       userUuid = user.uuid.get,
+                       userUuid = user_uuid,
                        uuid = uuid)
     if (uuid.isDefined) {
       db.run(DBIO.seq(itemLists forceInsert itemList)).map { _ => uuid.get}

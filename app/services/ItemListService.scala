@@ -9,9 +9,9 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class ItemListService @Inject()(repo: ItemListRepository, itemRepo: ItemRepository)(implicit ec: ExecutionContext) {
 
-  def add(name: String, description: Option[String] = None, user: User,
+  def add(name: String, description: Option[String] = None, user_uuid: User.UUID,
          uuid: Option[ItemList.UUID] = None): Future[ItemList.UUID] = {
-   repo.add(name, description, user, uuid)
+   repo.add(name, description, user_uuid, uuid)
   }
 
   def updateName(name: String, uuid: ItemList.UUID): Future[Boolean] = repo.updateName(name, uuid)

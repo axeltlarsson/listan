@@ -10,6 +10,7 @@ import scala.language.postfixOps
 import java.sql.Timestamp
 
 import com.github.t3hnar.bcrypt._
+import models.User.UUID
 
 @Singleton
 class SlickUserRepository @Inject()
@@ -21,13 +22,28 @@ class SlickUserRepository @Inject()
 
   private[models] val users = TableQuery[Users]
 
-  override def all(): Future[Seq[User]] = db.run(users.result)
+  override def all(): Future[Seq[User]] = {
+    db.run(users.result)
+  }
 
   override def insert(user: User): Future[User.UUID] = {
     db.run((users returning users.map(_.uuid)) += user)
   }
 
-  override def findByName(name: String): Future[Option[User]] = db.run(users.filter(_.name === name).result.headOption)
+  override def findByName(name: String): Future[Option[User]] ={
+    db.run(users.filter(_.name === name).result.headOption)
+  }
+
+  override def get(uuid: UUID): Future[Option[User]] = {
+    db.run(users.filter(_.uuid === uuid).result.headOption)
+  }
+
+  override def authenticate(name: String, password: String): Future[Option[User]] = {
+    findByName(name) map {
+      case Some(u) if password.isBcrypted(u.passwordHash.getOrElse(""))=> Some(u)
+      case _ => None
+    }
+  }
 
   private[models] class Users(tag: Tag) extends Table[User](tag, "users") {
     def uuid = column[String]("uuid", O.PrimaryKey, O.AutoInc)
@@ -39,12 +55,5 @@ class SlickUserRepository @Inject()
     def idx = index("users_name_index", (name))
 
     def * = (uuid.?, name, passwordHash.?, created.?, updated.?) <> ((User.apply _).tupled, User.unapply)
-  }
-
-  override def authenticate(name: String, password: String): Future[Option[User]] = {
-    findByName(name) map {
-      case Some(u) if password.isBcrypted(u.passwordHash.getOrElse(""))=> Some(u)
-      case _ => None
-    }
   }
 }

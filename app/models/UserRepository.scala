@@ -7,4 +7,5 @@ trait UserRepository {
   def all(): Future[Seq[User]]
   def insert(user: User): Future[User.UUID]
   def findByName(name: String): Future[Option[User]]
+  def get(uuid: User.UUID): Future[Option[User]]
 }

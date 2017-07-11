@@ -19,8 +19,7 @@ case class CompleteItem(uuid: String, ack: String) extends Action
 case class UnCompleteItem(uuid: String, ack: String) extends Action
 case class DeleteItem(uuid: String, ack: String) extends Action
 case class GetState(ack: String) extends Action
-case class AddList(name: String, description: Option[String], user_uuid: Option[User.UUID] = None, ack: String,
-                   uuid: Option[String] = None) extends Action // user_uuid added by WebSocketActor when authenticated
+case class AddList(name: String, description: Option[String], ack: String, uuid: Option[String] = None) extends Action
 case class UpdateListName(uuid: String, name: String, ack: String) extends Action
 case class UpdateListDescription(uuid: String, description: String, ack: String) extends Action
 case class DeleteList(uuid: String, ack: String) extends Action
