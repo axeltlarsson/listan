@@ -15,9 +15,7 @@ import scala.util.{Failure, Success}
 
 object ListActor {
   // Used by WebSocketActor to add itself to list of clients
-  case class Subscribe(userName: String)
-  case object SubscriptionSucceeded // tells WebSocketActor it was subscribed
-  case object SubscriptionFailed // tells WebSocketActor it could not be subscribed
+  case class Subscribe(user: User)
   case object UnSubscribe // used by WebSocketActor to unsubscribe
   // Can be used by "pipeTo self" to propagate information to all clients
   case class SuccessfulAction(action: Action, response: Response, originalSender: ActorRef)
@@ -25,7 +23,7 @@ object ListActor {
 }
 
 @Singleton
-class ListActor @Inject()(itemService: ItemService, itemListService: ItemListService, userService: UserService)
+class ListActor @Inject()(itemService: ItemService, itemListService: ItemListService)
                          (implicit ec: ExecutionContext)
                           extends Actor {
   import ListActor._
@@ -51,26 +49,9 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
       originalSender ! failureResponse
     }
 
-    case Subscribe(userName) => {
-      logger.debug(s"Looking up `$userName` for subscription to listActor...")
-      val userFuture = userService.findByName(userName)
-      val theSender = sender
-      userFuture.map {
-        case Some(user) => {
-          logger.debug(s"Subscription of user `${user.name}` successful")
-          clients += (theSender -> user)
-          SubscriptionSucceeded
-        }
-        case None => {
-          logger.warn(s"Subscription of `$userName` failed (user name not found)")
-          SubscriptionFailed
-        }
-      }.recover {
-        case e => {
-          logger.error(s"Could not subscribe `$userName`: $e")
-          SubscriptionFailed
-        }
-      } pipeTo theSender
+    case Subscribe(user) => {
+      logger.debug(s"subscribing client ${user.uuid}")
+     clients += (sender -> user)
     }
 
     case UnSubscribe => {

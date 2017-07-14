@@ -27,6 +27,7 @@ import scala.language.postfixOps
 class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Results with BeforeAndAfter
                                           with EvolutionsHelper with ListHelper {
   var listUUID = ""
+  var userUUID = ""
   override val injector = app.injector
   implicit val ec = injector.instanceOf[ExecutionContext]
   var token = ""
@@ -34,10 +35,13 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
 
   before {
     evolve()
-    listUUID = createList()(ec)
+    val listUserPair = createList()(ec)
+    listUUID = listUserPair._1
+    userUUID = listUserPair._2
   }
 
   after {
+    token = ""
     clean()
   }
 
@@ -50,6 +54,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
   }
 
   trait ExtraClient {
+    // TODO: acquire own token and act as another user
     // Require Automaton to use this
     self: Automaton =>
     val mockWsActor2 = TestProbe()
@@ -63,6 +68,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
     // N.B. Will only be `instantiated` once, even if used by many tests...
     // Require Automaton to use this
     self: Automaton =>
+    println("authenticated")
     if (token == "") {
       fsm.stateName mustBe Unauthenticated
       // Get the token by calling /api/login with creds
@@ -92,7 +98,8 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
     // Try to authenticate with the token
     mockWsActor.expectMsg(500 millis, Json.toJson(AuthRequest(): Message))
     fsm ! Json.toJson(Auth(token, "ackNbr"): Message)
-    mockWsActor.expectMsg(500 millis, Json.toJson(AuthResponse("Authentication success", "ackNbr"): Message))
+    val authResponse = mockWsActor.expectMsg(500 millis, Json.toJson(AuthResponse("Authentication success", "ackNbr"): Message))
+    println(s"authReponse: $authResponse")
     fsm.stateName mustBe Authenticated
     fsm.stateData match {
       case UserData(user) => user.name mustBe "name"
@@ -261,7 +268,17 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       fsm ! Json.toJson(AddList(name = "a new list", description = None, ack = "msg1"): Message)
       val resAdd = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
       assertMessage(resAdd)
+      (resAdd \ "type").as[String] mustBe "UUIDResponse"
       println(Json.prettyPrint(resAdd))
+
+      // expect extra client to get the relayed AddList
+      val relayedAdd = mockWsActor2.receiveOne(500 millis).asInstanceOf[JsObject]
+      assertMessage(relayedAdd)
+      (relayedAdd \ "type").as[String] mustBe "AddList"
+      (relayedAdd \ "name").as[String] mustBe "a new list"
+
+      // TODO: test that only clients of same user gets relayed messages
+
 
     }
 

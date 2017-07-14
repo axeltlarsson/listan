@@ -33,7 +33,6 @@ class HomeController @Inject()(cc: ControllerComponents, userService: UserServic
           case Some(user) => {
             val safeUser = user.copy(
               passwordHash = None,
-              uuid = None,
               created = None,
               updated = None)
             val session = JwtSession() + ("user", safeUser)

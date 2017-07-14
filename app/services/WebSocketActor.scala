@@ -20,7 +20,6 @@ import scala.language.postfixOps
 // States in the FSM
 sealed trait State
 case object Unauthenticated extends State
-case object PendingSubscription extends State
 case object Authenticated extends State
 
 // State data
@@ -33,7 +32,6 @@ class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor
                               (implicit ec: ExecutionContext)
                               extends LoggingFSM[State, Data] {
 
-  import ListActor.{SubscriptionFailed, SubscriptionFailed}
   val ackMap = mutable.Map[String, Promise[Ack]]()
   val logger = Logger(this.getClass.getName)
 
@@ -52,7 +50,7 @@ class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor
                 case Some(user) => {
                   logger.debug(s"Successfully authenticated user `${user.name}`")
                   ws ! Json.toJson(AuthResponse("Authentication success", ack): Message)
-                  goto(PendingSubscription) using UserData(user)
+                  goto(Authenticated) using UserData(user)
                 }
                 case None => {
                   ws ! Json.toJson(FailureResponse("Authentication failure", ack): Message)
@@ -83,20 +81,14 @@ class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor
   }
 
   onTransition {
-    case Unauthenticated -> PendingSubscription =>
+    case Unauthenticated -> Authenticated =>
       nextStateData match {
         case UserData(user) => {
           logger.info(s"[$ipAddress] authenticated WebSocket for user `${user.name}`")
-          listActor ! ListActor.Subscribe(user.name)
+          listActor ! ListActor.Subscribe(user)
         }
         case NoData => logger.error("No user data associated with WebSocketActor")
       }
-  }
-
-  when(PendingSubscription) {
-    case Event(msg: SubscriptionFailed,state) => {
-      ListActor.SubscriptionFailed
-    }
   }
 
   when(Authenticated) {
@@ -141,7 +133,7 @@ class WebSocketActor @Inject()(ws: ActorRef, userService: UserService, listActor
       Future firstCompletedOf Seq(ackF, timeout) onComplete {
         case Success(x) => logger.debug(s"[$ipAddress] ack received within specified time")
         case Failure(e) => {
-          logger.debug(s"[$ipAddress] Committing suicide: e.getMessage")
+          logger.debug(s"[$ipAddress] Committing suicide: ${e.getMessage}")
           self ! PoisonPill
         }
       }

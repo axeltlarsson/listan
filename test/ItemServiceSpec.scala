@@ -13,15 +13,19 @@ import org.scalatestplus.play.guice.{GuiceOneAppPerSuite, GuiceOneAppPerTest}
 import play.api.inject.guice.GuiceApplicationBuilder
 import testhelpers.{EvolutionsHelper, ListHelper}
 
-class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfter with EvolutionsHelper with ListHelper {
+class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfter
+                      with EvolutionsHelper with ListHelper {
   override val injector = (new GuiceApplicationBuilder()).injector
   implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
   val repo = injector.instanceOf[ItemRepository]
   var listUUID = ""
+  var userUUID = ""
 
   before {
     evolve()
-    listUUID = createList()(ec)
+    val listUserPair = createList()(ec)
+    listUUID = listUserPair._1
+    userUUID = listUserPair._2
   }
 
   after {

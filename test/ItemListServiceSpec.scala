@@ -46,7 +46,7 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
   "SlickItemListRepository" should {
     "handle creation, updates and deletion of a list" in new Users {
       val creationTime = new Timestamp(System.currentTimeMillis())
-      val uuid1 = Await.result(service.add(name = "list1", user = users._1.get), 10 millis)
+      val uuid1 = Await.result(service.add(name = "list1", user_uuid = users._1.get.uuid.get), 10 millis)
       uuid1.length must be > 20
       val list1: Option[ItemList] = Await.result(service.get(uuid1), 10 millis)
       list1 mustBe defined
@@ -99,8 +99,8 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
     "delete items belonging to the list that gets deleted" in new Users {
       val itemService = injector.instanceOf[ItemService]
       // create two lists
-      val uuid1 = Await.result(service.add(name = "list 1", user = users._1.get), 10 millis)
-      val uuid2 = Await.result(service.add(name = "list 2", user = users._2.get), 10 millis)
+      val uuid1 = Await.result(service.add(name = "list 1", user_uuid = users._1.get.uuid.get), 10 millis)
+      val uuid2 = Await.result(service.add(name = "list 2", user_uuid = users._2.get.uuid.get), 10 millis)
       // Add some items to list1
       val list1ItemIds = Await.result(for {
         item1 <- itemService.add("item 1", uuid1)
@@ -153,9 +153,9 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
     }
 
     "listsByUser should work" in new Users {
-      val uuid1 = Await.result(service.add(name = "list1 by user 1", user = users._1.get), 10 millis)
-      val uuid2 = Await.result(service.add(name = "list2 by user 2", user = users._2.get), 10 millis)
-      val uuid3 = Await.result(service.add(name = "list3 also by user 1", user = users._1.get), 10 millis)
+      val uuid1 = Await.result(service.add(name = "list1 by user 1", user_uuid = users._1.get.uuid.get), 10 millis)
+      val uuid2 = Await.result(service.add(name = "list2 by user 2", user_uuid = users._2.get.uuid.get), 10 millis)
+      val uuid3 = Await.result(service.add(name = "list3 also by user 1", user_uuid = users._1.get.uuid.get), 10 millis)
 
       val user1Lists = Await.result(service.listsByUser(users._1.get), 10 millis)
       user1Lists must have length(2)
@@ -166,9 +166,9 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
     "itemListByUser should return ItemList:s for user with their respective Item:s" in new Users {
       val itemService = injector.instanceOf[ItemService]
       // Add lists
-      val uuid1 = Await.result(service.add(name = "list1 by user 1", user = users._1.get), 10 millis)
-      val uuid2 = Await.result(service.add(name = "list2 by user 2", user = users._2.get), 10 millis)
-      val uuid3 = Await.result(service.add(name = "list3 also by user 1", user = users._1.get), 10 millis)
+      val uuid1 = Await.result(service.add(name = "list1 by user 1", user_uuid = users._1.get.uuid.get), 10 millis)
+      val uuid2 = Await.result(service.add(name = "list2 by user 2", user_uuid = users._2.get.uuid.get), 10 millis)
+      val uuid3 = Await.result(service.add(name = "list3 also by user 1", user_uuid = users._1.get.uuid.get), 10 millis)
 
       // Add items to lists
       val items = Await.result(for {
