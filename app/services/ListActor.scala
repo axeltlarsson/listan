@@ -149,8 +149,38 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
       } yield listUuid
 
       uuidFuture.map{
-        listUuid => SuccessfulAction(action, UUIDResponse("Added list", listUuid, ack), theSender)
+        listUuid => SuccessfulAction(action.copy(uuid = Some(listUuid)), UUIDResponse("Added list", listUuid, ack), theSender)
       }.recover{
+        case e => failureAction(e, ack, theSender)
+      } pipeTo self
+    }
+    case action @UpdateListName(uuid, name, ack) => {
+      val theSender = sender
+
+      itemListService.updateName(name, uuid).map{
+        case true => SuccessfulAction(action, UUIDResponse("Updated list name", uuid, ack), theSender)
+        case false => failureAction(throw new Exception("ItemListService did not update name"), ack, theSender)
+      }.recover{
+        case e => failureAction(e, ack, theSender)
+      } pipeTo self
+    }
+
+    case action @UpdateListDescription(uuid, description, ack) => {
+      val theSender = sender
+      itemListService.updateDescription(description, uuid).map{
+        case true => SuccessfulAction(action, UUIDResponse("Updated list description", uuid, ack), theSender)
+        case false => failureAction(throw new Exception("ItemListService did not update description"), ack, theSender)
+      }.recover {
+        case e => failureAction(e, ack, theSender)
+      } pipeTo self
+    }
+
+    case action @DeleteList(uuid, ack) => {
+      val theSender = sender
+      itemListService.delete(uuid).map{
+        case true => SuccessfulAction(action, UUIDResponse("Deleted list", uuid, ack), theSender)
+        case false => failureAction(throw new Exception("ItemListService did not delete list"), ack, theSender)
+      }.recover {
         case e => failureAction(e, ack, theSender)
       } pipeTo self
     }
