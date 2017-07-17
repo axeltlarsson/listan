@@ -23,7 +23,7 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuit
 
   before {
     evolve()
-    val listUserPair = createList()(ec)
+    val listUserPair = createListUser()(ec)
     listUUID = listUserPair._1
     userUUID = listUserPair._2
   }
@@ -87,9 +87,9 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuit
         uuid <- repo.add("to be deleted", listUUID = listUUID)
         affectedRows <- repo.delete(uuid)
       } yield (affectedRows, uuid),
-        10 millis)
+        30 millis)
       rowsUuidPair._1 mustBe 1
-      val item = Await.result(repo.get(rowsUuidPair._2), 10 millis)
+      val item = Await.result(repo.get(rowsUuidPair._2), 30 millis)
       item mustBe None
     }
 

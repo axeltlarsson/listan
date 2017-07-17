@@ -18,6 +18,7 @@ import play.api.inject._
 import models.{Item, ItemList, User, UserRepository}
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import testhelpers.{EvolutionsHelper, ListHelper}
 
@@ -26,64 +27,26 @@ import scala.language.postfixOps
 @Singleton
 class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Results with BeforeAndAfter
                                           with EvolutionsHelper with ListHelper {
-  var listUUID = ""
-  var userUUID = ""
   override val injector = app.injector
   implicit val ec = injector.instanceOf[ExecutionContext]
-  var token = ""
   implicit val system = ActorSystem("sys")
 
   before {
     evolve()
-    val listUserPair = createList()(ec)
-    listUUID = listUserPair._1
-    userUUID = listUserPair._2
   }
 
   after {
-    token = ""
     clean()
   }
 
+  /* Provides listActor, and setup to create mock wsActors */
   trait Automaton {
-    private val userService = injector.instanceOf[UserService]
-    private val listActor: ActorRef = injector.instanceOf(BindingKey(classOf[ActorRef]).qualifiedWith("list-actor"))
-    val mockWsActor = TestProbe()
+    val userService = injector.instanceOf[UserService]
+    val listActor: ActorRef = injector.instanceOf(BindingKey(classOf[ActorRef]).qualifiedWith("list-actor"))
     val wsActorProvider = new WebSocketActorProvider(userService, listActor, ipAddress = "test-ip")
-    val fsm = TestFSMRef(wsActorProvider.get(mockWsActor.ref, ipAddress = "test-ip"))
-  }
 
-  trait ExtraClient {
-    // TODO: acquire own token and act as another user
-    // Require Automaton to use this
-    self: Automaton =>
-    val mockWsActor2 = TestProbe()
-    val fsm2 = TestFSMRef(wsActorProvider.get(mockWsActor2.ref, ipAddress = "test-ip2"))
-    mockWsActor2.expectMsg(500 millis, Json.toJson(AuthRequest(): Message))
-    fsm2 ! Json.toJson(Auth(token, "12345"): Message)
-    mockWsActor2.expectMsg(500 millis, Json.toJson(AuthResponse("Authentication success", "12345"): Message))
-  }
-
-  trait Authenticated {
-    // N.B. Will only be `instantiated` once, even if used by many tests...
-    // Require Automaton to use this
-    self: Automaton =>
-    println("authenticated")
-    if (token == "") {
-      fsm.stateName mustBe Unauthenticated
-      // Get the token by calling /api/login with creds
-      val repo = injector.instanceOf[UserRepository]
-
-      if (!Await.result(repo.authenticate("name", "password"), 500 millis).isDefined)
-        Await.result(repo.insert(User.create("name", "password")), 500 millis)
-
-      val json = Json.parse("""
-        {
-          "username": "name",
-          "password": "password"
-        }
-        """)
-
+    def acquireToken(userName: String): String = {
+      val json = Json.obj("username" -> userName, "password" -> "password")
       val req = FakeRequest(
         uri = "/api/login",
         method = "POST",
@@ -92,40 +55,64 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       )
       val Some(res) = route(app, req)
       status(res) mustEqual OK
-      token = contentAsJson(res).apply("token").as[String]
-    }
-
-    // Try to authenticate with the token
-    mockWsActor.expectMsg(500 millis, Json.toJson(AuthRequest(): Message))
-    fsm ! Json.toJson(Auth(token, "ackNbr"): Message)
-    val authResponse = mockWsActor.expectMsg(500 millis, Json.toJson(AuthResponse("Authentication success", "ackNbr"): Message))
-    println(s"authReponse: $authResponse")
-    fsm.stateName mustBe Authenticated
-    fsm.stateData match {
-      case UserData(user) => user.name mustBe "name"
-      case _ => fail("user.name was not `name`")
+      contentAsJson(res).apply("token").as[String]
     }
   }
 
+  /* Provide mock wsActor:s sharing an empty list */
+  trait ListUsers1 {
+    self: Automaton =>
+    val mockWsActor = TestProbe()
+    val fsm = TestFSMRef(wsActorProvider.get(mockWsActor.ref, ipAddress = "test-ip"))
+
+    fsm.stateName mustBe Unauthenticated
+    // createListUser will create a user with an empty list
+    val (list1uuid, user1uuid) = createListUser("user1")(ec)
+
+    // Get token by authenticating via user:pass credentials
+    val token = acquireToken("user1")
+
+    // Authenticate with the token
+    mockWsActor.expectMsg(500 millis, Json.toJson(AuthRequest(): Message))
+    fsm ! Json.toJson(Auth(token, "user1authtoken"): Message)
+    private val authResponse = mockWsActor.expectMsg(500 millis,
+      Json.toJson(AuthResponse("Authentication success", "user1authtoken"): Message))
+    fsm.stateName mustBe Authenticated
+    fsm.stateData match {
+      case UserData(user) => user.name mustBe "user1"
+      case _ => fail("user.name was not `user1`")
+    }
+
+    // A second client using same login
+    val mockWsActor2 = TestProbe()
+    val fsm2 = TestFSMRef(wsActorProvider.get(mockWsActor2.ref, ipAddress = "test-ip2"))
+    mockWsActor2.expectMsg(500 millis, Json.toJson(AuthRequest(): Message))
+    fsm2 ! Json.toJson(Auth(token, "user1auth2token"): Message)
+    mockWsActor2.expectMsg(500 millis, Json.toJson(AuthResponse("Authentication success", "user1auth2token"): Message))
+  }
+
+  /* Provides a new user `user2` and client `mockWsActor3` with a separate empty list */
+  trait List2User {
+    self: Automaton =>
+    val mockWsActor3 = TestProbe()
+    val fsm3 = TestFSMRef(wsActorProvider.get(mockWsActor3.ref, ipAddress = "test-ip3"))
+    val (list2uuid, user2uuid) = createListUser("user2")(ec)
+    val token2 = acquireToken("user2")
+    // Authenticate user with token
+    mockWsActor3.expectMsg(500 millis, Json.toJson(AuthRequest(): Message))
+    fsm3 ! Json.toJson(Auth(token2, "user2authtoken"): Message)
+    private val authResponse = mockWsActor3.expectMsg(500 millis,
+      Json.toJson(AuthResponse("Authentication success", "user2authtoken"): Message))
+    fsm3.stateName mustBe Authenticated
+    fsm3.stateData match {
+      case UserData(user) => user.name mustBe "user2"
+      case _ => fail("user.name was not `user2`")
+    }
+  }
 
   "WebSocketActor" should {
-    "start in state Unauthenticated" in new Automaton {
-      // This should trigger a warn log message
-      fsm.stateName mustBe Unauthenticated
-      fsm ! Json.toJson(EditItem(uuid = "id", contents = "contents", ack = "123"): Message)
-    }
-
-    "reject invalid Auth" in new Automaton {
-      // NB: This test might cause error log message (could not decode token)
-      // that is entirely expected
-      fsm.stateName mustBe Unauthenticated
-      mockWsActor.expectMsg(500 millis, Json.toJson(AuthRequest(): Message))
-      fsm ! Json.toJson(Auth("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MDAxNTIwOTEsInVzZXIiOnsibmFtZSI6ImF4ZWwifX0.Pbgoh0juq2xRcGVIzeiJBDP2-jHHEYKwQ6lOzdt5YvY", "1234"): Message)
-      mockWsActor.expectMsg(500 millis, Json.toJson(FailureResponse("Authentication failure", "1234"): Message))
-    }
-
-    "handle AddItem and DeleteItem" in new Automaton with Authenticated {
-      fsm ! Json.toJson(AddItem("some contents that is to be added", list_uuid = listUUID, "someAckNbr"): Message)
+    "handle AddItem and DeleteItem" in new Automaton with ListUsers1 {
+      fsm ! Json.toJson(AddItem("some contents that is to be added", list_uuid = list1uuid, "someAckNbr"): Message)
       val res = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
       // Must be some way to make the following code compose better
       res.validate[Message] match {
@@ -145,7 +132,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       }
     }
 
-    "respond to Ping with Pong" in new Automaton with Authenticated {
+    "respond to Ping with Pong" in new Automaton with ListUsers1 {
       fsm ! Json.toJson(Ping(ack = "pong-me"): Message)
       val pongAck = for {
         pong <- Option(mockWsActor.receiveOne(500 millis)).map(_.asInstanceOf[JsObject])
@@ -156,11 +143,11 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
     }
   }
 
-  "System with multiple clients" should {
+  "System with multiple clients and same user" should {
 
-    "handle AddItem, EditItem, DeleteItem" in new Automaton with Authenticated with ExtraClient {
+    "handle AddItem, EditItem, DeleteItem" in new Automaton with ListUsers1 {
       /* Add item */
-      fsm ! Json.toJson(AddItem("some contents that is to be added", list_uuid = listUUID, "ackNbr"): Message)
+      fsm ! Json.toJson(AddItem("some contents that is to be added", list_uuid = list1uuid, "ackNbr"): Message)
       // mockWsActor should get UUIDResponse
       val resAdd = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
       assertMessage(resAdd)
@@ -172,7 +159,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       (relayedAdd \ "uuid").as[String] mustBe uuid
 
       /* Add extra item from mockWsActor2 */
-      fsm2 ! Json.toJson(AddItem("extra item", list_uuid = listUUID, "extra-ack-nbr"): Message)
+      fsm2 ! Json.toJson(AddItem("extra item", list_uuid = list1uuid, "extra-ack-nbr"): Message)
       // mockWsActor2 should get UUIDResponse for "extra item"
       val resExtraAdd = mockWsActor2.receiveOne(500 millis).asInstanceOf[JsObject]
       assertMessage(resExtraAdd)
@@ -236,7 +223,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       items(1).contents must (be ("changed content") or be ("extra item"))
       items(0).completed must not be (items(1).completed)
       itemList.description mustBe None
-      itemList.name mustBe "a list" // as per ListHelper
+      itemList.name mustBe "a list for user1" // as per ListHelper
 
       /* Let mockWsActor1 send DeleteItem */
       fsm ! Json.toJson(DeleteItem(uuid, "ack"): Message)
@@ -263,28 +250,75 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       (relayedDelExtra \ "uuid").as[String] mustBe uuidExtraAdd
     }
 
-    "handle adding, editing and deleting lists" in new Automaton with Authenticated with ExtraClient {
+    "handle adding, editing and deleting lists" in new Automaton with ListUsers1 {
       // Add a list
-      fsm ! Json.toJson(AddList(name = "a new list", description = None, ack = "msg1"): Message)
-      val resAdd = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
-      assertMessage(resAdd)
-      (resAdd \ "type").as[String] mustBe "UUIDResponse"
-      println(Json.prettyPrint(resAdd))
+      val addList = AddList(name = "a new list", description = None, ack = "msg1"): Message
+      fsm ! Json.toJson(addList)
+      expectResponse(mockWsActor, "UUIDResponse", "Added list", "msg1")
 
       // expect extra client to get the relayed AddList
-      val relayedAdd = mockWsActor2.receiveOne(500 millis).asInstanceOf[JsObject]
-      assertMessage(relayedAdd)
-      (relayedAdd \ "type").as[String] mustBe "AddList"
-      (relayedAdd \ "name").as[String] mustBe "a new list"
+      expectRelayedMessage(mockWsActor2, addList)
 
-      // TODO: test that only clients of same user gets relayed messages
+      // Update name
+      val updateName = UpdateListName(name = "new name", uuid = list1uuid, ack = "update name"): Message
+      fsm ! Json.toJson(updateName)
+      expectResponse(mockWsActor, "UUIDResponse", "Updated list name", "update name")
+      val resUpdate = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
 
+      // expect extra client to receive relayed UpdateListName
+      expectRelayedMessage(mockWsActor2, updateName)
 
+      // Update list description
+      val updateListDescr = UpdateListDescription(description = "new name", uuid = list1uuid, ack = "update name"): Message
+      fsm ! Json.toJson(updateListDescr)
+      expectResponse(mockWsActor, "UUIDResponse", "Updated list description", "update name")
+
+      // expect extra client to receive relayed UpdateListDescription
+      expectRelayedMessage(mockWsActor2, updateListDescr)
+
+      // Delete list
+      val deleteList = DeleteList(uuid = list1uuid, ack = "delete list"): Message
+      fsm ! Json.toJson(deleteList)
+      expectResponse(mockWsActor, "UUIDResponse", "Deleted list", "delete list")
+
+      // expect extra client to recieve relayed DeleteList
+      expectRelayedMessage(mockWsActor2, deleteList)
     }
-
   }
 
-  private def assertMessage(json: JsObject): Unit = {
+  "System with multiple clients and users" should {
+    "not allow users to access other users' lists" in new Automaton with ListUsers1 with List2User {
+      // Update list name
+      val updateName = UpdateListName(name = "new name", uuid = list1uuid, ack = "msg1"): Message
+      fsm ! Json.toJson(updateName)
+      expectResponse(mockWsActor, "UUIDResponse", "Updated list name", "msg1")
+
+      // client 2 should receive relayed msg...
+      expectRelayedMessage(mockWsActor2, updateName)
+
+      // ... but not client 3 which is user2
+      val msg = mockWsActor3.receiveOne(500 millis).asInstanceOf[JsObject]
+      msg mustBe null
+
+    }
+  }
+
+  def expectResponse(to: TestProbe, typeStr: String, status: String, ack: String) = {
+    val result = to.receiveOne(500 millis).asInstanceOf[JsObject]
+    assertMessage(result)
+    (result \ "type").as[String] mustBe typeStr
+    (result \ "status").as[String] mustBe status
+    (result \ "ack").as[String] mustBe ack
+  }
+
+  def expectRelayedMessage(to: TestProbe, msg: Message) = {
+    val result = to.receiveOne(500 millis).asInstanceOf[JsObject]
+    assertMessage(result)
+    val msgAsJson  = Json.toJson(msg)
+    msgAsJson mustBe result
+  }
+
+  def assertMessage(json: JsObject): Unit = {
     assert(json != null, "json was null!")
     json.validate[Message] match {
       case yes: JsSuccess[Message] => true mustBe true

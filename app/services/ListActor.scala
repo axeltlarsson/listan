@@ -6,6 +6,7 @@ import akka.actor._
 import akka.pattern.pipe
 import models.{Item, ItemList, User, UserRepository}
 import play.api.Logger
+import play.api.libs.json.Json
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -40,7 +41,9 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
 
     // Propagate successful actions to all but original sender
     case SuccessfulAction(action, response, originalSender) => {
-      clients.keys.filter(_ != originalSender).foreach(_ ! action)
+      // user should always be defined at this stage
+      val user = clients.get(originalSender).get
+      clients.filter{ case (c, u) => c != originalSender && u == user}.keys.foreach(_ ! action)
       originalSender ! response
     }
 
@@ -51,7 +54,7 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
 
     case Subscribe(user) => {
       logger.debug(s"subscribing client ${user.uuid}")
-     clients += (sender -> user)
+      clients += (sender -> user)
     }
 
     case UnSubscribe => {
@@ -127,7 +130,7 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
        lists => GetStateResponse(lists, ack)
      }.recover{
        case e => {
-         logger.error(s"Could not get state reponse: $e")
+         logger.error(s"Could not get state response: $e")
          FailureResponse("Could not get state response, check server logs for details", ack)
        }
      } pipeTo theSender
