@@ -1,8 +1,12 @@
+import julienrf.json.derived
+import julienrf.json.derived.NameAdapter
 import org.scalatestplus.play._
 import services._
 import play.api.libs.json._
 import models.{Item, ItemList}
 import play.api.Logger
+
+import scala.collection.mutable
 
 
 class MessageSpec extends PlaySpec {
@@ -59,14 +63,14 @@ class MessageSpec extends PlaySpec {
     }
     "GetStateResponse be" in {
       val lists = Seq(
-        ItemList(name = "a list", description = Some("descr"), userUuid = "user2", uuid = Some("abc")) -> Seq(
-          Item(contents = "an item", listUuid = "abc"),
-          Item(contents = "item 2", listUuid = "abc")),
-        ItemList(name = "another list", description = Some("description two"), userUuid = "user2", uuid = Some("ab2")) -> Seq(
-          Item(contents = "item 1 in list two", listUuid = "ab2")
-        )
+        ItemList(name = "list one", description = Some("list one"), userUuid = "user1", uuid = Some("abc")),
+        ItemList(name = "list two", description = None, userUuid = "user1", uuid = Some("abcd"))
       )
-      jsonSerializable(GetStateResponse(lists, ack = "123")) mustBe true
+      val items = Seq(
+        Item(contents = "an item", listUuid = "abc"),
+        Item(contents = "item 2", listUuid = "abc"),
+        Item(contents = "item in other list", listUuid = "abcd"))
+      jsonSerializable(GetStateResponse(lists, items, ack = "123")) mustBe true
     }
     "Pong be" in {
       jsonSerializable(Pong(ack = "lk2j3lj")) mustBe true

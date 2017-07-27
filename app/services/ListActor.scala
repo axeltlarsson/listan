@@ -120,14 +120,15 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
    case GetState(ack) => {
      val theSender = sender
      val user = clients.get(sender)
-     val listFuture = for {
-       lists <- if (user.isDefined) itemListService.itemListsByUser(user.get)
+     val stateFuture = for {
+       lists <- if (user.isDefined) itemListService.listsByUser(user.get)
                 else Future.failed(throw new Exception("Sender of GetState is not a subscribed client!"))
-     } yield lists
+       items <- Future.traverse(lists)(list => itemService.itemsByList(list.uuid.get))
+     } yield (lists, items.flatten)
 
      // Pipe directly to theSender since we do not want the response to go out to all subscribed clients
-     listFuture.map{
-       lists => GetStateResponse(lists, ack)
+     stateFuture.map{
+       state => GetStateResponse(state._1, state._2, ack)
      }.recover{
        case e => {
          logger.error(s"Could not get state response: $e")

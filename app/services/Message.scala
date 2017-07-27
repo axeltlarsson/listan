@@ -24,12 +24,11 @@ case class UpdateListName(uuid: String, name: String, ack: String) extends Actio
 case class UpdateListDescription(uuid: String, description: String, ack: String) extends Action
 case class DeleteList(uuid: String, ack: String) extends Action
 
-
 sealed trait Response extends Message
 case class AuthResponse(status: String, ack: String) extends Response // Authorised
 case class FailureResponse(error: String, ack: String) extends Response
 case class UUIDResponse(status: String, uuid: String, ack: String) extends Response
-case class GetStateResponse(lists: Seq[(ItemList, Seq[Item])], ack: String) extends Response
+case class GetStateResponse(lists: Seq[ItemList], items: Seq[Item], ack: String) extends Response
 case class Ack(ack: String) extends Response // expected response to relayed Actions
 case class Pong(ack: String) extends Response
 

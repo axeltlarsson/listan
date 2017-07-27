@@ -190,10 +190,11 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       // mockWsActor should get GetStateResponse
       val resState = mockWsActor.receiveOne(500 millis).asInstanceOf[JsObject]
       assertMessage(resState)
-      val lists = (resState \ "lists").as[Seq[(ItemList, Seq[Item])]]
+      val lists = (resState \ "lists").as[Seq[ItemList]]
       // the items list should contain the correct items
       lists must have length 1
-      val (itemList, items) = lists(0)
+      val itemList = lists(0)
+      val items = (resState \ "items").as[Seq[Item]]
       items(0).contents must (be ("changed content") or be ("extra item"))
       items(0).contents must not be (items(1).contents)
       items(1).contents must (be ("changed content") or be ("extra item"))
