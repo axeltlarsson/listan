@@ -10,7 +10,7 @@ packageDescription := """This is the backend to listan. It is built on top of Sc
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala, DebianPlugin, JavaServerAppPackaging)
 
-scalaVersion := "2.12.2"
+scalaVersion := "2.12.3"
 
 libraryDependencies ++= Seq(
   ehcache,
