@@ -4,7 +4,6 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import java.sql.Timestamp
 
-
 object Item {
   type UUID = String
   implicit val rds: Reads[Timestamp] = (__ \ "time").read[Long].map{ long => new Timestamp(long) }
@@ -12,12 +11,11 @@ object Item {
   implicit val format = Json.format[Item]
 }
 
-
 case class Item(
   uuid: Option[String] = None,
   contents: String,
   completed: Boolean = false,
-  listUuid: String,
+  list_uuid: String,
   created: Option[Timestamp] = None,
   updated: Option[Timestamp] = None
 )

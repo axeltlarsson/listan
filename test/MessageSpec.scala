@@ -67,9 +67,9 @@ class MessageSpec extends PlaySpec {
         ItemList(name = "list two", description = None, userUuid = "user1", uuid = Some("abcd"))
       )
       val items = Seq(
-        Item(contents = "an item", listUuid = "abc"),
-        Item(contents = "item 2", listUuid = "abc"),
-        Item(contents = "item in other list", listUuid = "abcd"))
+        Item(contents = "an item", list_uuid = "abc"),
+        Item(contents = "item 2", list_uuid = "abc"),
+        Item(contents = "item in other list", list_uuid = "abcd"))
       jsonSerializable(GetStateResponse(lists, items, ack = "123")) mustBe true
     }
     "Pong be" in {
