@@ -1,3 +1,4 @@
+[![CircleCI](https://circleci.com/gh/AxelTLarsson/listan-server/tree/multiple-lists.svg?style=svg)](https://circleci.com/gh/AxelTLarsson/listan-server/tree/multiple-lists)
 # Listan-server
 This is the backend to [listan](https://github.com/AxelTLarsson/listan).
 It is built on top of Scala Play framework, however it relies heavily on akka
