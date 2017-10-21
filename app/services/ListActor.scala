@@ -155,7 +155,7 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
         case e => failureAction(e, ack, theSender)
       } pipeTo self
     }
-    case action @UpdateListName(uuid, name, ack) => {
+    case action @ UpdateListName(uuid, name, ack) => {
       val theSender = sender
 
       itemListService.updateName(name, uuid).map{
@@ -166,7 +166,7 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
       } pipeTo self
     }
 
-    case action @UpdateListDescription(uuid, description, ack) => {
+    case action @ UpdateListDescription(uuid, description, ack) => {
       val theSender = sender
       itemListService.updateDescription(description, uuid).map{
         case true => SuccessfulAction(action, UUIDResponse("Updated list description", uuid, ack), theSender)
@@ -176,7 +176,7 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
       } pipeTo self
     }
 
-    case action @DeleteList(uuid, ack) => {
+    case action @ DeleteList(uuid, ack) => {
       val theSender = sender
       itemListService.delete(uuid).map{
         case true => SuccessfulAction(action, UUIDResponse("Deleted list", uuid, ack), theSender)

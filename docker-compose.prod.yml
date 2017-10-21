@@ -4,11 +4,11 @@
 version: '3'
 
 services:
-  listan-server:
+  app:
     restart: unless-stopped
     networks:
       - listan-net
-  listan-mysql:
+  db:
     restart: unless-stopped
     volumes:
       - db-volume:/var/lib/mysql

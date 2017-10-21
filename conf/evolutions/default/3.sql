@@ -6,15 +6,10 @@ CREATE TABLE lists (
   name varchar(255) NOT NULL UNIQUE,
   description varchar(255),
   user_uuid varchar(255) NOT NULL,
-  created datetime DEFAULT CURRENT_TIMESTAMP,
-  updated datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_uuid) REFERENCES users(uuid)
 );
-
-CREATE TRIGGER before_insert_list
-  BEFORE INSERT ON lists
-  FOR EACH ROW
-  SET new.uuid = uuid();
 
 ALTER TABLE items
     ADD list_uuid varchar(255) NOT NULL;

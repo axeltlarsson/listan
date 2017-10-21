@@ -8,7 +8,6 @@ import slick.jdbc.JdbcProfile
 
 import scala.concurrent.{ExecutionContext, Future}
 
-
 @Singleton
 class SlickItemListRepository @Inject()(protected val dbConfigProvider: DatabaseConfigProvider,
                                         private[models] val userRepo: SlickUserRepository)

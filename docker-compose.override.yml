@@ -5,14 +5,14 @@
 version: '3'
 
 services:
-  listan-server:
+  app:
     environment:
       DB_PASSWORD: "${DB_PASSWORD:-password}"
       CRYPTO_SECRET: "${CRYPTO_SECRET:-G@m7wI=;NNpFx?1dHJQ7<dcN4Pw55xuhn0KN]:e?]Lr;]]DQsM7Sh;hY73EZpRZn}"
     ports:
       - "9000:9000"
 
-  listan-mysql:
+  db:
     environment:
       MYSQL_PASSWORD: "${DB_PASSWORD:-password}"
 

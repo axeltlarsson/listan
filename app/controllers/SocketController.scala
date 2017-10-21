@@ -1,6 +1,6 @@
 package controllers
 
-import play.Logger
+import play.api.Logger
 
 import play.api.mvc._
 import play.api.libs.streams._

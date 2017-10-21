@@ -1,20 +1,18 @@
 version: '3'
 
 services:
-  listan-server:
-    container_name: listan-server
+  app:
     build: .
     environment:
-      DB_URL: listan-mysql/listan
+      DB_URL: db/listan
       DB_USER: listan
       DB_PASSWORD: "$DB_PASSWORD"
       CRYPTO_SECRET: "$CRYPTO_SECRET"
-  listan-mysql:
-    container_name: listan-mysql
+  db:
     image: "mysql:5"
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: "yes"
       MYSQL_DATABASE: listan
       MYSQL_USER: listan
       MYSQL_PASSWORD: "$DB_PASSWORD"
-
+      TZ: "Europe/Stockholm"

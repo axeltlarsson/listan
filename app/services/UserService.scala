@@ -4,7 +4,7 @@ import models.{UserRepository, User}
 import javax.inject._
 import scala.concurrent.Future
 import play.api.Configuration
-import play.Logger
+import play.api.Logger
 import pdi.jwt.{JwtJson, JwtAlgorithm}
 
 @Singleton
