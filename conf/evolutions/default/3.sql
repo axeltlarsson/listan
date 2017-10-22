@@ -1,28 +1,20 @@
-# Add support for multiple lists
-
-# --- !Ups
-CREATE TABLE lists (
-  uuid varchar(255) NOT NULL PRIMARY KEY,
-  name varchar(255) NOT NULL UNIQUE,
-  description varchar(255),
-  user_uuid varchar(255) NOT NULL,
-  created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_uuid) REFERENCES users(uuid)
-);
-
-ALTER TABLE items
-    ADD list_uuid varchar(255) NOT NULL;
-
-ALTER TABLE items
-    ADD FOREIGN KEY (list_uuid)
-        REFERENCES lists(uuid)
-        ON DELETE CASCADE;
+# Items schema
 
 # --- !Downs
-DROP TABLE lists;
+CREATE TABLE items (
+  uuid text NOT NULL PRIMARY KEY,
+  contents text NOT NULL,
+  completed boolean DEFAULT false,
+  list_uuid text NOT NULL REFERENCES lists ON DELETE CASCADE,
+  created TIMESTAMP DEFAULT now(),
+  updated TIMESTAMP DEFAULT now()
+);
 
-ALTER TABLE items
-    DROP FOREIGN KEY list_uuid;
-ALTER TABLE items
-    DROP COLUMN list_uuid;
+CREATE TRIGGER items_updated_timestamp
+  BEFORE UPDATE ON items
+  FOR EACH ROW EXECUTE PROCEDURE set_updated_timestamp();
+
+
+# --- !Downs
+DROP TABLE items;
+
