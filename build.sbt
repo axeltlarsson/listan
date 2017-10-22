@@ -24,10 +24,10 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-slick" % "3.0.+",
   "com.typesafe.play" %% "play-slick-evolutions" % "3.0.+",
   "com.h2database" % "h2" % "1.4.+",
-  "mysql" % "mysql-connector-java" % "5.1.42",
+  "org.postgresql" % "postgresql" % "42.1.4",
   "com.github.t3hnar" %% "scala-bcrypt" % "3.+",
   filters,
-  guice
+  guice,
 )
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
