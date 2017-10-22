@@ -16,5 +16,5 @@ CREATE TRIGGER lists_updated_timestamp
 
 
 # --- !Downs
-DROP TABLE items;
+DROP TABLE lists;
 

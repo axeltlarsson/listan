@@ -14,9 +14,9 @@ CREATE UNIQUE INDEX users_name_idx ON users (name);
 CREATE OR REPLACE FUNCTION set_updated_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.updated = now();
-    RETURN NEW;
-END;
+    NEW.updated = now();;
+    RETURN NEW;;
+END;;
 $$ language 'plpgsql';
 
 CREATE TRIGGER users_updated_timestamp
