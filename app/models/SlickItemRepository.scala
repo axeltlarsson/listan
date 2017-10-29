@@ -4,8 +4,6 @@ import javax.inject._
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.db.slick.HasDatabaseConfigProvider
 import slick.jdbc.JdbcProfile
-import slick.profile.SqlProfile.ColumnOption.SqlType
-
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 import java.sql.Timestamp
