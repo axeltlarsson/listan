@@ -1,6 +1,7 @@
 version: 2
 jobs:
   build:
+    parallelism: 4
     working_directory: ~/listan-server
     docker:
       - image: codestar/circleci-scala-sbt-git:latest

@@ -11,7 +11,7 @@ class ItemListService @Inject()(repo: ItemListRepository, itemRepo: ItemReposito
 
   def add(name: String, description: Option[String] = None, user_uuid: User.UUID,
          uuid: Option[ItemList.UUID] = None): Future[ItemList.UUID] = {
-   repo.add(name, description, user_uuid, uuid)
+   repo.add(uuid, user_uuid, name, description)
   }
 
   def updateName(name: String, uuid: ItemList.UUID): Future[Boolean] = repo.updateName(name, uuid)

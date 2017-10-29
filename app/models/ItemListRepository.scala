@@ -1,9 +1,12 @@
 package models
 
+import models.ItemList.UUID
+import models.User.UUID
+
 import scala.concurrent.Future
 
 trait ItemListRepository {
-  def add(name: String, description: Option[String], user_uuid: User.UUID, uuid: Option[ItemList.UUID]): Future[ItemList.UUID]
+  def add(uuid: UUID, user_uuid: UUID, name: String, description: Option[String]): Future[ItemList.UUID]
   def updateName(name: String, uuid: ItemList.UUID): Future[Boolean]
   def updateDescription(description: String, uuid: ItemList.UUID): Future[Boolean]
   def delete(uuid: ItemList.UUID): Future[Boolean]

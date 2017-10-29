@@ -15,6 +15,24 @@ testing tools that is invaluable when testing the actor system.
 * `sbt runProd` for running the app locally in production mode
 (application.prod.conf will be used as configuration file), however do not forget
 to export the required ENV variables `DB_PASSWORD` and `CRYPTO_SECRET`.
+
+### Console
+`sbt console` then enter `:paste` to get to paste-mode and:
+```scala
+// injector from Guice to gain access to services/repos
+import play.api.inject.guice.GuiceApplicationBuilder
+val injector = (new GuiceApplicationBuilder()).injector
+```
+
+To e.g. create a user and insert into the database:
+```scala
+import models.User
+val user = User.create("name", "password")
+import models.UserRepository
+val userRepo = injector.instanceOf[UserRepository]
+userRepo.insert(user)
+```
+
 ### Docker
 `sbt dist`
 

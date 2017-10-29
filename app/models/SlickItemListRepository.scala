@@ -3,6 +3,8 @@ package models
 import java.sql.Timestamp
 import javax.inject._
 
+import models.ItemList.UUID
+import models.User.UUID
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import slick.jdbc.JdbcProfile
 
@@ -17,17 +19,13 @@ class SlickItemListRepository @Inject()(protected val dbConfigProvider: Database
 
   private[models] val itemLists = TableQuery[ItemLists]
 
-  override def add(name: String, description: Option[String], user_uuid: User.UUID,
-                   uuid: Option[ItemList.UUID] = None): Future[ItemList.UUID] = {
+  // TODO: do not allow uuid to empty
+  override def add(uuid: UUID, user_uuid: UUID, name: String, description: Option[String]): Future[ItemList.UUID] = {
     val itemList: ItemList = ItemList(name = name,
                        description = description,
                        userUuid = user_uuid,
-                       uuid = uuid)
-    if (uuid.isDefined) {
-      db.run(DBIO.seq(itemLists forceInsert itemList)).map { _ => uuid.get}
-    } else {
-      db.run((itemLists returning itemLists.map(_.uuid)) += itemList)
-    }
+                       uuid = Some(uuid))
+    db.run((itemLists returning itemLists.map(_.uuid)) += itemList)
   }
 
   override def updateName(name: String, uuid: ItemList.UUID): Future[Boolean] = {
