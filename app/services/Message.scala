@@ -43,70 +43,70 @@ object Message {
 }
 
 object Auth {
-  implicit val format: OFormat[Auth] = derived.oformat(NameAdapter.identity)
+  implicit val format: OFormat[Auth] = derived.oformat(NameAdapter.snakeCase)
 }
 object AuthRequest {
-  implicit val format: OFormat[AuthRequest] = derived.oformat(NameAdapter.identity)
+  implicit val format: OFormat[AuthRequest] = derived.oformat(NameAdapter.snakeCase)
 }
 object Ping {
-  implicit val format: OFormat[Ping] = derived.oformat(NameAdapter.identity)
+  implicit val format: OFormat[Ping] = derived.oformat(NameAdapter.snakeCase)
 }
 
 // Actions
 object EditItem {
-  implicit val format: OFormat[EditItem] = derived.oformat(NameAdapter.identity)
+  implicit val format: OFormat[EditItem] = derived.oformat(NameAdapter.snakeCase)
 }
 object AddItem {
-  implicit val format: OFormat[AddItem] = derived.oformat(NameAdapter.identity)
+  implicit val format: OFormat[AddItem] = derived.oformat(NameAdapter.snakeCase)
 }
 object CompleteItem {
- implicit val format: OFormat[CompleteItem] = derived.oformat(NameAdapter.identity)
+ implicit val format: OFormat[CompleteItem] = derived.oformat(NameAdapter.snakeCase)
 }
 object UnCompleteItem {
- implicit val format: OFormat[UnCompleteItem] = derived.oformat(NameAdapter.identity)
+ implicit val format: OFormat[UnCompleteItem] = derived.oformat(NameAdapter.snakeCase)
 }
 object DeleteItem {
-  implicit val format: OFormat[DeleteItem] = derived.oformat(NameAdapter.identity)
+  implicit val format: OFormat[DeleteItem] = derived.oformat(NameAdapter.snakeCase)
 }
 object GetState {
- implicit val format: OFormat[GetState] = derived.oformat(NameAdapter.identity)
+ implicit val format: OFormat[GetState] = derived.oformat(NameAdapter.snakeCase)
 }
 object AddList {
-  implicit val format: OFormat[AddList] = derived.oformat(NameAdapter.identity)
+  implicit val format: OFormat[AddList] = derived.oformat(NameAdapter.snakeCase)
 }
 object UpdateListName {
-  implicit val format: OFormat[UpdateListName] = derived.oformat(NameAdapter.identity)
+  implicit val format: OFormat[UpdateListName] = derived.oformat(NameAdapter.snakeCase)
 }
 object UpdateListDescription {
-  implicit val format: OFormat[UpdateListDescription] = derived.oformat(NameAdapter.identity)
+  implicit val format: OFormat[UpdateListDescription] = derived.oformat(NameAdapter.snakeCase)
 }
 object DeleteList {
-  implicit val format: OFormat[DeleteList] = derived.oformat(NameAdapter.identity)
+  implicit val format: OFormat[DeleteList] = derived.oformat(NameAdapter.snakeCase)
 }
 
 object Action {
-  implicit val format: OFormat[Action] = derived.oformat(NameAdapter.identity)
+  implicit val format: OFormat[Action] = derived.oformat(NameAdapter.snakeCase)
 }
 
 // Responses
 object FailureResponse {
-  implicit val format: OFormat[FailureResponse] = derived.oformat(NameAdapter.identity)
+  implicit val format: OFormat[FailureResponse] = derived.oformat(NameAdapter.snakeCase)
 }
 object UUIDResponse {
-  implicit val format: OFormat[UUIDResponse] = derived.oformat(NameAdapter.identity)
+  implicit val format: OFormat[UUIDResponse] = derived.oformat(NameAdapter.snakeCase)
 }
 object AuthResponse {
-  implicit val format: OFormat[AuthResponse] = derived.oformat(NameAdapter.identity)
+  implicit val format: OFormat[AuthResponse] = derived.oformat(NameAdapter.snakeCase)
 }
 object GetStateResponse {
-  implicit val format: OFormat[GetStateResponse] = derived.oformat(NameAdapter.identity)
+  implicit val format: OFormat[GetStateResponse] = derived.oformat(NameAdapter.snakeCase)
 }
 object Ack {
-  implicit val format: OFormat[Ack] = derived.oformat(NameAdapter.identity)
+  implicit val format: OFormat[Ack] = derived.oformat(NameAdapter.snakeCase)
 }
 object Pong {
-  implicit val format: OFormat[Pong] = derived.oformat(NameAdapter.identity)
+  implicit val format: OFormat[Pong] = derived.oformat(NameAdapter.snakeCase)
 }
 object Response {
-  implicit val format: OFormat[Response] = derived.oformat(NameAdapter.identity)
+  implicit val format: OFormat[Response] = derived.oformat(NameAdapter.snakeCase)
 }
