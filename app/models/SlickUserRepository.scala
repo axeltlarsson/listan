@@ -26,7 +26,7 @@ class SlickUserRepository @Inject()
     db.run(users.result)
   }
 
-  override def insert(user: User): Future[User.UUID] = {
+  override def add(user: User): Future[User.UUID] = {
     db.run((users returning users.map(_.uuid)) += user)
   }
 
@@ -40,20 +40,20 @@ class SlickUserRepository @Inject()
 
   override def authenticate(name: String, password: String): Future[Option[User]] = {
     findByName(name) map {
-      case Some(u) if password.isBcrypted(u.passwordHash.getOrElse(""))=> Some(u)
+      case Some(u) if password.isBcrypted(u.passwordHash)=> Some(u)
       case _ => None
     }
   }
 
   private[models] class Users(tag: Tag) extends Table[User](tag, "users") {
-    def uuid = column[String]("uuid", O.PrimaryKey, O.AutoInc)
+    def uuid = column[String]("uuid", O.PrimaryKey)
     def name = column[String]("name", O.Unique)
     def passwordHash = column[String]("password_hash")
-    def created = column[Timestamp]("created", O.AutoInc)
-    def updated = column[Timestamp]("updated", O.AutoInc)
+    def created = column[Timestamp]("created_at", O.AutoInc)
+    def updated = column[Timestamp]("updated_at", O.AutoInc)
 
     def idx = index("users_name_index", (name))
 
-    def * = (uuid.?, name, passwordHash.?, created.?, updated.?) <> ((User.apply _).tupled, User.unapply)
+    def * = (uuid, name, passwordHash, created.?, updated.?) <> ((User.apply _).tupled, User.unapply)
   }
 }

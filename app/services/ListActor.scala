@@ -4,15 +4,12 @@ import javax.inject._
 
 import akka.actor._
 import akka.pattern.pipe
-import models.{Item, ItemList, User, UserRepository}
+import models.{Item, User}
 import play.api.Logger
-import play.api.libs.json.Json
 
 import scala.collection.mutable
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
 
 object ListActor {
   // Used by WebSocketActor to add itself to list of clients
@@ -26,7 +23,7 @@ object ListActor {
 @Singleton
 class ListActor @Inject()(itemService: ItemService, itemListService: ItemListService)
                          (implicit ec: ExecutionContext)
-                          extends Actor {
+  extends Actor {
   import ListActor._
 
   val logger = Logger(this.getClass.getName)
@@ -106,47 +103,46 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
       } pipeTo self
     }
 
-   case action @ DeleteItem(uuid, ack) => {
-     val rowsFuture: Future[Int] = itemService.delete(uuid)
-     val theSender = sender
-     rowsFuture.map{
-       case 1 => SuccessfulAction(action, UUIDResponse("Deleted item", uuid, ack), theSender)
-       case 0 => FailedAction(FailureResponse("Could not find item to delete", ack), theSender)
-     }.recover {
-       case e => failureAction(e, ack, theSender)
-     } pipeTo self
-   }
+    case action @ DeleteItem(uuid, ack) => {
+      val rowsFuture: Future[Int] = itemService.delete(uuid)
+      val theSender = sender
+      rowsFuture.map{
+        case 1 => SuccessfulAction(action, UUIDResponse("Deleted item", uuid, ack), theSender)
+        case 0 => FailedAction(FailureResponse("Could not find item to delete", ack), theSender)
+      }.recover {
+        case e => failureAction(e, ack, theSender)
+      } pipeTo self
+    }
 
-   case GetState(ack) => {
-     val theSender = sender
-     val user = clients.get(sender)
-     val stateFuture = for {
-       lists <- if (user.isDefined) itemListService.listsByUser(user.get)
-                else Future.failed(throw new Exception("Sender of GetState is not a subscribed client!"))
-       items <- Future.traverse(lists)(list => itemService.itemsByList(list.uuid.get))
-     } yield (lists, items.flatten)
+    case GetState(ack) => {
+      val theSender = sender
+      val user = clients.get(sender)
+      val stateFuture = for {
+        lists <- if (user.isDefined) itemListService.listsByUser(user.get)
+        else Future.failed(throw new Exception("Sender of GetState is not a subscribed client!"))
+        items <- Future.traverse(lists)(list => itemService.itemsByList(list.uuid))
+      } yield (lists, items.flatten)
 
-     // Pipe directly to theSender since we do not want the response to go out to all subscribed clients
-     stateFuture.map{
-       state => GetStateResponse(state._1, state._2, ack)
-     }.recover{
-       case e => {
-         logger.error(s"Could not get state response: $e")
-         FailureResponse("Could not get state response, check server logs for details", ack)
-       }
-     } pipeTo theSender
-   }
+      // Pipe directly to theSender since we do not want the response to go out to all subscribed clients
+      stateFuture.map{
+        state => GetStateResponse(state._1, state._2, ack)
+      }.recover{
+        case e => {
+          logger.error(s"Could not get state response: $e")
+          FailureResponse("Could not get state response, check server logs for details", ack)
+        }
+      } pipeTo theSender
+    }
 
     case action @ AddList(name, description, ack, uuid) => {
       val theSender = sender
-      val user_uuid = for {
+      val userUuid = for {
         user <- clients.get(theSender)
-        user_uuid <- user.uuid
-      } yield user_uuid
+      } yield user.uuid
 
       val uuidFuture = for {
-        listUuid <- if (user_uuid.isDefined) itemListService.add(name, description, user_uuid.get, uuid)
-                 else Future.failed(throw new Exception("Sender of AddList is not a subscribed client"))
+        listUuid <- if (userUuid.isDefined) itemListService.add(name, description, userUuid.get, uuid)
+        else Future.failed(throw new Exception("Sender of AddList is not a subscribed client"))
       } yield listUuid
 
       uuidFuture.map{

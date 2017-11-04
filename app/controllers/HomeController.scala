@@ -31,10 +31,7 @@ class HomeController @Inject()(cc: ControllerComponents, userService: UserServic
       form => {
         userService.authenticate(form._1, form._2) map {
           case Some(user) => {
-            val safeUser = user.copy(
-              passwordHash = None,
-              created = None,
-              updated = None)
+            val safeUser = user.copy(passwordHash = "", created = None, updated = None)
             val session = JwtSession() + ("user", safeUser)
             Ok(Json.obj("token" -> session.serialize))
           }

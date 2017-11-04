@@ -112,7 +112,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
 
   "WebSocketActor" should {
     "handle AddItem and DeleteItem" in new Automaton with ListUsers1 {
-      val addItem = AddItem("some contents that is to be added", list_uuid = list1uuid, "some ack nbr"): Message
+      val addItem = AddItem("some contents that is to be added", listUuid = list1uuid, "some ack nbr"): Message
       fsm ! Json.toJson(addItem)
       val uuid = expectUUIDResponse(mockWsActor, "Added item", ack = "some ack nbr")
 
@@ -136,7 +136,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
 
     "handle AddItem, EditItem, DeleteItem" in new Automaton with ListUsers1 {
       /* Add item */
-      val addItem = AddItem("some contents that is to be added", list_uuid = list1uuid, "ackNbr"): Message
+      val addItem = AddItem("some contents that is to be added", listUuid = list1uuid, "ackNbr"): Message
       fsm ! Json.toJson(addItem)
       // mockWsActor should get UUIDResponse
       val uuid = expectUUIDResponse(mockWsActor, "Added item", "ackNbr")
@@ -145,7 +145,7 @@ class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Resul
       (relayedAdd \ "uuid").as[String] mustBe uuid
 
       /* Add extra item from mockWsActor2 */
-      val addItem2 = AddItem("extra item", list_uuid = list1uuid, "extra-ack-nbr"): Message
+      val addItem2 = AddItem("extra item", listUuid = list1uuid, "extra-ack-nbr"): Message
       fsm2 ! Json.toJson(addItem2)
       // mockWsActor2 should get UUIDResponse for "extra item"
       val uuid2 = expectUUIDResponse(mockWsActor2, "Added item", ack = "extra-ack-nbr")

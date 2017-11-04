@@ -5,13 +5,13 @@ import javax.inject._
 import models._
 
 import scala.concurrent.{ExecutionContext, Future}
+import java.util.UUID.randomUUID
 
 @Singleton
 class ItemListService @Inject()(repo: ItemListRepository, itemRepo: ItemRepository)(implicit ec: ExecutionContext) {
 
-  def add(name: String, description: Option[String] = None, user_uuid: User.UUID,
-         uuid: Option[ItemList.UUID] = None): Future[ItemList.UUID] = {
-   repo.add(uuid, user_uuid, name, description)
+  def add(name: String, description: Option[String] = None, userUuid: User.UUID, uuid: Option[ItemList.UUID] = None): Future[ItemList.UUID] = {
+    repo.add(ItemList(uuid.getOrElse(randomUUID().toString), name, description, userUuid))
   }
 
   def updateName(name: String, uuid: ItemList.UUID): Future[Boolean] = repo.updateName(name, uuid)
@@ -31,7 +31,7 @@ class ItemListService @Inject()(repo: ItemListRepository, itemRepo: ItemReposito
       // Doing just lists.map(itemRepo.itemsByList(_.uuid)) would become Seq[Future[Seq[Item]]
       // traverse fixes this into Future[Seq[Item]], then the .map on the future transforms the Seq[Item] into a tuple
       // of (ItemList, Seq[Item]) which is what we want
-      items <- Future.traverse(lists)(list => itemRepo.itemsByList(list.uuid.get).map(items => (list, items)))
+      items <- Future.traverse(lists)(list => itemRepo.itemsByList(list.uuid).map(items => (list, items)))
     } yield items
   }
 

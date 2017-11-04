@@ -2,14 +2,16 @@ package services
 
 import models.{Item, ItemRepository, ItemList}
 import javax.inject._
+import java.util.UUID.randomUUID
 
 import scala.concurrent.Future
 
 @Singleton
 class ItemService @Inject()(repo: ItemRepository) {
 
-  def add(contents: String, listUuid: ItemList.UUID, uuid: Option[Item.UUID] = None): Future[Item.UUID] =
-    repo.add(contents, listUuid, uuid)
+  def add(contents: String, listUuid: ItemList.UUID, uuid: Option[Item.UUID] = None): Future[Item.UUID] = {
+    repo.add(Item(uuid.getOrElse(randomUUID().toString), contents, false, listUuid))
+  }
 
   def complete(uuid: Item.UUID): Future[Int] = repo.complete(uuid)
 

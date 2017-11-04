@@ -5,36 +5,24 @@ CREATE TABLE users (
   uuid text NOT NULL PRIMARY KEY,
   name text UNIQUE NOT NULL,
   password_hash text NOT NULL,
-  created timestamp DEFAULT now(),
-  updated timestamp DEFAULT now()
+  created_at timestamp DEFAULT now(),
+  updated_at timestamp DEFAULT now()
 );
 
 CREATE UNIQUE INDEX users_name_idx ON users (name);
 
-CREATE OR REPLACE FUNCTION set_updated_timestamp()
+CREATE OR REPLACE FUNCTION set_updated_at_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.updated = now();;
+    NEW.updated_at = now();;
     RETURN NEW;;
 END;;
 $$ language 'plpgsql';
 
-CREATE OR REPLACE FUNCTION set_uuid()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.uuid = 'uuid-very-real-not-fake-at-all';;
-    RETURN NEW;;
-END;;
-$$ language 'plpgsql';
-
-CREATE TRIGGER users_updated_timestamp
+CREATE TRIGGER users_updated_at_timestamp
   BEFORE UPDATE ON users
-  FOR EACH ROW EXECUTE PROCEDURE set_updated_timestamp();
-
-CREATE TRIGGER users_set_uuid
-BEFORE INSERT ON users
-  FOR EACH ROW EXECUTE PROCEDURE set_uuid();
+  FOR EACH ROW EXECUTE PROCEDURE set_updated_at_timestamp();
 
 # --- !Downs
 DROP TABLE users;
-DROP FUNCTION set_updated_timestamp;
+DROP FUNCTION set_updated_at_timestamp;

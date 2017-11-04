@@ -13,7 +13,7 @@ case class AuthRequest() extends Message
 case class Ping(ack: String) extends Message
 
 sealed trait Action extends Message
-case class AddItem(contents: String, list_uuid: String, ack: String, uuid: Option[String] = None) extends Action // uuid for relayed msg
+case class AddItem(contents: String, listUuid: String, ack: String, uuid: Option[String] = None) extends Action // uuid for relayed msg
 case class EditItem(uuid: String, contents: String, ack: String) extends Action
 case class CompleteItem(uuid: String, ack: String) extends Action
 case class UnCompleteItem(uuid: String, ack: String) extends Action

@@ -1,13 +1,15 @@
-# Items schema H2
+# Lists schema
 
 # --- !Ups
-CREATE TABLE items (
-  uuid varchar(255) NOT NULL DEFAULT UUID() PRIMARY KEY,
-  contents varchar(255) NOT NULL,
-  completed boolean DEFAULT false,
-  created datetime DEFAULT CURRENT_TIMESTAMP(),
-  updated datetime AS CURRENT_TIMESTAMP()
-)
+CREATE TABLE lists (
+  uuid varchar(255) NOT NULL PRIMARY KEY,
+  name varchar(255) NOT NULL UNIQUE,
+  description varchar(255),
+  user_uuid varchar(255) REFERENCES users(uuid) ON DELETE CASCADE,
+  created_at timestamp DEFAULT CURRENT_TIMESTAMP(),
+  updated_at timestamp AS CURRENT_TIMESTAMP()
+);
 
 # --- !Downs
-DROP TABLE items;
+DROP TABLE lists;
+

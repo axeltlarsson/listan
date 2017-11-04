@@ -33,7 +33,7 @@ class MessageSpec extends PlaySpec {
     }
     // Actions
     "AddItem be" in {
-      jsonSerializable(AddItem(contents = "mjölk", list_uuid = "abc", ack = "123")) mustBe true
+      jsonSerializable(AddItem(contents = "mjölk", listUuid = "abc", ack = "123")) mustBe true
     }
     "EditItem be" in {
       jsonSerializable(EditItem(uuid = "sldfj-234-sdfj", contents = "filmjölk", ack = "124")) mustBe true
@@ -63,13 +63,13 @@ class MessageSpec extends PlaySpec {
     }
     "GetStateResponse be" in {
       val lists = Seq(
-        ItemList(name = "list one", description = Some("list one"), userUuid = "user1", uuid = Some("abc")),
-        ItemList(name = "list two", description = None, userUuid = "user1", uuid = Some("abcd"))
+        ItemList(uuid = "abc", name = "list one", description = Some("list one"), userUuid = "user1"),
+        ItemList(uuid = "abcd", name = "list two", description = None, userUuid = "user1")
       )
       val items = Seq(
-        Item(contents = "an item", list_uuid = "abc"),
-        Item(contents = "item 2", list_uuid = "abc"),
-        Item(contents = "item in other list", list_uuid = "abcd"))
+        Item("uuid1", contents = "an item", listUuid = "abc"),
+        Item("uuid2", contents = "item 2", listUuid = "abc"),
+        Item("uuid3", contents = "item in other list", listUuid = "abcd"))
       jsonSerializable(GetStateResponse(lists, items, ack = "123")) mustBe true
     }
     "Pong be" in {

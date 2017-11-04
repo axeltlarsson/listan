@@ -28,14 +28,16 @@ class UserServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuit
       .build
     val userService = app.injector.instanceOf[UserService]
     implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
-    when(mockUserRepo.authenticate("axel", "password")) thenReturn Future{Some(User(name = "axel"))}
+    when(mockUserRepo.authenticate("axel", "password")) thenReturn Future{
+      Some(User("uid1", passwordHash = "pa$$", name = "axel"))
+    }
     when(mockUserRepo.authenticate("axel", "wrong")) thenReturn Future{None}
   }
 
   "UserService#authenticate" should {
     "return correct user for valid password" in new MockUserRepo {
       val maybeUser = Await.result(userService.authenticate("axel", "password"), 1 seconds)
-      maybeUser mustBe Some(User(name = "axel"))
+      maybeUser mustBe Some(User(uuid = "uid1", passwordHash = "pa$$", name = "axel"))
     }
 
     "return None for user with invalid password" in new MockUserRepo {
@@ -47,8 +49,8 @@ class UserServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuit
   "SlickUserRepository" should {
     "work with a test db" in {
       val repo = app.injector.instanceOf[UserRepository]
-      val user = User.create("axel", "whatever")
-      val uuid = Await.result(repo.insert(user), 100 millis)
+      val user = User(name = "axel", passwordHash = "whatever", uuid = "1")
+      Await.result(repo.add(user), 100 millis)
       val usersInDb = Await.result(repo.all(), 100 millis)
       usersInDb(0).name mustBe "axel"
       usersInDb(0).passwordHash must not be Some("whatever") // should be hashed duh

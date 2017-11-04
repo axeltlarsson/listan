@@ -1,26 +1,14 @@
-# Add support for multiple lists
+# Items schema H2
 
 # --- !Ups
-CREATE TABLE lists (
-  uuid varchar(255) NOT NULL DEFAULT UUID() PRIMARY KEY,
-  name varchar(255) NOT NULL UNIQUE,
-  description varchar(255),
-  user_uuid varchar(255) NOT NULL,
-  created datetime DEFAULT CURRENT_TIMESTAMP(),
-  updated datetime AS CURRENT_TIMESTAMP(),
-  FOREIGN KEY (user_uuid) REFERENCES users(uuid)
-);
-
-ALTER TABLE items
-    ADD list_uuid varchar(255) NOT NULL;
-
-ALTER TABLE items
-    ADD FOREIGN KEY (list_uuid)
-        REFERENCES lists(uuid)
-        ON DELETE CASCADE;
+CREATE TABLE items (
+  uuid varchar(255) NOT NULL PRIMARY KEY,
+  contents varchar(255) NOT NULL,
+  completed boolean DEFAULT false,
+  list_uuid varchar(255) REFERENCES lists(uuid) ON DELETE CASCADE,
+  created_at timestamp DEFAULT CURRENT_TIMESTAMP(),
+  updated_at timestamp AS CURRENT_TIMESTAMP()
+)
 
 # --- !Downs
-DROP TABLE lists;
-
-ALTER TABLE items
-    DROP COLUMN list_uuid;
+DROP TABLE items;

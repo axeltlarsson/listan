@@ -20,13 +20,8 @@ class SlickItemRepository @Inject()
 
   private[models] val items = TableQuery[Items]
 
-  override def add(contents: String, listUUID: ItemList.UUID, uuid: Option[Item.UUID] = None): Future[Item.UUID] = {
-    val item: Item = Item(uuid = uuid, contents = contents, list_uuid = listUUID)
-    if (uuid.isDefined) {
-      db.run(DBIO.seq(items forceInsert item)).map {_ => uuid.get}
-    } else {
-      db.run((items returning items.map(_.uuid)) += item)
-    }
+  override def add(item: Item): Future[Item.UUID] = {
+    db.run((items returning items.map(_.uuid)) += item)
   }
 
   override def delete(uuid: Item.UUID): Future[Int] = {
@@ -61,21 +56,21 @@ class SlickItemRepository @Inject()
   }
 
   override def itemsByList(listUuid: ItemList.UUID): Future[Seq[Item]] = {
-    val action = items.filter(_.list_uuid === listUuid).sortBy(_.created).result
+    val action = items.filter(_.listUuid === listUuid).sortBy(_.created).result
     db.run(action)
   }
 
   private[models] class Items(tag: Tag) extends Table[Item](tag, "items") {
-    def uuid = column[String]("uuid", O.PrimaryKey, O.AutoInc)
+    def uuid = column[String]("uuid", O.PrimaryKey)
     def contents = column[String]("contents")
     def completed = column[Boolean]("completed")
-    def list_uuid = column[String]("list_uuid")
-    def created = column[Timestamp]("created", O.AutoInc)
-    def updated = column[Timestamp]("updated", O.AutoInc)
-    def foreign_list = foreignKey("LIST_FK", list_uuid, lstRepo.itemLists)(_.uuid, onUpdate=ForeignKeyAction.Restrict,
+    def listUuid = column[String]("list_uuid")
+    def created = column[Timestamp]("created_at", O.AutoInc)
+    def updated = column[Timestamp]("updated_at", O.AutoInc)
+    def foreign_list = foreignKey("LIST_FK", listUuid, lstRepo.itemLists)(_.uuid, onUpdate=ForeignKeyAction.Restrict,
                                                                                    onDelete=ForeignKeyAction.Cascade)
 
-    def * = (uuid.?, contents, completed, list_uuid, created.?, updated.?) <>
+    def * = (uuid, contents, completed, listUuid, created.?, updated.?) <>
       ((Item.apply _).tupled, Item.unapply)
 
   }

@@ -18,13 +18,17 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
   implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
   val service = injector.instanceOf[ItemListService]
 
+  def createUser(name: String, password: String): User = {
+    User(uuid = name, name = name, passwordHash = password)
+  }
+
   before {
     evolve()
     val userRepo = injector.instanceOf[UserRepository]
     // Insert users and await completion
     val uuidFutures = for {
-      uuid1 <- userRepo.insert(User.create("user1", "password1"))
-      uuid2 <- userRepo.insert(User.create("user2", "password2"))
+      uuid1 <- userRepo.add(createUser("user1", "password1"))
+      uuid2 <- userRepo.add(createUser("user2", "password2"))
     } yield (uuid1, uuid2)
     Await.result(uuidFutures, 300 millis)
  }
@@ -46,7 +50,7 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
   "SlickItemListRepository" should {
     "handle creation, updates and deletion of a list" in new Users {
       val creationTime = new Timestamp(System.currentTimeMillis())
-      val uuid1 = Await.result(service.add(name = "list1", user_uuid = users._1.get.uuid.get), 30 millis)
+      val uuid1 = Await.result(service.add(name = "list1", userUuid = users._1.get.uuid), 30 millis)
       uuid1.length must be > 20
       val list1: Option[ItemList] = Await.result(service.get(uuid1), 30 millis)
       list1 mustBe defined
@@ -57,7 +61,7 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
         l.updated.foreach(_.getTime() shouldEqual creationTime.getTime() +- 20)
         l.description mustBe None
         l.name mustBe "list1"
-        l.userUuid mustBe users._1.get.uuid.get
+        l.userUuid mustBe users._1.get.uuid
       })
 
 
@@ -74,7 +78,7 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
         l.created.foreach(_.getTime() shouldEqual creationTime.getTime() +- 20)
         l.updated mustBe defined
         l.updated.foreach(_.getTime() shouldEqual updateTime.getTime() +- 20)
-        l.userUuid mustBe users._1.get.uuid.get
+        l.userUuid mustBe users._1.get.uuid
       })
 
       // Update name
@@ -99,8 +103,8 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
     "delete items belonging to the list that gets deleted" in new Users {
       val itemService = injector.instanceOf[ItemService]
       // create two lists
-      val uuid1 = Await.result(service.add(name = "list 1", user_uuid = users._1.get.uuid.get), 30 millis)
-      val uuid2 = Await.result(service.add(name = "list 2", user_uuid = users._2.get.uuid.get), 30 millis)
+      val uuid1 = Await.result(service.add(name = "list 1", userUuid = users._1.get.uuid), 30 millis)
+      val uuid2 = Await.result(service.add(name = "list 2", userUuid = users._2.get.uuid), 30 millis)
       // Add some items to list1
       val list1ItemIds = Await.result(for {
         item1 <- itemService.add("item 1", uuid1)
@@ -119,8 +123,8 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
       /* List 1*/
       val itemsList1 = Await.result(itemService.itemsByList(uuid1), 30 millis)
       itemsList1 must have length(2)
-      itemsList1(0).uuid.get shouldEqual list1ItemIds._1
-      itemsList1(1).uuid.get shouldEqual list1ItemIds._2
+      itemsList1(0).uuid shouldEqual list1ItemIds._1
+      itemsList1(1).uuid shouldEqual list1ItemIds._2
       // Get by id and check
       val item1 = Await.result(itemService.get(list1ItemIds._1), 30 millis)
       item1 mustBe defined
@@ -130,8 +134,8 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
       /* List 2*/
       val itemsList2 = Await.result(itemService.itemsByList(uuid2), 30 millis)
       itemsList2 must have length(2)
-      itemsList2(0).uuid.get shouldEqual list2ItemIds._1
-      itemsList2(1).uuid.get shouldEqual list2ItemIds._2
+      itemsList2(0).uuid shouldEqual list2ItemIds._1
+      itemsList2(1).uuid shouldEqual list2ItemIds._2
       // Get by id and check
       val item3 = Await.result(itemService.get(list1ItemIds._1), 30 millis)
       item3 mustBe defined
@@ -153,9 +157,9 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
     }
 
     "return lists by user properly" in new Users {
-      val uuid1 = Await.result(service.add(name = "list1 by user 1", user_uuid = users._1.get.uuid.get), 30 millis)
-      val uuid2 = Await.result(service.add(name = "list2 by user 2", user_uuid = users._2.get.uuid.get), 30 millis)
-      val uuid3 = Await.result(service.add(name = "list3 also by user 1", user_uuid = users._1.get.uuid.get), 30 millis)
+      val uuid1 = Await.result(service.add(name = "list1 by user 1", userUuid = users._1.get.uuid), 30 millis)
+      val uuid2 = Await.result(service.add(name = "list2 by user 2", userUuid = users._2.get.uuid), 30 millis)
+      val uuid3 = Await.result(service.add(name = "list3 also by user 1", userUuid = users._1.get.uuid), 30 millis)
 
       val user1Lists = Await.result(service.listsByUser(users._1.get), 30 millis)
       user1Lists must have length(2)
@@ -166,9 +170,9 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
     "return ItemList:s for users with their respective Item:s from itemListByUser" in new Users {
       val itemService = injector.instanceOf[ItemService]
       // Add lists
-      val uuid1 = Await.result(service.add(name = "list1 by user 1", user_uuid = users._1.get.uuid.get), 30 millis)
-      val uuid2 = Await.result(service.add(name = "list2 by user 2", user_uuid = users._2.get.uuid.get), 30 millis)
-      val uuid3 = Await.result(service.add(name = "list3 also by user 1", user_uuid = users._1.get.uuid.get), 30 millis)
+      val uuid1 = Await.result(service.add(name = "list1 by user 1", userUuid = users._1.get.uuid), 30 millis)
+      val uuid2 = Await.result(service.add(name = "list2 by user 2", userUuid = users._2.get.uuid), 30 millis)
+      val uuid3 = Await.result(service.add(name = "list3 also by user 1", userUuid = users._1.get.uuid), 30 millis)
 
       // Add items to lists
       val items = Await.result(for {
