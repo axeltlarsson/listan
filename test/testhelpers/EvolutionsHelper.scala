@@ -10,12 +10,12 @@ trait EvolutionsHelper {
   def clean() = {
     val injector = new GuiceApplicationBuilder().injector
     val dbApi = injector.instanceOf[DBApi]
-    Evolutions.cleanupEvolutions(dbApi.database("test"))
+    Evolutions.cleanupEvolutions(dbApi.database("default"))
   }
 
   def evolve() = {
     val injector = new GuiceApplicationBuilder().injector
     val dbApi = injector.instanceOf[DBApi]
-    Evolutions.applyEvolutions(dbApi.database("test"))
+    Evolutions.applyEvolutions(dbApi.database("default"))
   }
 }

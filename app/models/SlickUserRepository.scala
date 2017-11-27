@@ -40,7 +40,7 @@ class SlickUserRepository @Inject()
 
   override def authenticate(name: String, password: String): Future[Option[User]] = {
     findByName(name) map {
-      case Some(u) if password.isBcrypted(u.passwordHash)=> Some(u)
+      case Some(u) if password.isBcrypted(u.passwordHash) => Some(u)
       case _ => None
     }
   }

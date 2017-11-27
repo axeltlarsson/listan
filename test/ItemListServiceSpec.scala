@@ -1,7 +1,8 @@
 import org.scalatest.Matchers._
 import java.sql.Timestamp
 
-import models.{ItemList, User, UserRepository}
+import models.{ItemList, User}
+import services.UserService
 import org.scalatest.BeforeAndAfter
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -18,19 +19,16 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
   implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
   val service = injector.instanceOf[ItemListService]
 
-  def createUser(name: String, password: String): User = {
-    User(uuid = name, name = name, passwordHash = password)
-  }
-
   before {
     evolve()
-    val userRepo = injector.instanceOf[UserRepository]
+    val userService = injector.instanceOf[UserService]
     // Insert users and await completion
     val uuidFutures = for {
-      uuid1 <- userRepo.add(createUser("user1", "password1"))
-      uuid2 <- userRepo.add(createUser("user2", "password2"))
+      uuid1 <- userService.add("user1", "password1")
+      uuid2 <- userService.add("user2", "password2")
     } yield (uuid1, uuid2)
     Await.result(uuidFutures, 300 millis)
+    println(s"uuidf: ${uuidFutures.value}")
  }
 
   after {
@@ -39,10 +37,10 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
 
   trait Users {
     // Get the users
-    private val userRepo = injector.instanceOf[UserRepository]
+    private val userService = injector.instanceOf[UserService]
     private val usersFuture = for {
-      user1 <- userRepo.authenticate("user1", "password1")
-      user2 <- userRepo.authenticate("user2", "password2")
+      user1 <- userService.authenticate("user1", "password1")
+      user2 <- userService.authenticate("user2", "password2")
     } yield (user1, user2)
     val users = Await.result(usersFuture, 300 millis)
   }

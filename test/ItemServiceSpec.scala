@@ -42,7 +42,7 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuit
     "accept a client-given uuid" in {
       val clientUUID = Some("abc-123")
       val uuid = Await.result(insertItem("an item", clientUUID), 1 second)
-      uuid mustBe clientUUID
+      uuid mustBe clientUUID.get
     }
 
     "return uuid and actually insert the item correctly" in {
