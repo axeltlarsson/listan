@@ -20,23 +20,27 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import testhelpers.{EvolutionsHelper, ListHelper}
+import testhelpers.ListHelper
+
+import play.api.db.DBApi
+import play.api.db.evolutions.Evolutions
 
 import scala.language.postfixOps
 
 @Singleton
 class WebSocketActorSpec extends PlaySpec with GuiceOneServerPerSuite with Results with BeforeAndAfter
-                                          with EvolutionsHelper with ListHelper {
+                                          with ListHelper {
   override val injector = app.injector
   implicit val ec = injector.instanceOf[ExecutionContext]
   implicit val system = ActorSystem("sys")
+  val dbApi = injector.instanceOf[DBApi]
 
   before {
-    evolve()
+    Evolutions.applyEvolutions(dbApi.database("default"))
   }
 
   after {
-    clean()
+    Evolutions.cleanupEvolutions(dbApi.database("default"))
   }
 
   /* Provides listActor, and setup to create mock wsActors */

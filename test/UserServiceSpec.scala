@@ -8,17 +8,24 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 import models.{User, UserRepository}
-import org.scalatest.BeforeAndAfterAll
+import org.scalatest.BeforeAndAfter
 import org.scalatestplus.play.guice.{GuiceOneAppPerSuite, GuiceOneServerPerSuite}
 import services.UserService
-import testhelpers.{EvolutionsHelper, ListHelper}
+import testhelpers.ListHelper
 
-class UserServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfterAll with EvolutionsHelper {
+import play.api.db.DBApi
+import play.api.db.evolutions.Evolutions
 
-  // Clean up db after ourselves
-  override def afterAll() = {
-    clean()
-    evolve()
+class UserServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfter {
+  val injector = app.injector
+  val dbApi = injector.instanceOf[DBApi]
+
+  before {
+    Evolutions.applyEvolutions(dbApi.database("default"))
+  }
+
+  after {
+    Evolutions.cleanupEvolutions(dbApi.database("default"))
   }
 
   trait MockUserRepo {

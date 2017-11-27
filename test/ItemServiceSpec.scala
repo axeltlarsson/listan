@@ -12,30 +12,34 @@ import models.{Item, ItemRepository, User, UserRepository}
 import org.scalatestplus.play.guice.{GuiceOneAppPerSuite, GuiceOneAppPerTest}
 import play.api.inject.guice.GuiceApplicationBuilder
 import services.ItemService
-import testhelpers.{EvolutionsHelper, ListHelper}
+import testhelpers.ListHelper
+
+import play.api.db.DBApi
+import play.api.db.evolutions.Evolutions
 
 class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite with BeforeAndAfter
-                      with EvolutionsHelper with ListHelper {
+                      with ListHelper {
   override val injector = (new GuiceApplicationBuilder()).injector
   implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
   val service = injector.instanceOf[ItemService]
   var listUUID = ""
   var userUUID = ""
 
+  val dbApi = injector.instanceOf[DBApi]
 
   def insertItem(contents: String, uuid: Option[Item.UUID] = None): Future[Item.UUID] = {
     service.add(contents, listUUID, uuid)
   }
 
   before {
-    evolve()
+    Evolutions.applyEvolutions(dbApi.database("default"))
     val listUserPair = createListUser()(ec)
     listUUID = listUserPair._1
     userUUID = listUserPair._2
   }
 
   after {
-    clean()
+    Evolutions.cleanupEvolutions(dbApi.database("default"))
   }
 
   "SlickItemRepository#add(contents)" should {

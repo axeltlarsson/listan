@@ -8,19 +8,22 @@ import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.inject.guice.GuiceApplicationBuilder
 import services.{ItemListService, ItemService}
-import testhelpers.EvolutionsHelper
 
 import scala.language.postfixOps
 import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
 
-class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeAndAfter with EvolutionsHelper {
-  val injector = (new GuiceApplicationBuilder()).injector
+import play.api.db.DBApi
+import play.api.db.evolutions.Evolutions
+
+class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeAndAfter {
+  val injector = app.injector
   implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
   val service = injector.instanceOf[ItemListService]
+  val dbApi = injector.instanceOf[DBApi]
 
   before {
-    evolve()
+    Evolutions.applyEvolutions(dbApi.database("default"))
     val userService = injector.instanceOf[UserService]
     // Insert users and await completion
     val uuidFutures = for {
@@ -28,11 +31,10 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
       uuid2 <- userService.add("user2", "password2")
     } yield (uuid1, uuid2)
     Await.result(uuidFutures, 300 millis)
-    println(s"uuidf: ${uuidFutures.value}")
  }
 
   after {
-    clean()
+    Evolutions.cleanupEvolutions(dbApi.database("default"))
   }
 
   trait Users {
