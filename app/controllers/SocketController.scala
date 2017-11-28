@@ -1,18 +1,16 @@
 package controllers
 
-import play.api.Logger
+import javax.inject._
 
-import play.api.mvc._
-import play.api.libs.streams._
 import akka.actor.ActorSystem
 import akka.stream.Materializer
-import javax.inject._
-import akka.actor._
-import scala.concurrent.Future
-import play.api.mvc._
+import play.api.Logger
+import play.api.libs.json.JsValue
 import play.api.libs.streams._
-import play.api.libs.json.{JsValue}
-import services.{WebSocketActorProvider}
+import play.api.mvc._
+import services.WebSocketActorProvider
+
+import scala.concurrent.Future
 
 @Singleton
 class SocketController @Inject()(cc: ControllerComponents)

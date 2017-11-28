@@ -1,18 +1,16 @@
 package controllers
 
 import javax.inject._
-import play.api._
-import play.api.mvc._
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
-import scala.concurrent.{ExecutionContext, Future}
-import play.Logger
-import scala.language.postfixOps
-import pdi.jwt._
-import pdi.jwt.JwtSession._
 
-import models.User
+import pdi.jwt._
+import play.api._
+import play.api.libs.functional.syntax._
+import play.api.libs.json._
+import play.api.mvc._
 import services.UserService
+
+import scala.concurrent.{ExecutionContext, Future}
+import scala.language.postfixOps
 
 @Singleton
 class HomeController @Inject()(cc: ControllerComponents, userService: UserService, configuration: Configuration)

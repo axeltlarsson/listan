@@ -1,10 +1,10 @@
-import com.google.inject.AbstractModule
 import java.time.Clock
 
-import services.{ApplicationTimer, ListActor, WebSocketActor, WebSocketActorProvider}
-import play.api.{Configuration, Environment}
-import play.api.libs.concurrent.AkkaGuiceSupport
+import com.google.inject.AbstractModule
 import models._
+import play.api.libs.concurrent.AkkaGuiceSupport
+import play.api.{Configuration, Environment}
+import services.{ApplicationTimer, ListActor}
 
 /**
  * This class is a Guice module that tells Guice how to bind several

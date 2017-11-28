@@ -2,7 +2,6 @@ import javax.inject._
 import play.api._
 import play.api.http.DefaultHttpFilters
 import play.filters.cors.CORSFilter
-import play.api.mvc._
 
 /**
  * This class configures filters that run on every request. This

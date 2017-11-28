@@ -15,10 +15,9 @@ object Item {
   implicit val format: OFormat[Item] = derived.oformat(NameAdapter.snakeCase)
 }
 
-case class Item(
-  uuid: UUID,
-  contents: String,
-  completed: Boolean = false,
-  listUuid: UUID, 
-  created: Option[Timestamp] = None, 
-  updated: Option[Timestamp] = None)
+case class Item(uuid: UUID,
+                contents: String,
+                completed: Boolean = false,
+                listUuid: UUID,
+                created: Option[Timestamp] = None,
+                updated: Option[Timestamp] = None)

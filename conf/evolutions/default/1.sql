@@ -25,4 +25,4 @@ CREATE TRIGGER users_updated_at_timestamp
 
 # --- !Downs
 DROP TABLE users;
-DROP FUNCTION set_updated_at_timestamp;
+DROP FUNCTION set_updated_at_timestamp();

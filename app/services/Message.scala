@@ -2,7 +2,7 @@ package services
 
 import julienrf.json.derived
 import julienrf.json.derived.NameAdapter
-import models.{Item, ItemList, User}
+import models.{Item, ItemList}
 import play.api.libs.json._
 
 // The algebraic data type presentation of messages
