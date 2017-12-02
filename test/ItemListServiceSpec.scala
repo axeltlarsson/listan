@@ -15,12 +15,14 @@ import scala.concurrent.duration._
 
 import play.api.db.DBApi
 import play.api.db.evolutions.Evolutions
+import play.api.Configuration
 
 class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeAndAfter {
   val injector = app.injector
   implicit val ec: ExecutionContext = injector.instanceOf[ExecutionContext]
   val service = injector.instanceOf[ItemListService]
   val dbApi = injector.instanceOf[DBApi]
+  val conf = injector.instanceOf[Configuration]
 
   before {
     Evolutions.applyEvolutions(dbApi.database("default"))
@@ -49,6 +51,12 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
 
   "SlickItemListRepository" should {
     "handle creation, updates and deletion of a list" in new Users {
+      val dbUrl = conf.getOptional[String]("slick.dbs.default.db.url")
+      println(s"dbUrl: $dbUrl")
+      val dbUser = conf.getOptional[String]("slick.dbs.default.db.user")
+      println(s"dbUser: $dbUser")
+      val dbPass = conf.getOptional[String]("slick.dbs.default.db.password")
+      println(s"dbPass: $dbPass")
       val creationTime = new Timestamp(System.currentTimeMillis())
       val uuid1 = Await.result(service.add(name = "list1", userUuid = users._1.get.uuid), 30 millis)
       uuid1.length must be > 20
