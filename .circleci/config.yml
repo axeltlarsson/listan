@@ -5,6 +5,10 @@ jobs:
     working_directory: ~/listan-server
     docker:
       - image: codestar/circleci-scala-sbt-git:latest
+        environment:
+          - DB_URL="jdbc:postgresql://localhost:5432/circle_test"
+          - DB_USER="ubuntu"
+
     steps:
       - checkout
 
