@@ -4,15 +4,12 @@ services:
   app:
     build: .
     environment:
-      DB_URL: db/listan
       DB_USER: listan
-      DB_PASSWORD: "$DB_PASSWORD"
-      CRYPTO_SECRET: "$CRYPTO_SECRET"
+      DB_PASSWORD: ${DB_PASSWORD}
+      CRYPTO_SECRET: ${CRYPTO_SECRET}
   db:
-    image: "mysql:5"
+    image: postgres:10
     environment:
-      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
-      MYSQL_DATABASE: listan
-      MYSQL_USER: listan
-      MYSQL_PASSWORD: "$DB_PASSWORD"
-      TZ: "Europe/Stockholm"
+      POSTGRES_USER: listan
+      POSTGRES_DB: listan
+

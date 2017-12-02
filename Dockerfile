@@ -1,10 +1,6 @@
 FROM openjdk:8
 
-ENV DB_URL=localhost/listan \
-    DB_USER=listan \
-    DB_PASSWORD=pasword \
-    CRYPTO_SECRET=changeme \
-    VERSION=1.1.1
+ENV VERSION=1.1.1
 
 COPY ./target/universal/listan-server-${VERSION}.zip /
 RUN unzip listan-server-${VERSION}.zip

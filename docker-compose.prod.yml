@@ -1,22 +1,26 @@
 # Used in production
-# It adds the app and db to a new isolated network: "listan-net"
+# It adds the app and db to a new isolated network: backend
 
 version: '3'
 
 services:
   app:
+    environment:
+      DB_URL: "jdbc:postgresql://db:5432/listan"
     restart: unless-stopped
     networks:
-      - listan-net
+      - backend
   db:
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     restart: unless-stopped
     volumes:
-      - db-volume:/var/lib/mysql
+      - db-volume:/var/lib/postgresql/data
     networks:
-      - listan-net
+      - backend
 
 volumes:
   db-volume:
 networks:
-  listan-net:
+  backend:
 
