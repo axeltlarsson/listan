@@ -8,7 +8,7 @@ jobs:
         environment:
           - DB_URL="jdbc:postgresql://localhost:5432/listan"
           - DB_USER=ubuntu
-      - image: postgres:9.6
+      - image: postgres:9.5
         environment:
           - POSTGRES_USER=ubuntu
           - POSTGRES_DB=listan
