@@ -6,12 +6,12 @@ jobs:
     docker:
       - image: codestar/circleci-scala-sbt-git:latest
         environment:
-          - DB_URL="jdbc:postgresql://localhost:5432/listan_test"
+          - DB_URL="jdbc:postgresql://localhost:5432/listan"
           - DB_USER=ubuntu
       - image: postgres:9.6
         environment:
           - POSTGRES_USER=ubuntu
-          - POSTGRES_DB=listan_test
+          - POSTGRES_DB=listan
 
     steps:
       - checkout
