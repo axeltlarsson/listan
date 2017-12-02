@@ -7,10 +7,10 @@ jobs:
       - image: codestar/circleci-scala-sbt-git:latest
         environment:
           - DB_URL="jdbc:postgresql://localhost:5432/listan_test"
-          - DB_USER="ubuntu"
+          - DB_USER=ubuntu
       - image: postgres:9.6
         environment:
-          - POSTGRES_USER="ubuntu"
+          - POSTGRES_USER=ubuntu
           - POSTGRES_DB=listan_test
 
     steps:
