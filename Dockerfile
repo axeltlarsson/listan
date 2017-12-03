@@ -1,16 +1,16 @@
 FROM openjdk:8
 
-ENV VERSION=1.1.1
+ENV VERSION=2.0.0
 
-COPY ./target/universal/listan-server-${VERSION}.zip /
-RUN unzip listan-server-${VERSION}.zip
+COPY ./target/universal/listan-${VERSION}.zip /
+RUN unzip listan-${VERSION}.zip
 
 
-ENV PATH=/listan-server-${VERSION}:$PATH
+ENV PATH=/listan-${VERSION}:$PATH
 
 EXPOSE 9000
 
-WORKDIR /listan-server-${VERSION}
-ENTRYPOINT ["bin/listan-server"]
+WORKDIR /listan-${VERSION}
+ENTRYPOINT ["bin/listan"]
 CMD ["-Dconfig.file=conf/application.prod.conf"]
 
