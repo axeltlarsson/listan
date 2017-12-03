@@ -10,6 +10,15 @@ services:
     restart: unless-stopped
     networks:
       - backend
+      - frontend
+  frontend:
+    environment:
+      VIRTUAL_HOST: "${VIRTUAL_HOST}"
+      LETSENCRYPT_HOST: "${VIRTUAL_HOST}"
+      LETSENCRYPT_EMAIL: "${EMAIL}"
+    restart: unless-stopped
+    networks:
+      - frontend
   db:
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -23,4 +32,5 @@ volumes:
   db-volume:
 networks:
   backend:
+  frontend:
 

@@ -26,17 +26,22 @@ val injector = (new GuiceApplicationBuilder()).injector
 
 To e.g. create a user and insert into the database:
 ```scala
-import models.User
-val user = User.create("name", "password")
-import models.UserRepository
-val userRepo = injector.instanceOf[UserRepository]
-userRepo.insert(user)
+import services.UserService
+val userService = injector.instanceOf[UserService]
+val uuidFuture = userService.add("name", "password")
+val uuid = uuidFuture.value.get
+
+val userFuture = userService.findByName("name")
 ```
 
 ### Docker
-`sbt dist`
+First, [build the frontend](./frontend/README.md).
 
-`docker-compose up` which will also spin up a MySQL database.
+`sbt dist` to generate the bundled app.
+
+Make `DB_PASSWORD` and `CRYPTO_SECRET` available to the shell before continuing:
+
+Then: `docker-compose -f docker-compose.yml -f docker-compose.prod.yml up`
 
 
 ## Architecture
@@ -52,26 +57,4 @@ connection is maintained by an akka actor.
 A custom protocol is used. It is based on the idea of the client sending `Action`s
 and the server responding with `Response`s and relaying the `Action`s to other
 clients. More details can be found in [`Message.scala`](./app/services/Message.scala).
-
-## Installing
-Releases for debian are created with `sbt debian:packageBin`. The resulting .deb file
-is found in `target/listan-server_x.x.x`. These .deb files are also published under
-"Releases" on GitHub.
-
-The only dependency required is Java 8 or later, but unfortunately it is not trivial to
-encode this requirement in the .deb in a satisfactory manner; it it was you would not have
-needed to install Java manually.
-
-Use `dpkg -i listan-server_x.x.x.deb` to install. Currently an upstart script is used and
-you need to somehow provide the required environment variables to the process. In theory,
-this could be done in `/etc/default/listan-server`, unfortunately though that does not work
-for some reason. So the easiest solution is to edit the generated upstart configuration file
-in `/etc/init/listan-server`.
-
-### Docker
-`sbt dist`
-
-Make `DB_PASSWORD` and `CRYPTO_SECRET` available to the shell before continuing:
-
-Then: `docker-compose -f docker-compose.yml -f docker-compose.prod.yml up`
 
