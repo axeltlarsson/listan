@@ -37,12 +37,26 @@ val userFuture = userService.findByName("name")
 ### Docker
 First, [build the frontend](./frontend/README.md).
 
-`sbt dist` to generate the bundled app.
+`sbt dist` to generate the bundled app, then:
 
-Make `DB_PASSWORD` and `CRYPTO_SECRET` available to the shell before continuing:
+`docker-compose up` for running in production mode with production configuration,
+but with some adaptations for making it smoother to run locally, such as not having
+to provide `CRYPTO_SECRET` and `DB_PASSWORD`.
 
-Then: `docker-compose -f docker-compose.yml -f docker-compose.prod.yml up`
+For deploying:
 
+```
+DB_PASSWORD=xxx \
+CRYPTO_SECRET=xxx \
+VIRTUAL_HOST=xxx \
+EMAIL=xxx \
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
+```
+where `VIRTUAL_HOST` is the same host as should be used in `WS_API_URL` and
+`LOGIN_URL` when building frontend bundle.
+
+Last step is to connect `frontend` to the default `bridge` docker network to enable
+automatic TLS certificates and routing via nginx-gen.
 
 ## Architecture
 The backend consists of two routes: /api/login and /api/ws. The /api/login route
