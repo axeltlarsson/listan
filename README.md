@@ -1,6 +1,5 @@
 [![CircleCI](https://circleci.com/gh/AxelTLarsson/listan-server/tree/multiple-lists.svg?style=svg)](https://circleci.com/gh/AxelTLarsson/listan-server/tree/multiple-lists)
-# Listan-server
-This is the backend to [listan](https://github.com/AxelTLarsson/listan).
+# Listan
 It is built on top of Scala Play framework, however it relies heavily on akka
 for the actor system.
 
@@ -57,6 +56,7 @@ where `VIRTUAL_HOST` is the same host as should be used in `WS_API_URL` and
 
 Last step is to connect `frontend` to the default `bridge` docker network to enable
 automatic TLS certificates and routing via nginx-gen.
+The `nginx-gen` container may need to be restarted after this as well.
 
 ## Architecture
 The backend consists of two routes: /api/login and /api/ws. The /api/login route
