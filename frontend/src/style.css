@@ -1,0 +1,187 @@
+/* General */
+:root {
+  --header-color: #1a237e;
+}
+
+body {
+  margin: 0;
+  font-size: 16px;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 100;
+  height: 100%;
+}
+
+/* To center content on page */
+#root {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+#app {
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+  max-width: 720px;
+}
+
+#main {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+#main-top {
+  /* To force footer down */
+  flex-grow: 1;
+}
+
+/* Login */
+#login-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#login-button {
+  margin-top: 1em;
+}
+
+/* WS Status */
+#ws-conn-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 2em;
+  margin-top: 1em;
+}
+
+.list-card {
+  margin-bottom: 1em;
+}
+
+/* Items */
+#item-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-bottom: 1em;
+
+  & .completed {
+    text-decoration: line-through;
+  }
+}
+
+
+.item-contents {
+  user-select: none;
+  width: 100%;
+  margin-right: 14px;
+  font-size: 2em;
+  line-height: 1em;
+}
+
+.item-contents:hover {
+  cursor: pointer;
+}
+
+.item {
+  & .editable {
+    width: 100%;
+
+    & input, & label {
+      font-size: 2em;
+    }
+
+  }
+}
+
+.item-menu {
+  box-sizing: border-box;
+}
+
+/* Fix alignment of icons in the menus */
+.item-menu div ul li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ex-enter {
+  opacity: 0.01;
+  height: 0;
+}
+
+.ex-enter.ex-enter-active {
+  overflow: hidden;
+  transition: all 200ms cubic-bezier(.25,.8,.25,1);
+  opacity: 1;
+  height: 2em;
+}
+
+.ex-leave {
+  opacity: 1;
+  height: 2em;
+}
+
+.ex-leave.ex-leave-active {
+  opacity: 0.01;
+  overflow: hidden;
+  height: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-left: 0;
+  transition: all 200ms cubic-bezier(.25,.8,.25,1);
+}
+
+/* AddItem */
+#add-item {
+  display: flex;
+  justify-content: space-around;
+}
+
+#add-item div {
+  width: 100%;
+  /* margin-left: 1em; */
+  /* margin-right: 16px; */
+}
+
+#add-item input, #add-item label {
+  font-size: 2em;
+}
+
+#add-item button {
+  /* margin-right: 14px; */
+}
+
+#add-list-form {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  padding-left: 1em;
+  padding-right: 1em;
+
+  & > div:nth-child(1), & > div:nth-child(2) {
+    flex-grow: 1;
+  }
+
+  & > div {
+
+  }
+  & button {
+  }
+
+}
+
+.navigation-paper {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  margin-bottom: 1em;
+}
+

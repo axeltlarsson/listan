@@ -1,0 +1,35 @@
+{
+  "short_name": "Listan",
+  "name": "Inköpslistan",
+  "icons": [
+    {
+      "src": "icons/mdpi/ic_launcher.png",
+      "sizes": "48x48",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/hdpi/ic_launcher.png",
+      "sizes": "72x72",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/xhdpi/ic_launcher.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/xxhdpi/ic_launcher.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/xxxhdpi/ic_launcher.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#424242",
+  "theme_color": "#1A237E",
+  "display": "standalone"
+}
