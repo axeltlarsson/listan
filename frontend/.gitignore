@@ -1,5 +1,4 @@
 dist/*
-!dist/index.html
 !dist/icons/
 !dist/manifest.json
 !dist/robots.txt

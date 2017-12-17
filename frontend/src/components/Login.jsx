@@ -20,12 +20,12 @@ const Login = ({
       <Redirect to={from || '/'} />
     ) : (
       <div id="login">
-      <Heading value="Logga in" />
+      <Heading id="login-header">Logga in</Heading>
       <form
         id="login-form"
         onSubmit={(e) => {
           e.preventDefault()
-          onLogin(userName.inputRef.value, password.inputRef.value)
+          onLogin(userName.inputRef.value.trim(), password.inputRef.value)
         }}>
         <Textfield
           id="user-name"
