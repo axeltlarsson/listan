@@ -1,6 +1,9 @@
 import React from 'react'
 import Item from './Item'
-import ReactCSSTransitionGroup from 'react-addons-css-transition-group'
+import {
+  CSSTransition,
+  TransitionGroup,
+} from 'react-transition-group';
 
 const ItemList = ({
   items,
@@ -10,11 +13,13 @@ const ItemList = ({
   onItemChange
 }) => (
   <div id="item-list">
-    <ReactCSSTransitionGroup
-      transitionName="ex"
-      transitionEnterTimeout={200}
-      transitionLeaveTimeout={200}>
+      <TransitionGroup className="transition-group" >
       {items.map((item) =>
+        <CSSTransition
+          key={item.uuid}
+          timeout={500}
+          classNames="fade"
+        >
         <Item
           key={item.uuid}
           {...item}
@@ -23,8 +28,9 @@ const ItemList = ({
           onDeleteClick={() => onDeleteClick(item.uuid)}
           onItemChange={onItemChange}
         />
+        </CSSTransition>
       )}
-    </ReactCSSTransitionGroup>
+    </TransitionGroup>
   </div>
 )
 

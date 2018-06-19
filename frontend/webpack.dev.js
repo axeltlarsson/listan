@@ -4,6 +4,7 @@ const webpack = require('webpack');
 const path = require('path');
 
 module.exports = merge(CommonConfig, {
+  mode: 'development',
   plugins: [
     new webpack.HotModuleReplacementPlugin(),
   ],

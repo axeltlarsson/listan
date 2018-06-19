@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import {indigo} from 'material-ui/colors'
-import { withStyles } from 'material-ui/styles'
+import {indigo} from '@material-ui/core/colors'
+import { withStyles } from '@material-ui/core/styles'
 
 const Heading = ({children, id, classes}) => (
   <h1 id={id} className={classes.heading}>{children}</h1>

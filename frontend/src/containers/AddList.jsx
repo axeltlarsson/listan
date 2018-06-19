@@ -1,10 +1,10 @@
 import React from 'react'
 import {connect} from 'react-redux'
 import {addList} from '../actions'
-import { withStyles } from 'material-ui/styles'
-import TextField from 'material-ui/TextField'
-import Button from 'material-ui/Button'
-import AddIcon from 'material-ui-icons/Add'
+import { withStyles } from '@material-ui/core/styles'
+import TextField from '@material-ui/core/TextField'
+import Button from '@material-ui/core/Button'
+import AddIcon from '@material-ui/icons/Add'
 import Heading from '../components/Heading'
 import withRouter from 'react-router-dom/withRouter'
 
@@ -44,8 +44,8 @@ let AddList = ({dispatch, classes, history}) => {
       />
       <Button
         id="add-list-btn"
-        fab
-        color="accent"
+        variant="fab"
+        color="secondary"
         type="submit" >
         <AddIcon />
       </Button>

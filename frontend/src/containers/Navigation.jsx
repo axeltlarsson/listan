@@ -1,10 +1,11 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { withStyles } from 'material-ui/styles'
-import BottomNavigation, { BottomNavigationButton } from 'material-ui/BottomNavigation'
-import Icon from 'material-ui/Icon'
+import { withStyles } from '@material-ui/core/styles'
+import BottomNavigation from '@material-ui/core/BottomNavigation';
+import BottomNavigationAction from '@material-ui/core/BottomNavigationAction';
+import Icon from '@material-ui/core/Icon'
 import { withRouter } from 'react-router-dom'
-import Paper from 'material-ui/Paper'
+import Paper from '@material-ui/core/Paper'
 
 const styles = theme => ({
   root: {
@@ -43,9 +44,9 @@ class Navigation extends React.Component {
         showLabels
         className={classes.navigation}
       >
-        <BottomNavigationButton value="/" label="Listor" icon={<Icon>view_list</Icon>} />
-        <BottomNavigationButton value="/new" label="Ny lista" icon={<Icon>add_box</Icon>} />
-        <BottomNavigationButton value="/logout" label="Logga ut" icon={<Icon>exit_to_app</Icon>} />
+        <BottomNavigationAction value="/" label="Listor" icon={<Icon>view_list</Icon>} />
+        <BottomNavigationAction value="/new" label="Ny lista" icon={<Icon>add_box</Icon>} />
+        <BottomNavigationAction value="/logout" label="Logga ut" icon={<Icon>exit_to_app</Icon>} />
       </BottomNavigation>
       </Paper>
     )

@@ -1,20 +1,22 @@
 import React from 'react'
 import {Component} from 'react'
-import { withStyles } from 'material-ui/styles'
-import Card, {CardContent, CardActions} from 'material-ui/Card'
-import Collapse from 'material-ui/transitions/Collapse'
-import IconButton from 'material-ui/IconButton'
-import ExpandMoreIcon from 'material-ui-icons/ExpandMore'
-import ModeEditIcon from 'material-ui-icons/ModeEdit'
-import ArrowBackIcon from 'material-ui-icons/ArrowBack'
-import Typography from 'material-ui/Typography'
+import { withStyles } from '@material-ui/core/styles'
+import Card from '@material-ui/core/Card';
+import CardContent from '@material-ui/core/CardContent';
+import CardActions from '@material-ui/core/CardActions';
+import Collapse from '@material-ui/core/Collapse'
+import IconButton from '@material-ui/core/IconButton'
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
+import ModeEditIcon from '@material-ui/icons/ModeEdit'
+import ArrowBackIcon from '@material-ui/icons/ArrowBack'
+import Typography from '@material-ui/core/Typography'
 import classnames from 'classnames'
 import ItemListContainer from '../containers/ItemListContainer'
 import AddItem from '../containers/AddItem'
 import DeleteWithConfirmationButton from './DeleteWithConfirmationButton'
 import Editable from '../components/Editable'
 import PropTypes from 'prop-types'
-import {indigo} from 'material-ui/colors'
+import {indigo} from '@material-ui/core/colors'
 
 const styleSheet = (theme) =>
   ({

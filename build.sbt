@@ -6,20 +6,20 @@ packageDescription := """This is the backend to listan. It is built on top of Sc
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
-scalaVersion := "2.12.4"
+scalaVersion := "2.12.6"
 
 libraryDependencies ++= Seq(
   ehcache,
   ws,
   "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.+" % Test,
-  "com.pauldijou" %% "jwt-play" % "0.14.+",
-  "com.pauldijou" %% "jwt-play-json" % "0.14.+",
+  "com.pauldijou" %% "jwt-play" % "0.16.+",
+  "com.pauldijou" %% "jwt-play-json" % "0.16.+",
   "org.julienrf" %% "play-json-derived-codecs" % "4.0.+",
   "com.typesafe.akka" %% "akka-testkit" % "2.5.+",
-  "org.mockito" % "mockito-core" % "2.10.+" % Test,
+  "org.mockito" % "mockito-core" % "2.18.+" % Test,
   "com.typesafe.play" %% "play-slick" % "3.0.+",
   "com.typesafe.play" %% "play-slick-evolutions" % "3.0.+",
-  "org.postgresql" % "postgresql" % "42.1.4",
+  "org.postgresql" % "postgresql" % "42.2.+",
   "com.github.t3hnar" %% "scala-bcrypt" % "3.+",
   filters,
   guice,

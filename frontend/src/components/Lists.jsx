@@ -1,7 +1,10 @@
 import React from 'react'
 import ListCard from './ListCard'
-import ReactCSSTransitionGroup from 'react-addons-css-transition-group'
-import withStyles from 'material-ui/styles/withStyles'
+import {
+  CSSTransition,
+  TransitionGroup,
+} from 'react-transition-group';
+import withStyles from '@material-ui/core/styles/withStyles'
 import ClearToggledButton from './ClearToggledButton'
 import PropTypes from 'prop-types'
 
@@ -31,23 +34,28 @@ const Lists = ({
       <p>Lägg till en ny lista genom att klicka på "Ny lista" i navigationsmenyn</p>
       </div>
     ) : (
-      <ReactCSSTransitionGroup
-      transitionName="ex"
-      transitionEnterTimeout={200}
-      transitionLeaveTimeout={200}>
-      {lists.map((list) =>
-        <ListCard
-        key={list.uuid}
-        onDelete={onDeleteClick}
-        onListNameChange={onListNameChange}
-        onListNameEditToggle={onListNameEditToggle}
-        {...list}
-        />
+    <div>
+      <TransitionGroup className="transition-group" >
+        {lists.map((list) =>
+        <CSSTransition
+          key={list.uuid}
+          timeout={500}
+          classNames="fade"
+        >
+          <ListCard
+            key={list.uuid}
+            onDelete={onDeleteClick}
+            onListNameChange={onListNameChange}
+            onListNameEditToggle={onListNameEditToggle}
+            {...list}
+          />
+        </CSSTransition>
       )}
+    </TransitionGroup>
       <div className={classes.clearToggled}>
         <ClearToggledButton onClearToggled={onClearToggled}/>
       </div>
-      </ReactCSSTransitionGroup>
+      </div>
     )}
   </div>
 )

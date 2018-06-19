@@ -1,13 +1,13 @@
 import React, { Component } from 'react';
-import Button from 'material-ui/Button';
-import Dialog, {
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-} from 'material-ui/Dialog';
-import IconButton from 'material-ui/IconButton'
-import DeleteIcon from 'material-ui-icons/Delete'
+import Button from '@material-ui/core/Button';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import IconButton from '@material-ui/core/IconButton'
+import Icon from '@material-ui/core/Icon';
+import DeleteIcon from '@material-ui/icons/Delete'
 
 export default class DeleteWithConfirmationButton extends Component {
   state = {
@@ -20,7 +20,7 @@ export default class DeleteWithConfirmationButton extends Component {
 
   proceed = () => {
     this.props.onDelete()
-    this.setState({open: false });
+    this.setState({ open: false });
   };
 
   render() {
@@ -31,8 +31,13 @@ export default class DeleteWithConfirmationButton extends Component {
           onClick={() => this.setState({ open: true })}>
           <DeleteIcon />
         </IconButton>
-        <Dialog open={this.state.open} onRequestClose={this.handleRequestClose}>
-          <DialogTitle>
+        <Dialog
+          fullscreen="true"
+          open={this.state.open}
+          onClose={this.handleRequestClose}
+          aria-labelledby="responsive-dialog-title"
+        >
+          <DialogTitle id="responsive-dialog-title">
             {this.props.title}
           </DialogTitle>
           <DialogContent>
@@ -41,7 +46,7 @@ export default class DeleteWithConfirmationButton extends Component {
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={this.handleRequestClose} color="primary">
+            <Button onClick={this.handleRequestClose} color="primary" autoFocus>
               No
             </Button>
             <Button onClick={this.proceed} color="primary">
