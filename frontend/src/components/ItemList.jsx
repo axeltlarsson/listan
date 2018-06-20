@@ -17,7 +17,7 @@ const ItemList = ({
       {items.map((item) =>
         <CSSTransition
           key={item.uuid}
-          timeout={500}
+          timeout={300}
           classNames="fade"
         >
         <Item

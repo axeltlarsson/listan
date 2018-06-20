@@ -36,6 +36,16 @@ body {
   flex-grow: 1;
 }
 
+/* Make the two transitioning areas occupy the same space */
+.transition-group {
+  display: grid;
+  grid-template-areas: "transition-area";
+}
+
+section.route-section {
+  grid-area: transition-area;
+}
+
 /* Login */
 #login-form {
   display: flex;
@@ -144,15 +154,16 @@ body {
 }
 .fade-enter-active {
   opacity: 1;
-  transition: opacity 500ms ease-in;
+  transition: opacity 300ms ease-in;
 }
 .fade-exit {
   opacity: 1;
 }
 .fade-exit-active {
   opacity: 0.01;
-  transition: opacity 500ms ease-in;
+  transition: opacity 300ms ease-in;
 }
+
 /* AddItem */
 #add-item {
   display: flex;
