@@ -7,7 +7,7 @@ const NameAllModulesPlugin = require('name-all-modules-plugin');
 
 module.exports = merge(CommonConfig, {
   entry: {
-    vendor: ['material-ui', 'material-ui-icons', 'classnames']
+    vendor: ['@material-ui/core', '@material-ui/icons', 'classnames', 'react', 'react-dom']
   },
   plugins: [
     new webpack.DefinePlugin({
@@ -17,22 +17,7 @@ module.exports = merge(CommonConfig, {
         'LOGIN_URL': JSON.stringify(process.env.LOGIN_URL || 'https://listan.axellarsson.nu/api/login')
       }
     }),
-    new webpack.NamedModulesPlugin(),
-    new webpack.NamedChunksPlugin((chunk) => {
-      if (chunk.name) {
-        return chunk.name;
-      }
-      return chunk.modules.map(m => path.relative(m.context, m.request)).join("_");
-    }),
-    new webpack.optimize.CommonsChunkPlugin({
-      name: 'vendor',
-      minChunks: Infinity
-    }),
-    new webpack.optimize.CommonsChunkPlugin({
-      name: 'runtime'
-    }),
     new NameAllModulesPlugin(),
-    new webpack.optimize.UglifyJsPlugin({})
   ],
   devtool: 'cheap-module-source-map',
   output: {

@@ -1,6 +1,6 @@
 name := """listan"""
 
-version := "2.0.0"
+version := "2.1.0"
 
 packageDescription := """This is the backend to listan. It is built on top of Scala Play Framework."""
 
