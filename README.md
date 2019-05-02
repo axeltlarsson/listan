@@ -10,12 +10,12 @@ testing tools that is invaluable when testing the actor system.
 
 ## Running
 * `sbt test` for running the tests
-* `sbt run` for running in dev mode (default dev user auth is `axel:whatever`)
+* `sbt run` for running in dev mode (remember to add a user first, see below)
 * `sbt runProd` for running the app locally in production mode
 (application.prod.conf will be used as configuration file), however do not forget
 to export the required ENV variables `DB_PASSWORD` and `CRYPTO_SECRET`.
 
-### Console
+### Adding a User Via the Console
 `sbt console` then enter `:paste` to get to paste-mode and:
 ```scala
 // injector from Guice to gain access to services/repos
