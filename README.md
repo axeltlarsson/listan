@@ -45,10 +45,10 @@ to provide `CRYPTO_SECRET` and `DB_PASSWORD`.
 For deploying:
 
 - Substitute appropriate values into `.env` - see [sample.env](./sample.env) for an example
-- Run `docker-compose -f docker-compose.yml -f docker-compose.prod.yml up`
+- Run `docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d`
 
 For updating only frontend:
-- `docker-compose -f docker-compose.yml -f docker-compose.prod.yml --no-deps --build up app`
+- `docker-compose -f docker-compose.yml -f docker-compose.prod.yml up --no-deps --build -d frontend`
 
 Last step is to connect `frontend` to the default `bridge` docker network to enable
 automatic TLS certificates and routing via nginx-gen.
