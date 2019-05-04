@@ -1,9 +1,9 @@
 import {
   ADD_ITEM, EDIT_ITEM, REQUEST_WS, requestWs, wsSuccess, wsFailure,
-  fulfilItem, DELETE_ITEM, addItemWithId, completeItem,
-  unCompleteItem, deleteItem, serverAddItem, serverEditItem, serverCompleteItem,
-  serverUnCompleteItem, serverDeleteItem, COMPLETE_ITEM, UNCOMPLETE_ITEM,
-  setItems, CLEAR_TOGGLED, addItem, editItem, logout, ADD_LIST, fulfilList,
+  fulfilItem, DELETE_ITEM, completeItem, unCompleteItem, deleteItem,
+  serverAddItem, serverEditItem, serverCompleteItem, serverUnCompleteItem,
+  serverDeleteItem, COMPLETE_ITEM, UNCOMPLETE_ITEM, setItems, CLEAR_TOGGLED,
+  addItem, editItem, LOGOUT, logout, ADD_LIST, fulfilList,
   UPDATE_LIST_NAME, UPDATE_LIST_DESCRIPTION, DELETE_LIST, setLists, addList,
   updateListName, updateListDescription, deleteList, serverAddList, serverUpdateListName,
   serverUpdateListDescription, serverDeleteList
@@ -45,7 +45,7 @@ const sync = (ws, store) => {
   send(ws, getStateMsg).then(state => {
     // Resolve lists
     const lists = state.lists
-    const localLists = store.getState().lists.allIds.map(l => store.getState().lists.byId[l.uuid])
+    const localLists = store.getState().lists.allIds.map(i => store.getState().lists.byId[i])
     const mergedListState = mergeListState(localLists, lists, deletedLists)
 
     // Set local state to new list state
@@ -193,7 +193,7 @@ const send = (ws, msg) => {
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(msg))
     } else {
-      console.warn("Cannot send msg, socket is not ready!")
+      console.warn("Cannot send msg, socket is not ready:", msg)
       reject({network_err: "cannot send msg, socket is not ready!"})
     }
   })
@@ -554,7 +554,7 @@ const api = store => next => action => {
       })
       break
     }
-    case DELETE_LIST: {
+    case DELETE_LIST: {
       const msg = {
         type: "DeleteList",
         ack: uuidGen.v4(),
@@ -572,8 +572,12 @@ const api = store => next => action => {
           store.dispatch(requestWs())
         }
       })
-      break
     }
+    case LOGOUT: {
+      console.log("LOGOUT - closing websocket")
+      ws.close()
+    }
+    break
     default: {
       return next(action)
     }

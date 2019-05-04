@@ -7,7 +7,9 @@ To run locally i dev mode, uncomment appropriate directives in webpack.config.js
 use `npm start` which will set up a local dev server with hot code reloading.
 
 ## Deploying in Production
-`WS_API_URL=<domain/api/ws> LOGIN_URL=<domain/api/login> npm run build:prod` to generate the JS bundle
+- Pull latest code
+- `npm install`
+- `WS_API_URL=<domain/api/ws> LOGIN_URL=<domain/api/login> npm run build:prod` to generate the JS bundle
 in `dist`.
 
 Then the whole project can be built with docker-compose, see [the README.md](../README.md).
