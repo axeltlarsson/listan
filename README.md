@@ -52,7 +52,13 @@ For updating only frontend:
 
 Last step is to connect `frontend` to the default `bridge` docker network to enable
 automatic TLS certificates and routing via nginx-gen.
+
+```
+docker network connect bridge listan_frontend_1
+```
+
 The `nginx-gen` container may need to be restarted after this as well.
+
 
 ## Architecture
 The backend consists of two routes: /api/login and /api/ws. The /api/login route
