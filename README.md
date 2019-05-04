@@ -59,6 +59,22 @@ docker network connect bridge listan_frontend_1
 
 The `nginx-gen` container may need to be restarted after this as well.
 
+#### Production Console
+If not already done, build the image, and container: 
+```
+docker build -f Dockerfil-prod-console -t prod-console .
+docker create --net listan_backend --env-file .env --name prod-console prod-console
+```
+
+Start the container and then execute sbt:
+```
+docker start prod-console
+docker exec -it prod-console sbt
+```
+
+Then run `console`.
+
+
 
 ## Architecture
 The backend consists of two routes: /api/login and /api/ws. The /api/login route
