@@ -62,7 +62,7 @@ The `nginx-gen` container may need to be restarted after this as well.
 #### Production Console
 If not already done, build the image, and container: 
 ```
-docker build -f Dockerfil-prod-console -t prod-console .
+docker build -f Dockerfile-prod-console -t prod-console .
 docker create --net listan_backend --env-file .env --name prod-console prod-console
 ```
 
