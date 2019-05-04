@@ -33,7 +33,7 @@ val uuid = uuidFuture.value.get
 val userFuture = userService.findByName("name")
 ```
 
-### Docker
+### Docker deploy
 First, [build the frontend](./frontend/README.md).
 
 `sbt dist` to generate the bundled app, then:
@@ -44,15 +44,11 @@ to provide `CRYPTO_SECRET` and `DB_PASSWORD`.
 
 For deploying:
 
-```
-DB_PASSWORD=xxx \
-CRYPTO_SECRET=xxx \
-VIRTUAL_HOST=xxx \
-EMAIL=xxx \
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
-```
-where `VIRTUAL_HOST` is the same host as should be used in `WS_API_URL` and
-`LOGIN_URL` when building frontend bundle.
+- Substitute appropriate values into `.env` - see [sample.env](./sample.env) for an example
+- Run `docker-compose -f docker-compose.yml -f docker-compose.prod.yml up`
+
+For updating only frontend:
+- `docker-compose -f docker-compose.yml -f docker-compose.prod.yml --no-deps --build up app`
 
 Last step is to connect `frontend` to the default `bridge` docker network to enable
 automatic TLS certificates and routing via nginx-gen.
