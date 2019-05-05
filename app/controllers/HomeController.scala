@@ -13,8 +13,8 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 
 @Singleton
-class HomeController @Inject()(cc: ControllerComponents, userService: UserService, configuration: Configuration)
-                              (implicit ec: ExecutionContext)
+class HomeController @Inject()(cc: ControllerComponents, userService: UserService)
+                              (implicit ec: ExecutionContext, conf: Configuration)
                               extends AbstractController(cc) {
 
   private val loginData: Reads[(String, String)] =

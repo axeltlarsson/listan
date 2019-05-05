@@ -4,7 +4,7 @@ import javax.inject._
 
 import akka.actor.ActorSystem
 import akka.stream.Materializer
-import play.api.Logger
+import play.api.Logging
 import play.api.libs.json.JsValue
 import play.api.libs.streams._
 import play.api.mvc._
@@ -17,31 +17,31 @@ class SocketController @Inject()(cc: ControllerComponents)
                                 (implicit sys: ActorSystem,
                                  mat: Materializer,
                                  provider: WebSocketActorProvider)
-                                 extends AbstractController(cc) {
+                                 extends AbstractController(cc) with Logging {
 
   def connect = WebSocket.acceptOrResult[JsValue, JsValue] {
     case requestHeader if sameOriginCheck(requestHeader) => {
       val realIp = requestHeader.headers.get("X-Real-IP").getOrElse(requestHeader.remoteAddress)
-      Logger.info(s"[$realIp] is ${requestHeader.headers.get("User-Agent").getOrElse("unknown")}")
+      logger.info(s"[$realIp] is ${requestHeader.headers.get("User-Agent").getOrElse("unknown")}")
       Future.successful(Right(ActorFlow.actorRef(out => provider.props(out, ipAddress = realIp))))
     }
     case rejected =>
-      Logger.error(s"Request $rejected failed same origin check")
+      logger.error(s"Request $rejected failed same origin check")
       Future.successful(Left(Forbidden("forbidden")))
   }
 
   private def sameOriginCheck(requestHeader: RequestHeader): Boolean = {
     requestHeader.headers.get("Origin") match {
       case Some(originValue) if originMatches(originValue) =>
-        Logger.debug(s"[${requestHeader.remoteAddress}] originCheck: originValue = $originValue")
+        logger.debug(s"[${requestHeader.remoteAddress}] originCheck: originValue = $originValue")
         true
       case Some(badOrigin) =>
-        /*Logger.error(
+        /*logger.error(
           s"originCheck: rejecting request because Origin header value $badOrigin"
           + " is not in the same origin")*/
         true // remember to change to false in production so to speak
       case None =>
-        Logger.error(
+        logger.error(
          s"[${requestHeader.remoteAddress}] originCheck: rejecting request because no Origin header found")
         false
     }

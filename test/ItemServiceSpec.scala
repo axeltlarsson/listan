@@ -72,9 +72,9 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuit
       item.foreach(i => {
         // Check that created and updated fields are ~equal to creation
         i.created mustBe defined
-        i.created.foreach(_.getTime() shouldEqual creation.getTime() +- 30)
+        i.created.foreach(_.getTime() shouldEqual creation.getTime() +- 35)
         i.updated mustBe defined
-        i.updated.foreach(_.getTime() shouldEqual creation.getTime() +- 30)
+        i.updated.foreach(_.getTime() shouldEqual creation.getTime() +- 35)
       })
       // Update item
       val update = new Timestamp(System.currentTimeMillis())
@@ -83,9 +83,9 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuit
       updatedItem.foreach(i => {
         // Created field should still be ~equal to creation, updated ~equal update
         i.created mustBe defined
-        i.created.foreach(_.getTime() shouldEqual creation.getTime() +- 30)
+        i.created.foreach(_.getTime() shouldEqual creation.getTime() +- 35)
         i.updated mustBe defined
-        i.updated.foreach(_.getTime() shouldEqual update.getTime() +- 30)
+        i.updated.foreach(_.getTime() shouldEqual update.getTime() +- 35)
       })
     }
   }
@@ -96,9 +96,9 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuit
         uuid <- insertItem("to be deleted")
         affectedRows <- service.delete(uuid)
       } yield (affectedRows, uuid),
-        30 millis)
+        35 millis)
       rowsUuidPair._1 mustBe 1
-      val item = Await.result(service.get(rowsUuidPair._2), 30 millis)
+      val item = Await.result(service.get(rowsUuidPair._2), 35 millis)
       item mustBe None
     }
 
