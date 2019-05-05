@@ -356,9 +356,18 @@ window.addEventListener("beforeunload", (e) => {
   return null
 })
 
+const handleBrokenWsPromise = (err, promiseName, store) => {
+  console.error(`Promise ${promiseName} broken!`, err)
+  if (err.network_err && ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CONNECTING) {
+    ws.close()
+    store.dispatch(wsFailure(err.network_err))
+    store.dispatch(requestWs())
+  }
+}
+
 const api = store => next => action => {
   if (action === undefined)
-    console.log("UNDEFINED ACTION SUBMITTED BY SOMEONE!!!")
+    console.log("UNDEFINED ACTION SUBMITTED!")
   switch (action.type) {
     case REQUEST_WS: {
       if (ws && ws.readyState === WebSocket.OPEN) {
@@ -387,12 +396,7 @@ const api = store => next => action => {
         console.log("AddItem accepted server side", uuid)
         store.dispatch(fulfilItem(action.uuid, uuid))
       }).catch(err => {
-        console.error("Promise broken!", err)
-        if (err.network_err && ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CONNECTING) {
-          ws.close()
-          store.dispatch(wsFailure(err.network_err))
-          store.dispatch(requestWs())
-        }
+        handleBrokenWsPromise(err, ADD_ITEM, store)
       })
       break
     }
@@ -406,12 +410,7 @@ const api = store => next => action => {
       send(ws, msg).then(uuid => {
         console.log("edit accepted", uuid)
       }).catch(err => {
-        console.error("Promise broken!", err)
-        if (err.network_err && ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CONNECTING) {
-          ws.close()
-          store.dispatch(wsFailure(err.network_err))
-          store.dispath(requestWs())
-        }
+        handleBrokenWsPromise(err, EDIT_ITEM, store)
       })
       break
     }
@@ -424,12 +423,7 @@ const api = store => next => action => {
       send(ws, msg).then(uuid => {
         console.log("completeItem accepted", uuid)
       }).catch(err => {
-        console.error("CompleteItem Promise broken", err)
-        if (err.network_err && ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CONNECTING) {
-          ws.close()
-          store.dispatch(wsFailure(err.network_err))
-          store.dispatch(requestWs())
-        }
+        handleBrokenWsPromise(err, COMPLETE_ITEM, store)
       })
       break
     }
@@ -442,12 +436,7 @@ const api = store => next => action => {
       send(ws, msg).then(uuid => {
         console.log("UnCompleteItem accepted", uuid)
       }).catch(err => {
-        console.error("UnCompleteItem Promise broken", err)
-        if (err.network_err && ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CONNECTING) {
-          ws.close()
-          store.dispatch(wsFailure(err.network_err))
-          store.dispatch(requestWs())
-        }
+        handleBrokenWsPromise(err, UNCOMPLETE_ITEM, store)
       })
       break
     }
@@ -462,12 +451,7 @@ const api = store => next => action => {
         console.log("delete accepted", uuid)
         delete deletedItems[uuid]
       }).catch(err => {
-        console.error("Promise broken!", err)
-        if (err.network_err && ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CONNECTING) {
-          ws.close()
-          store.dispatch(wsFailure(err.network_err))
-          store.dispatch(requestWs())
-        }
+        handleBrokenWsPromise(err, DELETE_ITEM, store)
       })
       break
     }
@@ -485,12 +469,7 @@ const api = store => next => action => {
           console.log("deleted toggled", uuid)
           delete deletedItems[msg.uuid]
         }).catch(err => {
-          console.error("ClearToggled promise broken", err)
-          if (err.network_err && ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CONNECTING) {
-            ws.close()
-            store.dispatch(wsFailure(err.network_err))
-            store.dispatch(requestWs())
-          }
+          handleBrokenWsPromise(err, CLEAR_TOGGLED, store)
         })
       })
       break
@@ -507,12 +486,7 @@ const api = store => next => action => {
         console.log("AddList accepted server side", uuid)
         store.dispatch(fulfilList(action.uuid, uuid))
       }).catch(err => {
-        console.error("ADD_LIST promise broken!", err)
-        if (err.network_err && ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CONNECTING) {
-          ws.close()
-          store.dispatch(wsFailure(err.network_err))
-          store.dispatch(requestWs())
-        }
+        handleBrokenWsPromise(err, ADD_LIST, store)
       })
       break
     }
@@ -526,12 +500,7 @@ const api = store => next => action => {
       send(ws, msg).then(uuid => {
         console.log("UpdateListName accepted server side", uuid)
       }).catch(err => {
-        console.error("UpdateListName promise broken!", err)
-        if (err.network_err && ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CONNECTING) {
-          ws.close()
-          store.dispatch(wsFailure(err.network_err))
-          store.dispatch(requestWs())
-        }
+        handleBrokenWsPromise(err, UPDATE_LIST_NAME, store)
       })
       break
     }
@@ -545,12 +514,7 @@ const api = store => next => action => {
       send(ws, msg).then(uuid => {
         console.log("UpdateListDescription accepted server side", uuid)
       }).catch(err => {
-        console.error("UpdateListDescription promise broken!", err)
-        if (err.network_err && ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CONNECTING) {
-          ws.close()
-          store.dispatch(wsFailure(err.network_err))
-          store.dispatch(requestWs())
-        }
+        handleBrokenWsPromise(err, UPDATE_LIST_DESCRIPTION, store)
       })
       break
     }
@@ -565,19 +529,16 @@ const api = store => next => action => {
         console.log("DeleteList accepted server side", uuid)
         delete deletedLists[uuid]
       }).catch(err => {
-        console.error("DeleteList promise broken!", err)
-        if (err.network_err && ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CONNECTING) {
-          ws.close()
-          store.dispatch(wsFailure(err.network_err))
-          store.dispatch(requestWs())
-        }
+        handleBrokenWsPromise(err, DELETE_LIST, store)
       })
+      break
     }
     case LOGOUT: {
-      console.log("LOGOUT - closing websocket")
-      ws.close()
+      if (ws) {
+        ws.close()
+      }
+      break
     }
-    break
     default: {
       return next(action)
     }
