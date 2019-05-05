@@ -64,9 +64,9 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
       list1 mustBe defined
       list1.foreach(l => {
         l.created mustBe defined
-        l.created.foreach(_.getTime() shouldEqual creationTime.getTime() +- 20)
+        l.created.foreach(_.getTime() shouldEqual creationTime.getTime() +- 30)
         l.updated mustBe defined
-        l.updated.foreach(_.getTime() shouldEqual creationTime.getTime() +- 20)
+        l.updated.foreach(_.getTime() shouldEqual creationTime.getTime() +- 30)
         l.description mustBe None
         l.name mustBe "list1"
         l.userUuid mustBe users._1.get.uuid
@@ -83,9 +83,9 @@ class ItemListServiceSpec extends PlaySpec with GuiceOneAppPerSuite with BeforeA
         l.description mustBe Some("new descr")
         l.name mustBe "list1"
         l.created mustBe defined
-        l.created.foreach(_.getTime() shouldEqual creationTime.getTime() +- 20)
+        l.created.foreach(_.getTime() shouldEqual creationTime.getTime() +- 30)
         l.updated mustBe defined
-        l.updated.foreach(_.getTime() shouldEqual updateTime.getTime() +- 20)
+        l.updated.foreach(_.getTime() shouldEqual updateTime.getTime() +- 30)
         l.userUuid mustBe users._1.get.uuid
       })
 

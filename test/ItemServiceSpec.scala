@@ -52,7 +52,7 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuit
     "return uuid and actually insert the item correctly" in {
       val uuid = Await.result(insertItem("some contents"), 1 seconds)
 
-      val item = Await.result(service.get(uuid), 10 millis)
+      val item = Await.result(service.get(uuid), 20 millis)
       item mustBe defined
       item.foreach(i => {
         i.contents mustBe "some contents"
@@ -67,25 +67,25 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuit
       // Add item
       val creation = new Timestamp(System.currentTimeMillis())
       val uuid = Await.result(insertItem("an item"), 100 millis)
-      val item = Await.result(service.get(uuid), 10 millis)
+      val item = Await.result(service.get(uuid), 20 millis)
       item mustBe defined
       item.foreach(i => {
         // Check that created and updated fields are ~equal to creation
         i.created mustBe defined
-        i.created.foreach(_.getTime() shouldEqual creation.getTime() +- 20)
+        i.created.foreach(_.getTime() shouldEqual creation.getTime() +- 30)
         i.updated mustBe defined
-        i.updated.foreach(_.getTime() shouldEqual creation.getTime() +- 20)
+        i.updated.foreach(_.getTime() shouldEqual creation.getTime() +- 30)
       })
       // Update item
       val update = new Timestamp(System.currentTimeMillis())
       Await.result(service.edit(uuid, "update"), 100 millis)
-      val updatedItem = Await.result(service.get(uuid), 10 millis)
+      val updatedItem = Await.result(service.get(uuid), 20 millis)
       updatedItem.foreach(i => {
         // Created field should still be ~equal to creation, updated ~equal update
         i.created mustBe defined
-        i.created.foreach(_.getTime() shouldEqual creation.getTime() +- 20)
+        i.created.foreach(_.getTime() shouldEqual creation.getTime() +- 30)
         i.updated mustBe defined
-        i.updated.foreach(_.getTime() shouldEqual update.getTime() +- 20)
+        i.updated.foreach(_.getTime() shouldEqual update.getTime() +- 30)
       })
     }
   }
@@ -130,20 +130,20 @@ class ItemServiceSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuit
       } yield (success, uuid1, uuid2),
         100 millis)
       results._1 mustBe 1
-      val item = Await.result(service.get(results._2), 10 millis)
+      val item = Await.result(service.get(results._2), 20 millis)
       item mustBe defined
       item.get.completed mustBe true
 
-      val item2 = Await.result(service.get(results._3), 10 millis)
+      val item2 = Await.result(service.get(results._3), 20 millis)
       item2 mustBe defined
       item2.get.completed mustBe false
 
       Await.result(service.unComplete(item.get.uuid), 1 seconds) mustBe 1
-      val itemUnCompleted = Await.result(service.get(item.get.uuid), 10 millis)
+      val itemUnCompleted = Await.result(service.get(item.get.uuid), 20 millis)
       itemUnCompleted mustBe defined
       itemUnCompleted.get.completed mustBe false
 
-      val item22 = Await.result(service.get(item2.get.uuid), 10 millis)
+      val item22 = Await.result(service.get(item2.get.uuid), 20 millis)
       item22.get.completed mustBe false // (still)
     }
 
