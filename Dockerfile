@@ -1,6 +1,6 @@
 FROM openjdk:8
 
-ENV VERSION=2.2.0
+ENV VERSION=2.2.1
 
 COPY ./target/universal/listan-${VERSION}.zip /
 RUN unzip listan-${VERSION}.zip
