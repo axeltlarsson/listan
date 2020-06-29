@@ -50,15 +50,6 @@ For deploying:
 For updating only frontend:
 - `docker-compose -f docker-compose.yml -f docker-compose.prod.yml up --no-deps --build -d frontend`
 
-Last step is to connect `frontend` to the default `bridge` docker network to enable
-automatic TLS certificates and routing via nginx-gen.
-
-```
-docker network connect bridge listan_frontend_1
-```
-
-The `nginx-gen` container may need to be restarted after this as well.
-
 #### Production Console
 If not already done, build the image, and container: 
 ```

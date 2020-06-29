@@ -19,6 +19,7 @@ services:
     restart: unless-stopped
     networks:
       - frontend
+      - webproxy
   db:
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -33,4 +34,6 @@ volumes:
 networks:
   backend:
   frontend:
+  webproxy:
+    external: true
 
