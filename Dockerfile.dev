@@ -1,0 +1,18 @@
+# Use the full SBT + Scala image for development
+FROM hseeberger/scala-sbt:8u212_1.2.8_2.12.8
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the entire project
+COPY . .
+
+# Expose the application port
+EXPOSE 9000
+
+# Set the entrypoint to SBT
+ENTRYPOINT ["sbt"]
+
+# Default command to run the Play application in development mode
+CMD ["run"]
+

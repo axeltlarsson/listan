@@ -4,11 +4,6 @@ FROM hseeberger/scala-sbt:8u212_1.2.8_2.12.8 as build-stage
 # Set the working directory
 WORKDIR /app
 
-# Copy the SBT configuration files
-COPY build.sbt project/ ./project/
-COPY project/plugins.sbt project/ ./project/
-
-# Copy the rest of the application code
 COPY . .
 
 # Build the project
