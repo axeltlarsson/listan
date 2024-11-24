@@ -28,4 +28,4 @@ EXPOSE 9000
 # Set the working directory and entrypoint
 WORKDIR /listan-${VERSION}
 ENTRYPOINT ["bin/listan"]
-CMD ["-Dconfig.file=conf/application.prod.conf"]
+CMD ["-Dconfig.file=conf/application.conf"]

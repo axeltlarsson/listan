@@ -7,6 +7,7 @@ services:
       DB_USER: listan
       DB_PASSWORD: ${DB_PASSWORD}
       CRYPTO_SECRET: ${CRYPTO_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
   db:
     image: postgres:10
     environment:
