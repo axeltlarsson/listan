@@ -88,3 +88,15 @@ from /api/login). Each WebSocket connection is maintained by an akka actor.
 A custom protocol is used. It is based on the idea of the client sending `Action`s and the server responding with
 `Response`s and relaying the `Action`s to other clients. More details can be found in
 [`Message.scala`](./app/services/Message.scala).
+
+## Integration with recipe db
+
+``` shell
+curl -X POST http://localhost:9000/api/lists/batch \
+  -H "Authorization: Bearer $(uv run --with pyjwt,python-dotenv generate_jwt.py)" -i
+```
+
+- use [generate_jwt.py](./generate_jwt.py) to generate a JWT.
+- curl `POST /api/lists/batch` to batch add ingredients like the recipe db does
+- the listan service will then batch add the ingredients to the first list owned by the user defined in the `sub` claim
+  of the JWT
