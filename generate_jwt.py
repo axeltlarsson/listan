@@ -12,7 +12,7 @@ ALGORITHM = "HS256"
 # Define the claims for the token
 def generate_jwt():
     payload = {
-        "sub": "user123",  # User ID or subject
+        "sub": "axel",  # User ID or subject
         "aud": "listan",  # Audience
         "exp": datetime.now(timezone.utc)
         + timedelta(minutes=5),  # Expiration in 5 minutes

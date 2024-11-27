@@ -93,10 +93,13 @@ A custom protocol is used. It is based on the idea of the client sending `Action
 
 ``` shell
 curl -X POST http://localhost:9000/api/lists/batch \
-  -H "Authorization: Bearer $(uv run --with pyjwt,python-dotenv generate_jwt.py)" -i
+  -H "Authorization: Bearer $(uv run --with pyjwt,python-dotenv generate_jwt.py)" \
+  -H "content-type: application/json" \
+  -d '[ "mjölk", "mjöl", "socker"]' -i
 ```
 
-- use [generate_jwt.py](./generate_jwt.py) to generate a JWT.
+- use [generate_jwt.py](./generate_jwt.py) to generate a JWT - make sure the `sub` claim points to a valid username in
+  the database
 - curl `POST /api/lists/batch` to batch add ingredients like the recipe db does
 - the listan service will then batch add the ingredients to the first list owned by the user defined in the `sub` claim
   of the JWT
