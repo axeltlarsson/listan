@@ -3,19 +3,25 @@ package controllers
 import javax.inject._
 import play.api.mvc._
 import play.api.libs.json.{JsValue, Json}
-import services.{JwtValidator, ItemService, ItemListService}
-import models.{UserRepository, User}
+import services.{JwtValidator, ItemListService, ListActor, AddItem, UUIDResponse}
+import models.{UserRepository, User, Item}
 import play.api.Logging
+import akka.actor.ActorRef
+import akka.pattern.ask
+import akka.util.Timeout
 
+import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class BatchAddController @Inject()(cc: ControllerComponents,
                                    userRepository: UserRepository,
                                    itemListService: ItemListService,
-                                   itemService: ItemService)
+                                   @Named("list-actor") listActor: ActorRef)
                                   (implicit ec: ExecutionContext)
     extends AbstractController(cc) with Logging {
+
+  implicit val timeout: Timeout = 5.seconds // For ask pattern
 
   def batchAdd: Action[JsValue] = Action.async(parse.json) { request =>
     extractToken(request.headers.get("Authorization"))
@@ -27,6 +33,12 @@ class BatchAddController @Inject()(cc: ControllerComponents,
             findPrimaryList(user)
               .flatMap { primaryList =>
                 addItemsToList(itemContents, primaryList.uuid, user)
+                  .map { addedItems =>
+                    Ok(Json.obj(
+                      "message" -> "Batch items added",
+                      "items" -> addedItems.map(_.contents)
+                    ))
+                  }
               }
           }
       }
@@ -72,16 +84,14 @@ class BatchAddController @Inject()(cc: ControllerComponents,
     }
   }
 
-  private def addItemsToList(itemContents: Seq[String], listUuid: String, user: User): Future[Result] = {
-    logger.info(s"Adding ${itemContents.size} items for user ${user.name}")
-    val addItemFutures = itemContents.map(itemService.add(_, listUuid))
-    Future.sequence(addItemFutures).map { _ =>
-      logger.info(s"Successfully added ${itemContents.size} items for user ${user.name}")
-      Ok(Json.obj(
-        "message" -> s"Batch items added for user ${user.name}",
-        "items" -> itemContents
-      ))
-    }
+  private def addItemsToList(itemContents: Seq[String], listUuid: String, user: User): Future[Seq[models.Item]] = {
+    Future.sequence(itemContents.map { contents =>
+      (listActor ? AddItem(contents, listUuid, ack = "BATCH_ADD", uuid = None, user = Some(user)))
+        .mapTo[UUIDResponse]
+        .map { response =>
+          models.Item(response.uuid, contents, completed = false, listUuid)
+        }
+    })
   }
 }
 
