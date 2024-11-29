@@ -26,3 +26,7 @@ services:
   frontend:
     ports:
       - "80:80"
+    build:
+      args:
+        WS_API_URL: "http:/${VIRTUAL_HOST}/api/ws"
+        LOGIN_URL: "http://${VIRTUAL_HOST}/api/login"

@@ -12,5 +12,6 @@ services:
       POSTGRES_USER: listan
       POSTGRES_DB: listan
   frontend:
-    build: ./frontend/
-
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile

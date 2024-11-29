@@ -11,8 +11,6 @@ services:
       - frontend
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
       args:
         WS_API_URL: "https:/${VIRTUAL_HOST}/api/ws"
         LOGIN_URL: "https://${VIRTUAL_HOST}/api/login"
