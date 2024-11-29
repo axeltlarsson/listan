@@ -36,10 +36,18 @@ To e.g. create a user and insert into the database:
 ``` scala
 import services.UserService
 val userService = injector.instanceOf[UserService]
-val uuidFuture = userService.add("name", "password")
+val uuidFuture = userService.add("alice", "password")
 val uuid = uuidFuture.value.get
 
-val userFuture = userService.findByName("name")
+val userFuture = userService.findByName("alice")
+```
+
+To create a list for the user:
+
+``` scala
+import services.ItemListService
+val listService = injector.instanceOf[ItemListService]
+val listUuidFuture = listService.add("my list", None, uuid.get)
 ```
 
 ### Docker deploy
