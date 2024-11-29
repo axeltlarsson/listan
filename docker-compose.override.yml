@@ -2,8 +2,6 @@
 # It adds a default working DB_PASSWORD between the db and the app that can however be overriden
 # It also exposes the port 9000 for easy access to the app locally
 
-version: '3'
-
 services:
   app:
     environment:

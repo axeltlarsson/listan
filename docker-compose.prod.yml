@@ -1,8 +1,6 @@
 # Used in production
 # It adds the app and db to a new isolated network: backend
 
-version: '3'
-
 services:
   app:
     environment:
