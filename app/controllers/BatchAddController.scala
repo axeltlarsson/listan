@@ -64,7 +64,7 @@ class BatchAddController @Inject()(cc: ControllerComponents,
   private def getUser(userName: String): Future[User] = {
     userRepository.findByName(userName).flatMap {
       case Some(user) => Future.successful(user)
-      case None       => Future.failed(BatchAddError.Unauthorized("User not found"))
+      case None       => Future.failed(BatchAddError.Unauthorized(s"User $userName not found"))
     }
   }
 

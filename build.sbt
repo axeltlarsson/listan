@@ -28,7 +28,7 @@ libraryDependencies ++= Seq(
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 
 javaOptions in Test += "-Dconfig.file=conf/application.test.conf"
-javaOptions in Production += "-Dconfig.file=conf/application.conf" // for 'sbt runProd'
+javaOptions in Production += "-Dconfig.file=conf/application.prod.conf" // for 'sbt runProd'
 javaOptions in Universal ++= Seq(
   s"-Dpidfile.path=/dev/null",
   s"-Dconfig.file=/usr/share/${packageName.value}/conf/application.conf")

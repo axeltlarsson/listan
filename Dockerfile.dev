@@ -16,6 +16,6 @@ RUN sbt update
 EXPOSE 9000
 
 # Set the entrypoint to SBT
-ENTRYPOINT ["sbt", "-Dconfig.file=conf/application.conf"]
+ENTRYPOINT ["sbt", "-Dconfig.file=conf/application.dev.conf"]
 
-CMD ["runProd"]
+CMD ["run"]

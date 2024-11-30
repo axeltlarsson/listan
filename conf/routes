@@ -2,6 +2,7 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 POST    /api/login          controllers.HomeController.login
+OPTIONS /api/login          controllers.HomeController.login
 GET     /api/ws             controllers.SocketController.connect
 POST    /api/lists/batch    controllers.BatchAddController.batchAdd
 
