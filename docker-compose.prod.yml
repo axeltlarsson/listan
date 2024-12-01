@@ -12,7 +12,7 @@ services:
   frontend:
     build:
       args:
-        WS_API_URL: "https:/${VIRTUAL_HOST}/api/ws"
+        WS_API_URL: "api/ws"
         LOGIN_URL: "https://${VIRTUAL_HOST}/api/login"
     environment:
       VIRTUAL_HOST: "${VIRTUAL_HOST}"
