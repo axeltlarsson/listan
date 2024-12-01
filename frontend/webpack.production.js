@@ -13,8 +13,8 @@ module.exports = merge(CommonConfig, {
     new webpack.DefinePlugin({
       'process.env': {
         'NODE_ENV': JSON.stringify('production'),
-        'WS_API_URL': JSON.stringify(process.env.WS_API_URL || 'wss://listan.axellarsson.nu/api/ws'),
-        'LOGIN_URL': JSON.stringify(process.env.LOGIN_URL || 'https://listan.axellarsson.nu/api/login')
+        'WS_API_URL': JSON.stringify(process.env.WS_API_URL),
+        'LOGIN_URL': JSON.stringify(process.env.LOGIN_URL)
       }
     }),
     new NameAllModulesPlugin(),
