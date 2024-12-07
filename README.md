@@ -1,5 +1,3 @@
-[![CircleCI](https://circleci.com/gh/AxelTLarsson/listan-server/tree/multiple-lists.svg?style=svg)](https://circleci.com/gh/AxelTLarsson/listan-server/tree/multiple-lists)
-
 # Listan
 
 It is built on top of Scala Play framework, however it relies heavily on akka for the actor system.
@@ -10,7 +8,7 @@ rather good testing tools that is invaluable when testing the actor system.
 
 ## Setup
 
-`docker compose up --build` then add a user via the console (see bewlow).
+`docker compose up --build` then add a user via the console (see below).
 
 ## Running
 
@@ -52,15 +50,6 @@ val listUuidFuture = listService.add("my list", None, uuid.get)
 
 ### Docker deploy
 
-First, [build the frontend](./frontend/README.md).
-
-`sbt dist` to generate the bundled app, then:
-
-`docker-compose up` for running in production mode with production configuration, but with some adaptations for making
-it smoother to run locally, such as not having to provide `CRYPTO_SECRET` and `DB_PASSWORD`.
-
-For deploying:
-
 - Substitute appropriate values into `.env` - see [sample.env](./sample.env) for an example
 - Run `docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d`
 
@@ -70,23 +59,15 @@ For updating only frontend:
 
 #### Production Console
 
-If not already done, build the image, and container:
-
-    docker build -f Dockerfile-prod-console -t prod-console .
-    docker create --net listan_backend --env-file .env --name prod-console prod-console
-
-Start the container and then execute sbt:
-
-    docker start prod-console
-    docker exec -it prod-console sbt
+    docker compose -f docker-compose.yml -f docker-compose.prod.yml run --entrypoint sbt -i app
 
 Then run `console`.
 
 ## Architecture
 
-The backend consists of two routes: /api/login and /api/ws. The /api/login route accepts a `POST` with keys `username`
-and `password`. If the correct credentials are given a `JSON` response with a payload containing the JWT token is
-returned.
+The backend consists of three routes: /api/login, /api/ws and /api/lists/batch. The /api/login route accepts a `POST`
+with keys `username` and `password`. If the correct credentials are given a `JSON` response with a payload containing
+the JWT token is returned.
 
 The route /api/ws accepts WebSocket connections and requires that the client provides a valid JWT token (as required
 from /api/login). Each WebSocket connection is maintained by an akka actor.
@@ -98,6 +79,8 @@ A custom protocol is used. It is based on the idea of the client sending `Action
 [`Message.scala`](./app/services/Message.scala).
 
 ## Integration with recipe db
+
+Endpoint `/api/lists/batch` is used to batch add items to the user's primary list.
 
 ``` shell
 curl -X POST http://localhost:9000/api/lists/batch \

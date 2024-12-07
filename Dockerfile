@@ -1,5 +1,5 @@
 # Step 1: Build Stage
-FROM hseeberger/scala-sbt:8u212_1.2.8_2.12.8 as build-stage
+FROM hseeberger/scala-sbt:8u212_1.2.8_2.12.8 AS build-stage
 
 # Set the working directory
 WORKDIR /app
