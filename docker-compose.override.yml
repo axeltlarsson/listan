@@ -2,16 +2,21 @@
 # It adds a default working DB_PASSWORD between the db and the app that can however be overriden
 # It also exposes the port 9000 for easy access to the app locally
 
-version: '3'
-
 services:
   app:
     environment:
       DB_PASSWORD: password
       DB_URL: "jdbc:postgresql://db:5432/listan_dev"
-      CRYPTO_SECRET: "${CRYPTO_SECRET:-G@m7wI=;NNpFx?1dHJQ7<dcN4Pw55xuhn0KN]:e?]Lr;]]DQsM7Sh;hY73EZpRZn}"
+      CRYPTO_SECRET: "${CRYPTO_SECRET}"
+      JWT_SECRET: "${JWT_SECRET}"
     ports:
       - "9000:9000"
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    tty: true
+    volumes:
+      - .:/app
 
   db:
     environment:
@@ -21,3 +26,7 @@ services:
   frontend:
     ports:
       - "80:80"
+    build:
+      args:
+        WS_API_URL: "api/ws"
+        LOGIN_URL: "http://${VIRTUAL_HOST}/api/login"

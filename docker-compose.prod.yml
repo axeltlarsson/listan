@@ -1,8 +1,6 @@
 # Used in production
 # It adds the app and db to a new isolated network: backend
 
-version: '3'
-
 services:
   app:
     environment:
@@ -11,7 +9,23 @@ services:
     networks:
       - backend
       - frontend
+  prod-console:
+    # This is a temporary service to run the console in production
+    environment:
+      DB_URL: "jdbc:postgresql://db:5432/listan"
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    tty: true
+    entrypoint: ["sbt", "-Dconfig.resource=prod.conf"]
+    command: compile
+    volumes:
+      - .:/app
   frontend:
+    build:
+      args:
+        WS_API_URL: "api/ws"
+        LOGIN_URL: "https://${VIRTUAL_HOST}/api/login"
     environment:
       VIRTUAL_HOST: "${VIRTUAL_HOST}"
       LETSENCRYPT_HOST: "${VIRTUAL_HOST}"

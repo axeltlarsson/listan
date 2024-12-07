@@ -1,7 +1,0 @@
-FROM hseeberger/scala-sbt:8u181_2.12.8_1.2.8
-
-COPY ./ /app
-
-WORKDIR /app
-ENTRYPOINT ["sbt"]
-CMD ["-Dconfig.file=conf/application.prod.conf"]

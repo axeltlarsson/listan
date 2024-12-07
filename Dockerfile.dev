@@ -1,0 +1,21 @@
+# Use the full SBT + Scala image for development
+FROM hseeberger/scala-sbt:8u212_1.2.8_2.12.8
+
+# Set the working directory
+WORKDIR /app
+
+# copy the project files and run sbt to install dependencies and compile the project withouth the code
+# so that when the source code changes we don't have to download the dependencies again
+COPY project/build.properties project/plugins.sbt ./project/
+COPY build.sbt ./
+COPY conf ./conf/
+
+RUN sbt update
+
+# Expose the application port
+EXPOSE 9000
+
+# Set the entrypoint to SBT
+ENTRYPOINT ["sbt", "-Dconfig.file=conf/application.dev.conf"]
+
+CMD ["run"]

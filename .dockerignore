@@ -2,3 +2,11 @@ frontend
 test
 public
 logs
+docker-compose*.yml
+*.nix
+LICENCE
+*.md
+sample.env
+.env
+target
+Dockerfile-prod-console

@@ -2,6 +2,7 @@ package services
 
 import javax.inject._
 
+import java.lang.IllegalStateException
 import akka.actor._
 import akka.pattern.pipe
 import models.{Item, User}
@@ -16,7 +17,7 @@ object ListActor {
   case class Subscribe(user: User)
   case object UnSubscribe // used by WebSocketActor to unsubscribe
   // Can be used by "pipeTo self" to propagate information to all clients
-  case class SuccessfulAction(action: Action, response: Response, originalSender: ActorRef)
+  case class SuccessfulAction(action: Action, response: Response, originalSender: ActorRef, user: Option[User] = None)
   case class FailedAction(failureResponse: FailureResponse, originalSender: ActorRef)
 }
 
@@ -36,11 +37,25 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
 
   def receive = {
 
-    // Propagate successful actions to all but original sender
-    case SuccessfulAction(action, response, originalSender) => {
-      // user should always be defined at this stage
-      val user = clients.get(originalSender).get
-      clients.filter{ case (c, u) => c != originalSender && u == user}.keys.foreach(_ ! action)
+    // Propagate successful actions to all clients of same user, except the original sender
+    case SuccessfulAction(action, response, originalSender, userOpt) => {
+      // userOpt is passed in by internal clients (AatchAddController) that do not have a WebSocketActor
+      // otherwise, the user is looked up from the clients map for external WebSocketActors
+      val user = userOpt.getOrElse(clients.get(originalSender).getOrElse {
+        logger.error(s"User not found for sender $originalSender. This might indicate a bug.")
+        throw new IllegalStateException("User must be defined for external senders")
+      })
+      // Broadcast to all clients associated with the same user except the original sender
+      // make sure to compare user on uuid only - internal user will be fetched from db and will
+      // have additional fields set (pasword_hash, created, updated) but external websocket users
+      // will only have uuid and name set - taken directly from jwt
+      clients.filter { case (client, u) => client != originalSender && u.uuid == user.uuid }
+        .keys
+        .foreach { client => {
+          client ! action
+        }
+      }
+
       originalSender ! response
     }
 
@@ -50,7 +65,7 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
     }
 
     case Subscribe(user) => {
-      logger.debug(s"subscribing client ${user.uuid}")
+      logger.debug(s"subscribing client sender: ${sender}, user_name: ${user.name} with uuid: ${user.uuid}")
       clients += (sender -> user)
     }
 
@@ -59,11 +74,13 @@ class ListActor @Inject()(itemService: ItemService, itemListService: ItemListSer
       clients -= sender
     }
 
-    case action @ AddItem(contents, lst, ack, clientId) => {
+    case action @ AddItem(contents, lst, ack, clientId, userOpt) => {
       val uuidFuture: Future[Item.UUID] = itemService.add(contents, lst, clientId)
       val theSender = sender
       uuidFuture.map{
-        uuid => SuccessfulAction(action.copy(uuid = Some(uuid)), UUIDResponse("Added item", uuid, action.ack), theSender)
+        uuid => SuccessfulAction(
+          action.copy(uuid = Some(uuid)), UUIDResponse("Added item", uuid, action.ack), theSender, userOpt
+        )
       }.recover {
         case e => failureAction(e, ack, sender)
       } pipeTo self
