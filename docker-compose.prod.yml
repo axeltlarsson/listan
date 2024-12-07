@@ -9,6 +9,18 @@ services:
     networks:
       - backend
       - frontend
+  prod-console:
+    # This is a temporary service to run the console in production
+    environment:
+      DB_URL: "jdbc:postgresql://db:5432/listan"
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    tty: true
+    entrypoint: ["sbt", "-Dconfig.resource=prod.conf"]
+    command: compile
+    volumes:
+      - .:/app
   frontend:
     build:
       args:

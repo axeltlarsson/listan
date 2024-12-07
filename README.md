@@ -59,7 +59,7 @@ For updating only frontend:
 
 #### Production Console
 
-    docker compose -f docker-compose.yml -f docker-compose.prod.yml run --entrypoint sbt -i app
+    docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm -i prod-console console
 
 Then run `console`.
 
