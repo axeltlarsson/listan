@@ -36,7 +36,8 @@ class BatchAddController @Inject()(cc: ControllerComponents,
                   .map { addedItems =>
                     Ok(Json.obj(
                       "message" -> "Batch items added",
-                      "items" -> addedItems.map(_.contents)
+                      "items" -> addedItems.map(_.contents),
+                      "list_name" -> primaryList.name
                     ))
                   }
               }
