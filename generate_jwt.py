@@ -1,3 +1,11 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "pyjwt",
+#     "python-dotenv",
+# ]
+# ///
+
 import jwt
 from datetime import datetime, timedelta, timezone
 import os
@@ -27,3 +35,4 @@ def generate_jwt():
 if __name__ == "__main__":
     token = generate_jwt()
     print(token)
+

@@ -84,7 +84,7 @@ Endpoint `/api/lists/batch` is used to batch add items to the user's primary lis
 
 ``` shell
 curl -X POST http://localhost:9000/api/lists/batch \
-  -H "Authorization: Bearer $(uv run --with pyjwt,python-dotenv generate_jwt.py)" \
+  -H "Authorization: Bearer $(uv run generate_jwt.py)" \
   -H "content-type: application/json" \
   -d '[ "mjölk", "mjöl", "socker"]' -i
 ```
