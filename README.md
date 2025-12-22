@@ -8,7 +8,13 @@ rather good testing tools that is invaluable when testing the actor system.
 
 ## Setup
 
-`docker compose up --build` then add a user via the console (see below).
+`docker compose up --build` then seed the dev user:
+
+```bash
+./scripts/seed-dev-user.sh
+```
+
+This creates an `alice`/`password` user with a default list. See below for manual user creation.
 
 ## Running
 
@@ -21,31 +27,43 @@ rather good testing tools that is invaluable when testing the actor system.
 
 ### Adding a User Via the Console
 
-`sbt console` then enter `:paste` to get to paste-mode and:
+First, ensure evolutions have been applied by hitting any endpoint (e.g., `curl http://localhost:9000/api/login`).
 
-``` scala
-// injector from Guice to gain access to services/repos
-import play.api.inject.guice.GuiceApplicationBuilder
-val injector = (new GuiceApplicationBuilder()).injector
+Then start the console:
+```bash
+docker compose exec app sbt -Dconfig.file=conf/application.dev.conf console
 ```
 
-To e.g. create a user and insert into the database:
+Enter `:paste` mode and load the application:
 
-``` scala
-import services.UserService
-val userService = injector.instanceOf[UserService]
-val uuidFuture = userService.add("alice", "password")
-val uuid = uuidFuture.value.get
+```scala
+import play.api._
+import play.api.inject.guice._
 
-val userFuture = userService.findByName("alice")
+val app = new GuiceApplicationBuilder()
+  .in(Mode.Dev)
+  .build()
+
+Play.start(app)
+
+val injector = app.injector
+```
+
+To create a user:
+
+```scala
+import scala.concurrent.Await
+import scala.concurrent.duration._
+
+val userService = injector.instanceOf[services.UserService]
+val uuid = Await.result(userService.add("alice", "password"), 10.seconds)
 ```
 
 To create a list for the user:
 
-``` scala
-import services.ItemListService
-val listService = injector.instanceOf[ItemListService]
-val listUuidFuture = listService.add("my list", None, uuid.get)
+```scala
+val listService = injector.instanceOf[services.ItemListService]
+val listUuid = Await.result(listService.add("my list", None, uuid), 10.seconds)
 ```
 
 ### Docker deploy
