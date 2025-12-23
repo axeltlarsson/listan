@@ -1,4 +1,4 @@
 *.md
 test
-dist
 node_modules/
+dist/
