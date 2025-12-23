@@ -25,7 +25,16 @@ const Login = ({
         id="login-form"
         onSubmit={(e) => {
           e.preventDefault()
-          onLogin(userName.inputRef.value.trim(), password.inputRef.value)
+          // Fallback to DOM query if react-mdl inputRef is unavailable (iOS Safari)
+          const userEl = document.getElementById('user-name')
+          const passEl = document.getElementById('password')
+          const userValue = (userName && userName.inputRef && userName.inputRef.value)
+            || (userEl && userEl.querySelector('input') && userEl.querySelector('input').value)
+            || ''
+          const passValue = (password && password.inputRef && password.inputRef.value)
+            || (passEl && passEl.querySelector('input') && passEl.querySelector('input').value)
+            || ''
+          onLogin(userValue.trim(), passValue)
         }}>
         <Textfield
           id="user-name"

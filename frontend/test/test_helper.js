@@ -1,19 +1,35 @@
-import jsdom from 'jsdom';
+import { JSDOM } from 'jsdom';
 
-const doc = jsdom.jsdom('<!doctype html><html><body></body></html>');
-const win = doc.defaultView;
-const localStorage = {
-  getItem: (key) => null,
-  setItem: (key, value) => null
+const dom = new JSDOM('<!doctype html><html><body></body></html>', {
+  url: 'http://localhost'
+});
+const win = dom.window;
+const doc = win.document;
+
+// Mock localStorage
+const localStorageMock = {
+  store: {},
+  getItem: function(key) { return this.store[key] || null },
+  setItem: function(key, value) { this.store[key] = value },
+  removeItem: function(key) { delete this.store[key] },
+  clear: function() { this.store = {} }
 }
-const atob = (str) => str
 
 global.document = doc;
 global.window = win;
-global.window.localStorage = localStorage;
 
-Object.keys(window).forEach((key) => {
+Object.defineProperty(global.window, 'localStorage', {
+  value: localStorageMock,
+  writable: true
+});
+
+Object.defineProperty(global, 'localStorage', {
+  value: localStorageMock,
+  writable: true
+});
+
+Object.keys(win).forEach((key) => {
   if (!(key in global)) {
-    global[key] = window[key];
+    global[key] = win[key];
   }
 });

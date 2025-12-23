@@ -21,7 +21,8 @@ describe('lists reducer', () => {
             fulfilled: false
           }
         },
-        allIds: ['l1']
+        allIds: ['l1'],
+        pending: true
       })
 
     const action2 = { type: 'ADD_LIST', uuid: 'l2', name: 'snd list', description: 'descr2' }
@@ -45,7 +46,8 @@ describe('lists reducer', () => {
           fulfilled: false
         }
       },
-      allIds: ['l1', 'l2']
+      allIds: ['l1', 'l2'],
+      pending: true
     })
 
   })
@@ -233,7 +235,7 @@ describe('items reducer', () => {
     const action = { type: ADD_ITEM, uuid: '1', contents: 'the first ever item',
       created: { time: 1 }, updated: { time: 1 }, list_uuid: 'list1' }
     const nextState = reducer(initialState, action)
-    expect(nextState).to.have.deep.property('items[0]').that.deep.equals({
+    expect(nextState.items[0]).to.deep.equal({
       uuid: '1',
       contents: 'the first ever item',
       created: { time: 1 },
@@ -283,13 +285,12 @@ describe('items reducer', () => {
       updated: { time: 2 }
     }
     const nextState = reducer(initialState, action)
-    expect(nextState).to.have.deep.property('items[0]').that.deep.equals(
-      {
-        uuid: '1',
-        contents: 'the first ever item',
-        completed: true,
-        updated: { time: 2 }
-      })
+    expect(nextState.items[0]).to.deep.equal({
+      uuid: '1',
+      contents: 'the first ever item',
+      completed: true,
+      updated: { time: 2 }
+    })
     expect(nextState.items).to.have.length(2)
     const action2 = {
       type: 'UNCOMPLETE_ITEM',

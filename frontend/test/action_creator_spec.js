@@ -2,8 +2,66 @@ import { expect } from 'chai'
 import {
   SERVER_ADD_ITEM, serverAddItem, SERVER_EDIT_ITEM, serverEditItem,
   serverCompleteItem, SERVER_COMPLETE_ITEM, serverUnCompleteItem, SERVER_UNCOMPLETE_ITEM,
-  serverDeleteItem, SERVER_DELETE_ITEM
+  serverDeleteItem, SERVER_DELETE_ITEM,
+  loginUser, LOGIN_REQUEST, LOGIN_SUCCESS, LOGIN_FAILURE
 } from '../src/actions'
+
+describe('loginUser action creator', () => {
+  let originalFetch
+  let originalSetItem
+
+  beforeEach(() => {
+    originalFetch = global.fetch
+    originalSetItem = global.window.localStorage.setItem
+  })
+
+  afterEach(() => {
+    global.fetch = originalFetch
+    global.window.localStorage.setItem = originalSetItem
+  })
+
+  it('dispatches LOGIN_SUCCESS even when localStorage.setItem throws', (done) => {
+    // Mock fetch to return successful login
+    global.fetch = () => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({ token: 'test-jwt-token' })
+    })
+
+    // Mock localStorage.setItem to throw (simulates iOS private browsing)
+    global.window.localStorage.setItem = () => {
+      throw new Error('QuotaExceededError')
+    }
+
+    const dispatched = []
+    const dispatch = (action) => dispatched.push(action)
+
+    loginUser('testuser', 'testpass')(dispatch).then(() => {
+      const types = dispatched.map(a => a.type)
+      expect(types).to.include(LOGIN_REQUEST)
+      expect(types).to.include(LOGIN_SUCCESS)
+      expect(types).to.not.include(LOGIN_FAILURE)
+      done()
+    }).catch(done)
+  })
+
+  it('dispatches LOGIN_FAILURE when JSON parsing fails', (done) => {
+    // Mock fetch to return successful response but invalid JSON
+    global.fetch = () => Promise.resolve({
+      ok: true,
+      json: () => Promise.reject(new Error('Invalid JSON'))
+    })
+
+    const dispatched = []
+    const dispatch = (action) => dispatched.push(action)
+
+    loginUser('testuser', 'testpass')(dispatch).then(() => {
+      const types = dispatched.map(a => a.type)
+      expect(types).to.include(LOGIN_REQUEST)
+      expect(types).to.include(LOGIN_FAILURE)
+      done()
+    }).catch(done)
+  })
+})
 
 describe('server action creators', () => {
   it('creates correct SERVER_ADD_ITEM', () => {

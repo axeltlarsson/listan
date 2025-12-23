@@ -267,10 +267,18 @@ export const loginUser = (userName, password) => dispatch => {
           dispatch(loginError(response.statusText))
       } else {
         response.json().then(jwt => {
-          localStorage.setItem('jwt', jwt.token)
+          try {
+            localStorage.setItem('jwt', jwt.token)
+          } catch (e) {
+            // iOS Safari may throw QuotaExceededError
+            console.warn("localStorage unavailable:", e)
+          }
           dispatch(loginSuccess(jwt.token))
           dispatch(openWebSocket())
-        }).catch(err => console.warn("JSON Error: ", err))
+        }).catch(err => {
+          console.warn("Login error:", err)
+          dispatch(loginError("Inloggning misslyckades"))
+        })
       }
     }).catch(err => {
       dispatch(loginError("Kunde ej nå servern"))
