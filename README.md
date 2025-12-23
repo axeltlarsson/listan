@@ -69,11 +69,11 @@ val listUuid = Await.result(listService.add("my list", None, uuid), 10.seconds)
 ### Docker deploy
 
 - Substitute appropriate values into `.env` - see [sample.env](./sample.env) for an example
-- Run `docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d`
+- Run `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d`
 
 For updating only frontend:
 
-- `docker-compose -f docker-compose.yml -f docker-compose.prod.yml up --no-deps --build -d frontend`
+- `docker compose -f docker-compose.yml -f docker-compose.prod.yml up --no-deps --build -d frontend`
 
 #### Production Console
 
