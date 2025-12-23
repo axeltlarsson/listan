@@ -55,6 +55,12 @@ section.route-section {
 
 #login-button {
   margin-top: 1em;
+  touch-action: manipulation; /* Disable 300ms tap delay on iOS */
+  cursor: pointer;
+}
+
+#login-form {
+  touch-action: manipulation;
 }
 
 /* WS Status */

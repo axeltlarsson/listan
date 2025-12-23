@@ -54,7 +54,7 @@ const Login = ({
         />
         {auth.isFetching ?
           <Spinner /> :
-          <Button id="login-button" raised colored ripple type="submit">Logga in</Button>
+          <Button id="login-button" raised colored type="submit">Logga in</Button>
         }
       </form>
       </div>
