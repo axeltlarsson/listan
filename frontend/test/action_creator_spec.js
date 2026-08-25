@@ -44,6 +44,44 @@ describe('loginUser action creator', () => {
     }).catch(done)
   })
 
+  it('shows a message on 401 even when statusText is empty (HTTP/2)', (done) => {
+    // HTTP/2 dropped the reason phrase, so fetch reports statusText as ''
+    // regardless of status. Branching on it left the user with a blank error.
+    global.fetch = () => Promise.resolve({
+      ok: false,
+      status: 401,
+      statusText: ''
+    })
+
+    const dispatched = []
+    const dispatch = (action) => dispatched.push(action)
+
+    loginUser('testuser', 'wrongpass')(dispatch).then(() => {
+      const failure = dispatched.find(a => a.type === LOGIN_FAILURE)
+      expect(failure).to.not.be.undefined
+      expect(failure.message).to.equal('Felaktigt användarnamn eller lösenord')
+      done()
+    }).catch(done)
+  })
+
+  it('shows a non-empty message on a non-401 error with empty statusText', (done) => {
+    global.fetch = () => Promise.resolve({
+      ok: false,
+      status: 500,
+      statusText: ''
+    })
+
+    const dispatched = []
+    const dispatch = (action) => dispatched.push(action)
+
+    loginUser('testuser', 'testpass')(dispatch).then(() => {
+      const failure = dispatched.find(a => a.type === LOGIN_FAILURE)
+      expect(failure).to.not.be.undefined
+      expect(failure.message).to.not.be.empty
+      done()
+    }).catch(done)
+  })
+
   it('dispatches LOGIN_FAILURE when JSON parsing fails', (done) => {
     // Mock fetch to return successful response but invalid JSON
     global.fetch = () => Promise.resolve({

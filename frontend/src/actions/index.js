@@ -261,10 +261,13 @@ export const loginUser = (userName, password) => dispatch => {
       })
     }).then(response => {
       if (!response.ok) {
-        if (response.statusText == "Unauthorized")
+        // HTTP/2 dropped the reason phrase, so statusText is always '' —
+        // branch on the status code, and never dispatch an empty message
+        // (react-mdl renders no error container for a falsy one).
+        if (response.status === 401)
           dispatch(loginError("Felaktigt användarnamn eller lösenord"))
         else
-          dispatch(loginError(response.statusText))
+          dispatch(loginError(response.statusText || `Något gick fel (${response.status})`))
       } else {
         response.json().then(jwt => {
           try {
