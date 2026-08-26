@@ -59,6 +59,28 @@ section.route-section {
   cursor: pointer;
 }
 
+/* MDL floats its label from an .is-dirty class its JS adds on input events.
+   Autofill assigns .value without firing those, so the label stays sitting on
+   top of the filled-in text. Float it from the browser's own autofill state
+   instead — same declarations MDL uses for .is-dirty.
+
+   Kept as two rules on purpose: an unknown selector invalidates an entire
+   comma-separated list, so pairing these would lose the -webkit- rule on any
+   browser that doesn't know :autofill. */
+#login-form .mdl-textfield__input:-webkit-autofill ~ .mdl-textfield__label {
+  color: rgb(63, 81, 181);
+  font-size: 12px;
+  top: 4px;
+  visibility: visible;
+}
+
+#login-form .mdl-textfield__input:autofill ~ .mdl-textfield__label {
+  color: rgb(63, 81, 181);
+  font-size: 12px;
+  top: 4px;
+  visibility: visible;
+}
+
 /* Anchor the show/hide toggle inside the password field so it stays
    aligned with the username field above it. */
 /* Mirror .mdl-textfield's own geometry, otherwise the shrink-to-fit wrapper
