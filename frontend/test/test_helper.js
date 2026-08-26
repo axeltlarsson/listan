@@ -18,6 +18,15 @@ const localStorageMock = {
 global.document = doc;
 global.window = win;
 
+// react-mdl upgrades its elements through MDL's global componentHandler,
+// which only exists once material-design-lite's script has run. Stub it so
+// components can be rendered under jsdom.
+global.window.componentHandler = {
+  upgradeElement: () => {},
+  upgradeElements: () => {},
+  downgradeElements: () => {}
+};
+
 Object.defineProperty(global.window, 'localStorage', {
   value: localStorageMock,
   writable: true

@@ -1,5 +1,5 @@
-import React from 'react'
-import { Textfield, Button, Spinner } from 'react-mdl'
+import React, { useState } from 'react'
+import { Textfield, Button, Spinner, IconButton } from 'react-mdl'
 import Heading from './Heading'
 import { Redirect } from 'react-router-dom'
 
@@ -13,6 +13,7 @@ const Login = ({
 }) => {
   let userName = null
   let password = null
+  const [showPassword, setShowPassword] = useState(false)
 
   return (
     <div>
@@ -25,14 +26,16 @@ const Login = ({
         id="login-form"
         onSubmit={(e) => {
           e.preventDefault()
-          // Fallback to DOM query if react-mdl inputRef is unavailable (iOS Safari)
+          // Fallback to DOM query if react-mdl inputRef is unavailable (iOS
+          // Safari). react-mdl puts the id on the input itself, so these are
+          // the inputs — not wrappers to search within.
           const userEl = document.getElementById('user-name')
           const passEl = document.getElementById('password')
           const userValue = (userName && userName.inputRef && userName.inputRef.value)
-            || (userEl && userEl.querySelector('input') && userEl.querySelector('input').value)
+            || (userEl && userEl.value)
             || ''
           const passValue = (password && password.inputRef && password.inputRef.value)
-            || (passEl && passEl.querySelector('input') && passEl.querySelector('input').value)
+            || (passEl && passEl.value)
             || ''
           onLogin(userValue.trim(), passValue)
         }}>
@@ -40,18 +43,35 @@ const Login = ({
           id="user-name"
           ref={(input) => { userName = input}}
           required
+          name="username"
+          autoComplete="username"
           label="Användarnamn"
           floatingLabel
         />
-        <Textfield
-          id="password"
-          required
-          ref={(input) => { password = input }}
-          type="password"
-          label="Lösenord"
-          floatingLabel
-          error={auth.errorMessage}
-        />
+        <div id="password-field">
+          <Textfield
+            id="password"
+            required
+            ref={(input) => { password = input }}
+            name="password"
+            autoComplete="current-password"
+            type={showPassword ? "text" : "password"}
+            label="Lösenord"
+            floatingLabel
+            error={auth.errorMessage}
+          />
+          <IconButton
+            id="password-toggle"
+            // Default button type in a form is submit — that would log in
+            // on every toggle.
+            type="button"
+            name={showPassword ? "visibility_off" : "visibility"}
+            title={showPassword ? "Dölj lösenord" : "Visa lösenord"}
+            aria-label={showPassword ? "Dölj lösenord" : "Visa lösenord"}
+            aria-pressed={showPassword}
+            onClick={() => setShowPassword(!showPassword)}
+          />
+        </div>
         {auth.isFetching ?
           <Spinner /> :
           <Button id="login-button" raised colored type="submit">Logga in</Button>

@@ -59,6 +59,40 @@ section.route-section {
   cursor: pointer;
 }
 
+/* Anchor the show/hide toggle inside the password field so it stays
+   aligned with the username field above it. */
+/* Mirror .mdl-textfield's own geometry, otherwise the shrink-to-fit wrapper
+   collapses around the percentage-width field and the password input ends up
+   narrower than the username one above it. */
+#password-field {
+  position: relative;
+  display: inline-block;
+  width: 300px;
+  max-width: 100%;
+}
+
+#password-field .mdl-textfield {
+  width: 100%;
+}
+
+/* Keep typed text clear of the toggle. border-box so the padding doesn't
+   widen the input past the field and leave its underline overhanging. */
+#password-field input {
+  padding-right: 2.5em;
+  box-sizing: border-box;
+}
+
+#password-toggle {
+  position: absolute;
+  right: 0;
+  /* .mdl-textfield has 20px top padding; centre the 32px button on the
+     24px input line below it */
+  top: 16px;
+  color: rgba(0, 0, 0, 0.54);
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
 #login-form {
   touch-action: manipulation;
 }
